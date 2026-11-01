@@ -21,7 +21,7 @@ const fullTitle = title ? `${title} | THEE ARCTIC` : 'THEE ARCTIC | Stay Cold';
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
-    <meta name="theme-color" content="#0c0e11" />
+    <meta name="theme-color" content="#171512" />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -33,7 +33,7 @@ const fullTitle = title ? `${title} | THEE ARCTIC` : 'THEE ARCTIC | Stay Cold';
         <svg viewBox="0 0 900 140" class="sig">
           <text x="50%" y="62%" text-anchor="middle">THEE ARCTIC</text>
         </svg>
-        <p class="eyebrow" style="color:#9fb3c4">Stay cold</p>
+        <p class="eyebrow" style="color:var(--on-dark-muted)">Stay cold</p>
       </div>
       <script is:inline>
         try { if (sessionStorage.getItem('ta-intro')) document.getElementById('preloader').remove(); } catch (e) {}
@@ -110,11 +110,11 @@ const fullTitle = title ? `${title} | THEE ARCTIC` : 'THEE ARCTIC | Stay Cold';
       .preloader .sig { width: min(820px, 88vw); overflow: visible; }
       .preloader text {
         font-family: var(--display); font-weight: 900; font-stretch: 125%; font-size: 120px; letter-spacing: -2px;
-        fill: transparent; stroke: #e6f1f9; stroke-width: 1.4px; stroke-dasharray: 900; stroke-dashoffset: 900;
+        fill: transparent; stroke: var(--on-dark); stroke-width: 1.4px; stroke-dasharray: 900; stroke-dashoffset: 900;
         animation: sig-draw 1.8s var(--ease) forwards, sig-fill .6s ease 1.5s forwards;
       }
       @keyframes sig-draw { to { stroke-dashoffset: 0; } }
-      @keyframes sig-fill { to { fill: #e6f1f9; } }
+      @keyframes sig-fill { to { fill: var(--on-dark); } }
     </style>
   </body>
 </html>

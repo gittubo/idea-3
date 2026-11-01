@@ -5,9 +5,9 @@ import { departments, onSale, discount } from '../data/catalog';
 const items = onSale().sort((a, b) => discount(b) - discount(a));
 ---
 <Base title="Sale" description="THEE ARCTIC sale.">
-  <section class="sale-hero">
+  <section class="sale-hero grain">
     <div class="wrap">
-      <nav class="crumbs" aria-label="Breadcrumb" style="color:#ffd3d6"><a href="/">Home</a><span>/</span><span>Sale</span></nav>
+      <nav class="crumbs" aria-label="Breadcrumb" style="color:rgba(255,255,255,.72)"><a href="/">Home</a><span>/</span><span>Sale</span></nav>
       <h1 class="display">Sale</h1>
       <p>Marked-down pieces from every department.</p>
     </div>
@@ -15,7 +15,7 @@ const items = onSale().sort((a, b) => discount(b) - discount(a));
   <Listing products={items} catChips={departments.map((d) => [d.slug, d.name] as [string, string])} />
 </Base>
 <style>
-  .sale-hero { background: linear-gradient(120deg, #b8141e, #e3343d 60%, #ff6b6b); color: #fff; padding-bottom: 40px; margin-bottom: 24px; }
+  .sale-hero { background: radial-gradient(120% 160% at 88% 0%, #a3434b, var(--accent) 45%, var(--accent-deep)); color: #fff; padding-bottom: 40px; margin-bottom: 24px; }
   h1 { font-size: clamp(56px, 11vw, 170px); margin: 8px 0 10px; }
   p { margin: 0; opacity: .9; }
 </style>

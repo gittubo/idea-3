@@ -8,9 +8,9 @@ const tiers = [
 ];
 ---
 <Base title="Arctic Rewards" description="Earn points on every order and unlock perks with Arctic Rewards.">
-  <section class="rw-hero">
+  <section class="rw-hero grain">
     <div class="wrap">
-      <p class="eyebrow" style="color:#b5b3ae">Arctic Rewards</p>
+      <p class="eyebrow" style="color:var(--on-dark-muted)">Arctic Rewards</p>
       <h1 class="display">Shop.<br />Earn.<br />Stay cold.</h1>
       <p>Earn points on every order and turn them into money off. Free to join.</p>
       <a class="btn light" href="/account">Join now</a>
@@ -37,7 +37,7 @@ const tiers = [
   </section>
 </Base>
 <style>
-  .rw-hero { background: radial-gradient(120% 100% at 80% 0%, #3a3a38, #141414 60%, #070707); color: #fff; padding-block: clamp(60px, 9vw, 130px); }
+  .rw-hero { background: radial-gradient(120% 100% at 80% 0%, #3b3731, var(--deep) 58%, #12100e); color: #fff; padding-block: clamp(60px, 9vw, 130px); }
   .rw-hero h1 { font-size: clamp(56px, 10vw, 150px); margin: 10px 0 18px; }
   .rw-hero p { max-width: 40ch; opacity: .85; margin: 0 0 24px; }
   .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
@@ -53,7 +53,7 @@ const tiers = [
   .tier li { display: flex; gap: 8px; align-items: center; }
   .tier :global(svg) { width: 18px; height: 18px; }
   .t0 { background: var(--ice); }
-  .t1 { background: linear-gradient(160deg, #8f8c86, #4a4a47); color: #fff; }
-  .t2 { background: linear-gradient(160deg, #2b2b2b, #070707); color: #fff; }
+  .t1 { background: linear-gradient(160deg, #8a8278, #4d4740); color: #fff; }
+  .t2 { background: linear-gradient(160deg, var(--deep-2), #12100e); color: #fff; }
   @media (max-width: 800px) { .steps, .tiers { grid-template-columns: 1fr; } }
 </style>

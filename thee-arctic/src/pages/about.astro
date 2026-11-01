@@ -2,9 +2,9 @@
 import Base from '../layouts/Base.astro';
 ---
 <Base title="Our Story">
-  <section class="story-hero">
+  <section class="story-hero grain">
     <div class="wrap">
-      <p class="eyebrow" style="color:#b5b3ae">Our story</p>
+      <p class="eyebrow" style="color:var(--on-dark-muted)">Our story</p>
       <h1 class="display">Cut once.<br />Worn for years.</h1>
     </div>
   </section>
@@ -22,7 +22,7 @@ import Base from '../layouts/Base.astro';
   </section>
 </Base>
 <style>
-  .story-hero { background: var(--ink); color: #fff; padding-block: clamp(80px, 12vw, 180px); }
+  .story-hero { background: var(--deep); color: #fff; padding-block: clamp(80px, 12vw, 180px); }
   h1 { font-size: clamp(56px, 10vw, 160px); margin: 10px 0 0; }
   .big { font-size: clamp(22px, 2.6vw, 36px); line-height: 1.25; font-weight: 500; max-width: 30ch; margin: 0 0 56px; }
   .cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }

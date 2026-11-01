@@ -152,7 +152,7 @@ const categoryLinks = departments.flatMap((d) => d.categories.slice(0, 2).map((c
     <section class="wrap">
       <a href="/sale" class="sale-banner reveal">
         <div>
-          <p class="eyebrow" style="color:#ffd3d6">Sale</p>
+          <p class="eyebrow" style="color:rgba(255,255,255,.72)">Sale</p>
           <h2 class="display">{saleCount} styles marked down</h2>
         </div>
         <span class="btn light">Shop sale</span>
@@ -178,7 +178,7 @@ const categoryLinks = departments.flatMap((d) => d.categories.slice(0, 2).map((c
   )}
 
   <!-- SEASON 01: giant word + card with the campaign still -->
-  <section class="drift">
+  <section class="drift grain">
     <div class="drift-word display" data-drift aria-hidden="true">ARCTIC</div>
     <div class="wrap drift-inner">
       <div class="drift-card reveal">
@@ -238,7 +238,7 @@ const categoryLinks = departments.flatMap((d) => d.categories.slice(0, 2).map((c
 
 <style>
   /* Hero */
-  .hero { position: relative; height: calc(100svh - var(--header-h) - 36px); min-height: 520px; overflow: hidden; background: #0b0b0b; }
+  .hero { position: relative; height: calc(100svh - var(--header-h) - 36px); min-height: 520px; overflow: hidden; background: var(--deep); }
   .hero-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
   .hero-shade { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 60%, rgba(0,0,0,.45)); pointer-events: none; }
   .hero-ui { position: absolute; left: 0; right: 0; bottom: clamp(24px, 5vh, 48px); display: flex; justify-content: space-between; align-items: end; gap: 16px; }
@@ -273,7 +273,7 @@ const categoryLinks = departments.flatMap((d) => d.categories.slice(0, 2).map((c
   .spot { background: var(--snow); padding-block: clamp(48px, 7vw, 96px); overflow: hidden; outline: none; }
   .spot-grid { display: grid; grid-template-columns: 1fr 1.2fr .9fr; gap: 32px; align-items: center; }
   .spot-title { font-size: clamp(44px, 6vw, 92px); margin: 10px 0 16px; }
-  .spot-title span { color: #9a9a96; }
+  .spot-title span { color: var(--frost); }
   .spot-lede { color: var(--muted); max-width: 36ch; margin: 0; }
   .spot-stage { position: relative; height: clamp(380px, 46vw, 600px); }
   .spot-item { position: absolute; top: 0; left: 50%; width: 70%; height: calc(100% - 60px); margin-left: -35%; transition: transform .9s var(--ease), opacity .7s, filter .7s; cursor: pointer; }
@@ -284,10 +284,10 @@ const categoryLinks = departments.flatMap((d) => d.categories.slice(0, 2).map((c
   .spot-item[data-pos="far-prev"] { transform: translateX(-110%) scale(.4); opacity: 0; pointer-events: none; }
   .spot-item[data-pos="far-next"] { transform: translateX(110%) scale(.4); opacity: 0; pointer-events: none; }
   .spot-nav { position: absolute; bottom: 0; left: 0; right: 0; display: flex; justify-content: center; align-items: center; gap: 18px; z-index: 4; }
-  .nav-btn { width: 46px; height: 46px; border-radius: 50%; background: #fff; display: grid; place-items: center; box-shadow: 0 6px 20px rgba(0,0,0,.1); }
+  .nav-btn { width: 46px; height: 46px; border-radius: 50%; background: #fff; display: grid; place-items: center; box-shadow: 0 6px 20px var(--shadow); }
   .nav-btn :global(svg) { width: 20px; height: 20px; }
   .spot-count { font-family: var(--display); font-weight: 700; font-size: 14px; letter-spacing: .1em; min-width: 70px; text-align: center; }
-  .spot-panel { background: #fff; border-radius: 20px; padding: 26px; box-shadow: 0 20px 50px -30px rgba(0,0,0,.35); transition: opacity .22s, filter .22s, transform .22s; }
+  .spot-panel { background: #fff; border-radius: 20px; padding: 26px; box-shadow: 0 20px 50px -30px var(--shadow); transition: opacity .22s, filter .22s, transform .22s; }
   .spot-panel.swap { opacity: 0; filter: blur(6px); transform: translateY(8px); }
   .spot-name { font-family: var(--display); font-weight: 800; font-stretch: 110%; text-transform: uppercase; font-size: clamp(22px, 2.2vw, 32px); line-height: 1; margin: 8px 0 10px; }
   .spot-price { font-size: 18px; margin-bottom: 18px; }
@@ -301,14 +301,14 @@ const categoryLinks = departments.flatMap((d) => d.categories.slice(0, 2).map((c
   @media (max-width: 1080px) { .spot-grid { grid-template-columns: 1fr; } .spot-stage { height: 440px; } }
 
   .rail-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
-  .sale-banner { display: flex; justify-content: space-between; align-items: center; gap: 24px; flex-wrap: wrap; background: var(--sale); color: #fff; border-radius: 24px; padding: clamp(24px, 4vw, 48px); }
+  .sale-banner { display: flex; justify-content: space-between; align-items: center; gap: 24px; flex-wrap: wrap; background: radial-gradient(120% 160% at 90% 0%, #a3434b, var(--accent) 45%, var(--accent-deep)); color: #fff; border-radius: 24px; padding: clamp(24px, 4vw, 48px); }
   .sale-banner h2 { font-size: clamp(32px, 5vw, 64px); margin: 6px 0 0; }
 
   /* Season 01 */
-  .drift { position: relative; background: #0b0b0b; color: #fff; padding-block: clamp(80px, 12vw, 180px); overflow: hidden; margin-top: clamp(24px, 4vw, 64px); }
+  .drift { position: relative; background: var(--deep); color: var(--on-dark); padding-block: clamp(80px, 12vw, 180px); overflow: hidden; margin-top: clamp(24px, 4vw, 64px); }
   .drift-word { position: absolute; top: 50%; left: 0; right: 0; margin-top: -0.45em; font-size: clamp(140px, 30vw, 520px); font-weight: 900; font-stretch: 125%; color: transparent; -webkit-text-stroke: 1.5px rgba(255,255,255,.16); white-space: nowrap; text-align: center; line-height: .9; will-change: transform; }
   .drift-inner { position: relative; display: flex; justify-content: center; }
-  .drift-card { display: grid; grid-template-columns: 240px 1fr; gap: 32px; align-items: center; background: #fff; color: var(--ink); border-radius: 24px; padding: 24px; max-width: 760px; box-shadow: 0 40px 80px -30px rgba(0,0,0,.6); }
+  .drift-card { display: grid; grid-template-columns: 240px 1fr; gap: 32px; align-items: center; background: #fff; color: var(--ink); border-radius: 24px; padding: 24px; max-width: 760px; box-shadow: 0 40px 80px -30px rgba(0,0,0,.55); }
   .drift-card h2 { font-size: clamp(32px, 4.4vw, 60px); margin: 6px 0 0; }
   .drift-img { width: 100%; aspect-ratio: 9/14; object-fit: cover; border-radius: 16px; }
   @media (max-width: 640px) { .drift-card { grid-template-columns: 1fr; } .drift-img { aspect-ratio: 4/5; } }

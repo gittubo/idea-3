@@ -40,7 +40,7 @@ export interface Product {
 
 export const departments: Department[] = [
   {
-    slug: 'women', name: 'Women', title: 'THEE ARCTIC WOMEN', tint: '#efeeeb',
+    slug: 'women', name: 'Women', title: 'THEE ARCTIC WOMEN', tint: '#f2efea',
     tagline: 'Cold looks. Hot fits.',
     blurb: 'Dresses, sets, denim and outerwear cut sharp for every season.',
     categories: [
@@ -57,7 +57,7 @@ export const departments: Department[] = [
     ],
   },
   {
-    slug: 'curve', name: 'Curve', title: 'THEE ARCTIC CURVE', tint: '#efeeeb',
+    slug: 'curve', name: 'Curve', title: 'THEE ARCTIC CURVE', tint: '#f2efea',
     tagline: 'Made for every curve.',
     blurb: 'The full Arctic line in sizes 1X–4X, fitted on real curves.',
     categories: [
@@ -70,7 +70,7 @@ export const departments: Department[] = [
     ],
   },
   {
-    slug: 'men', name: 'Men', title: 'THEE ARCTIC MEN', tint: '#efeeeb',
+    slug: 'men', name: 'Men', title: 'THEE ARCTIC MEN', tint: '#f2efea',
     tagline: 'Built for the cold. Worn everywhere.',
     blurb: 'Heavyweight hoodies, denim, outerwear and essentials.',
     categories: [
@@ -87,7 +87,7 @@ export const departments: Department[] = [
     ],
   },
   {
-    slug: 'kids', name: 'Kids', title: 'THEE ARCTIC KIDS', tint: '#efeeeb',
+    slug: 'kids', name: 'Kids', title: 'THEE ARCTIC KIDS', tint: '#f2efea',
     tagline: 'Little legends, big fits.',
     blurb: 'Girls, boys and Mini Me sets that match the grown-ups.',
     categories: [
@@ -99,7 +99,7 @@ export const departments: Department[] = [
     ],
   },
   {
-    slug: 'sports', name: 'Sports', title: 'THEE ARCTIC SPORTS', tint: '#efeeeb',
+    slug: 'sports', name: 'Sports', title: 'THEE ARCTIC SPORTS', tint: '#f2efea',
     tagline: 'Train in the cold. Peak in the heat.',
     blurb: 'Performance sets, leggings and layers that move with you.',
     categories: [
@@ -113,7 +113,7 @@ export const departments: Department[] = [
     ],
   },
   {
-    slug: 'beauty', name: 'Beauty', title: 'THEE ARCTIC BEAUTY', tint: '#efeeeb',
+    slug: 'beauty', name: 'Beauty', title: 'THEE ARCTIC BEAUTY', tint: '#f2efea',
     tagline: 'Glow below zero.',
     blurb: 'Skincare, makeup and fragrance with a frost-clean finish.',
     categories: [

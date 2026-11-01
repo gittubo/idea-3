@@ -209,7 +209,7 @@ const completeLook = inDept(p.dept).filter((x) => x.category !== p.category).fil
   .avg { font-family: var(--display); font-size: 56px; font-weight: 800; line-height: 1; }
   .dist { display: grid; gap: 6px; margin-top: 12px; }
   .drow, .fit { display: grid; grid-template-columns: 28px 1fr; gap: 8px; align-items: center; font-size: 12px; }
-  .drow i, .fit i { height: 6px; background: #e3e8ec; border-radius: 6px; overflow: hidden; display: block; }
+  .drow i, .fit i { height: 6px; background: var(--ice); border-radius: 6px; overflow: hidden; display: block; }
   .drow em { display: block; height: 100%; background: var(--ink); }
   .fit { grid-template-columns: auto 1fr auto; margin-top: 18px; color: var(--muted); }
   .fit i { position: relative; overflow: visible; }
@@ -233,7 +233,7 @@ const completeLook = inDept(p.dept).filter((x) => x.category !== p.category).fil
     .gallery::-webkit-scrollbar { display: none; }
     .shot { scroll-snap-align: start; border-radius: 0; }
     .dots { display: flex; justify-content: center; gap: 6px; margin-top: 12px; }
-    .dots span { width: 6px; height: 6px; border-radius: 50%; background: #cfd5db; transition: all .3s; }
+    .dots span { width: 6px; height: 6px; border-radius: 50%; background: var(--frost); transition: all .3s; }
     .dots span:global(.on) { background: var(--ink); width: 18px; border-radius: 6px; }
     .buy { position: static; }
     .shop-look { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(20px, 3vw, 48px); align-items: start; padding-bottom: 0; }
