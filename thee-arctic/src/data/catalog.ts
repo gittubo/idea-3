@@ -1,6 +1,7 @@
 // THEE ARCTIC catalog.
 // Departments and categories mirror a full fashion store (Women, Curve, Men, Kids, Sports, Beauty).
 import type { Garment } from './garments';
+import { lineup } from './products';
 
 export interface Category { slug: string; name: string; garment: Garment[] }
 export interface Department {
@@ -19,7 +20,8 @@ export interface Product {
   dept: string;
   category: string;
   garment: Garment;
-  price: number;
+  /** Undefined until the brand sets a price: the product shows "Price coming soon" and can't be added to the bag. */
+  price?: number;
   salePrice?: number;
   colors: Color[];
   sizes: string[];
@@ -32,6 +34,8 @@ export interface Product {
   details: string[];
   /** Real photos, e.g. ['/products/<slug>/1.jpg']. Empty = placeholder art. */
   images: string[];
+  /** 3:4 card image for listings; falls back to images[0]. */
+  card?: string;
 }
 
 export const departments: Department[] = [
@@ -146,18 +150,8 @@ export const palette: Color[] = [
   { name: 'Aurora', hex: '#3fb49a' },
 ];
 
-// THEE ARCTIC products. Empty until the real line sheet is supplied.
-// Each product looks like this (photos go in /public/products/<slug>/):
-//
-// {
-//   slug: 'season-01-sleeveless-shell', name: 'Sleeveless Shell', dept: 'men', category: 'outerwear',
-//   garment: 'jacket', price: 120, salePrice: undefined,
-//   colors: [{ name: 'Black', hex: '#15171a' }], sizes: ['S', 'M', 'L', 'XL'],
-//   isNew: true, bestseller: false, rating: 0, reviews: 0, collections: [],
-//   description: '…', details: ['…'],
-//   images: ['/products/season-01-sleeveless-shell/1.jpg', '/products/season-01-sleeveless-shell/2.jpg'],
-// }
-export const products: Product[] = [];
+// Products live in ./products.ts (one row per piece, photos in /public/products/<slug>/).
+export const products: Product[] = lineup;
 
 export const bySlug = new Map(products.map((p) => [p.slug, p]));
 export const getDept = (slug: string) => departments.find((d) => d.slug === slug);
@@ -168,5 +162,8 @@ export const onSale = () => products.filter((p) => p.salePrice);
 export const newIn = () => products.filter((p) => p.isNew);
 export const bestsellers = () => products.filter((p) => p.bestseller);
 export const money = (n: number) => `$${n.toFixed(2)}`;
-export const discount = (p: Product) => (p.salePrice ? Math.round((1 - p.salePrice / p.price) * 100) : 0);
+export const discount = (p: Product) => (p.salePrice && p.price ? Math.round((1 - p.salePrice / p.price) * 100) : 0);
+/** Price the shopper pays, or undefined when not yet priced. */
+export const priceOf = (p: Product) => p.salePrice ?? p.price;
+export const canBuy = (p: Product) => priceOf(p) !== undefined && p.sizes.length > 0;
 export const productUrl = (p: Product) => `/products/${p.slug}`;

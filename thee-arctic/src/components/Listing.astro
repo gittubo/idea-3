@@ -16,6 +16,7 @@ const { products, links = [], catChips = [] } = Astro.props;
 const sizes = [...new Set(products.flatMap((p) => p.sizes))];
 const colorNames = new Set(products.flatMap((p) => p.colors.map((c) => c.name)));
 const colors = palette.filter((c) => colorNames.has(c.name));
+const hasPrices = products.some((p) => (p.salePrice ?? p.price) !== undefined);
 const prices: [string, string][] = [['', 'Any price'], ['0-25', 'Under $25'], ['25-50', '$25 – $50'], ['50-100', '$50 – $100'], ['100-1000', '$100+']];
 ---
 {products.length === 0 ? (
@@ -46,7 +47,7 @@ const prices: [string, string][] = [['', 'Any price'], ['0-25', 'Under $25'], ['
   )}
   <div class="toolbar">
     <div class="left">
-      <button class="chip" type="button" data-open="filters"><Icon name="filter" class="i16" /> Filter <span data-filter-count></span></button>
+      {(sizes.length > 0 || colors.length > 0 || hasPrices) && <button class="chip" type="button" data-open="filters"><Icon name="filter" class="i16" /> Filter <span data-filter-count></span></button>}
       <button class="chip" type="button" data-toggle="sale" aria-pressed="false">On sale</button>
       <button class="chip" type="button" data-toggle="isNew" aria-pressed="false">New in</button>
     </div>
@@ -85,24 +86,24 @@ const prices: [string, string][] = [['', 'Any price'], ['0-25', 'Under $25'], ['
         <button class="icon-btn" type="button" data-close aria-label="Close filters"><Icon name="close" /></button>
       </div>
       <div class="panel-body filters">
-        <fieldset>
+        {sizes.length > 0 && <fieldset>
           <legend>Size</legend>
           <div class="opts">
             {sizes.map((s) => <label class="opt"><input type="checkbox" name="size" value={s} /><span>{s}</span></label>)}
           </div>
-        </fieldset>
-        <fieldset>
+        </fieldset>}
+        {colors.length > 0 && <fieldset>
           <legend>Colour</legend>
           <div class="opts">
             {colors.map((c) => <label class="opt colour"><input type="checkbox" name="color" value={c.name} /><span><i style={`background:${c.hex}`}></i>{c.name}</span></label>)}
           </div>
-        </fieldset>
-        <fieldset>
+        </fieldset>}
+        {hasPrices && <fieldset>
           <legend>Price</legend>
           <div class="opts col">
             {prices.map(([v, l]) => <label class="radio"><input type="radio" name="price" value={v} checked={v === ''} /> {l}</label>)}
           </div>
-        </fieldset>
+        </fieldset>}
       </div>
       <div class="cart-foot" style="grid-template-columns:1fr 1fr">
         <button class="btn ghost" type="button" data-clear>Clear all</button>

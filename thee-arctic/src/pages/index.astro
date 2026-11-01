@@ -2,15 +2,15 @@
 import Base from '../layouts/Base.astro';
 import ProductCard from '../components/ProductCard.astro';
 import Icon from '../components/Icon.astro';
-import { departments, products, inDept, newIn, onSale, collections, inCollection, money } from '../data/catalog';
+import { departments, products, inDept, newIn, onSale, collections, inCollection, money, priceOf } from '../data/catalog';
 import { hero, testimonials, community } from '../data/site';
 
 const hasProducts = products.length > 0;
 
 // Spotlight: up to six pieces that have photos
-const spotData = products.filter((p) => p.images.length).slice(0, 6).map((p) => ({
+const spotData = products.filter((p) => p.images.length && p.sizes.length && priceOf(p) !== undefined).slice(0, 6).map((p) => ({
   slug: p.slug, name: p.name, garment: p.garment, colors: p.colors, sizes: p.sizes, img: p.images[0],
-  price: money(p.salePrice ?? p.price), was: p.salePrice ? money(p.price) : '',
+  price: money(priceOf(p)!), was: p.salePrice && p.price ? money(p.price) : '',
   cat: departments.find((d) => d.slug === p.dept)!.title,
 }));
 

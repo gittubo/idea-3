@@ -179,7 +179,11 @@ body.locked { overflow: hidden; }
 .pimg { position: absolute; inset: 0; display: grid; place-items: center; transition: opacity .45s, transform .8s var(--ease); }
 .pimg svg { width: 72%; height: auto; }
 .pimg img { width: 100%; height: 100%; object-fit: cover; }
-.card:hover .pimg.main { transform: scale(1.04); }
+.pimg.alt { opacity: 0; }
+.card:hover .pimg.alt { opacity: 1; }
+.card:hover .pimg.main { transform: scale(1.03); }
+.card:hover .pimg.main:has(+ .pimg.alt) { opacity: 0; }
+.price .tba { color: var(--muted); font-weight: 500; }
 .badges { position: absolute; top: 10px; left: 10px; display: flex; gap: 6px; z-index: 2; flex-wrap: wrap; pointer-events: none; }
 .badge { font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: 4px 8px; border-radius: 6px; background: #fff; }
 .badge.sale { background: var(--sale); color: #fff; }

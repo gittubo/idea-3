@@ -1,20 +1,21 @@
 ---
 import type { Product } from '../data/catalog';
-import { money, discount, productUrl } from '../data/catalog';
-import ProductImage from './ProductImage.astro';
+import { money, discount, productUrl, priceOf, canBuy } from '../data/catalog';
 import Icon from './Icon.astro';
 interface Props { product: Product; idx?: number; eager?: boolean }
 const { product: p, idx = 0, eager = false } = Astro.props;
 const url = productUrl(p);
+const price = priceOf(p);
+const img = p.card ?? p.images[0] ?? '';
 const item = {
-  slug: p.slug, name: p.name, price: p.salePrice ?? p.price, garment: p.garment,
-  color: p.colors[0].name, hex: p.colors[0].hex, img: p.images[0] ?? '',
+  slug: p.slug, name: p.name, price: price ?? null, garment: p.garment,
+  color: p.colors[0]?.name ?? '', hex: p.colors[0]?.hex ?? '#cccccc', img,
 };
 ---
 <article
   class="card"
   data-idx={idx}
-  data-price={p.salePrice ?? p.price}
+  data-price={price ?? ''}
   data-sale={p.salePrice ? '1' : '0'}
   data-new={p.isNew ? '1' : '0'}
   data-rating={p.rating}
@@ -25,7 +26,8 @@ const item = {
 >
   <div class="media">
     <a class="hit" href={url} aria-label={p.name}></a>
-    <ProductImage product={p} class="main" eager={eager} />
+    {img && <div class="pimg main"><img src={img} alt={p.name} loading={eager ? 'eager' : 'lazy'} decoding="async" /></div>}
+    {p.images[1] && <div class="pimg alt" aria-hidden="true"><img src={p.images[1]} alt="" loading="lazy" decoding="async" /></div>}
     <div class="badges">
       {p.salePrice && <span class="badge sale">-{discount(p)}%</span>}
       {p.isNew && <span class="badge new">New</span>}
@@ -34,18 +36,22 @@ const item = {
     <button class="wish" type="button" data-wish={JSON.stringify(item)} aria-pressed="false" aria-label={`Save ${p.name} to wishlist`}>
       <Icon name="heart" />
     </button>
-    <div class="quick" data-quick={JSON.stringify(item)}>
-      <p>Quick add</p>
-      <div class="sizes">
-        {p.sizes.map((s) => <button type="button" data-size={s}>{s === 'One Size' ? 'Add' : s}</button>)}
+    {canBuy(p) && (
+      <div class="quick" data-quick={JSON.stringify(item)}>
+        <p>Quick add</p>
+        <div class="sizes">
+          {p.sizes.map((s) => <button type="button" data-size={s}>{s === 'One Size' ? 'Add' : s}</button>)}
+        </div>
       </div>
-    </div>
+    )}
   </div>
   <div class="info">
     <a class="name" href={url}>{p.name}</a>
     <div class="price">
-      {p.salePrice ? <><span class="now">{money(p.salePrice)}</span><s>{money(p.price)}</s></> : <span>{money(p.price)}</span>}
+      {price === undefined
+        ? <span class="tba">Price coming soon</span>
+        : p.salePrice && p.price ? <><span class="now">{money(p.salePrice)}</span><s>{money(p.price)}</s></> : <span>{money(price)}</span>}
     </div>
-    <div class="swatches">{p.colors.map((c) => <i style={`background:${c.hex}`} title={c.name}></i>)}</div>
+    {p.colors.length > 0 && <div class="swatches">{p.colors.map((c) => <i style={`background:${c.hex}`} title={c.name}></i>)}</div>}
   </div>
 </article>

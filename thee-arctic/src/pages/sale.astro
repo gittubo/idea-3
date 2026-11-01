@@ -1,8 +1,8 @@
 ---
 import Base from '../layouts/Base.astro';
 import Listing from '../components/Listing.astro';
-import { departments, onSale } from '../data/catalog';
-const items = onSale().sort((a, b) => (b.price - b.salePrice!) / b.price - (a.price - a.salePrice!) / a.price);
+import { departments, onSale, discount } from '../data/catalog';
+const items = onSale().sort((a, b) => discount(b) - discount(a));
 ---
 <Base title="Sale" description="THEE ARCTIC sale.">
   <section class="sale-hero">

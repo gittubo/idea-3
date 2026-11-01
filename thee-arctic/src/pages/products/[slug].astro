@@ -1,11 +1,9 @@
 ---
 import Base from '../../layouts/Base.astro';
 import ProductCard from '../../components/ProductCard.astro';
-import ProductImage from '../../components/ProductImage.astro';
 import Icon from '../../components/Icon.astro';
-import { products, getDept, inCategory, inDept, money, discount } from '../../data/catalog';
+import { products, getDept, inCategory, inDept, money, discount, priceOf, canBuy } from '../../data/catalog';
 import type { Product } from '../../data/catalog';
-import { garmentSvg } from '../../data/garments';
 
 export function getStaticPaths() {
   return products.map((p) => ({ params: { slug: p.slug }, props: { p } }));
@@ -13,27 +11,16 @@ export function getStaticPaths() {
 const { p } = Astro.props as { p: Product };
 const dept = getDept(p.dept)!;
 const cat = dept.categories.find((c) => c.slug === p.category)!;
-const price = p.salePrice ?? p.price;
-const pdpItem = { slug: p.slug, name: p.name, price, garment: p.garment, color: p.colors[0].name, hex: p.colors[0].hex, img: p.images[0] ?? '', images: p.images };
+const price = priceOf(p);
+const buyable = canBuy(p);
+const colour = p.colors[0];
+const item = { slug: p.slug, name: p.name, price: price ?? null, garment: p.garment, color: colour?.name ?? '', hex: colour?.hex ?? '#cccccc', img: p.card ?? p.images[0] ?? '' };
+const pdpItem = { ...item, images: p.images };
 
 const similar = inCategory(p.dept, p.category).filter((x) => x.slug !== p.slug).slice(0, 8);
-const completeLook = inDept(p.dept).filter((x) => x.category !== p.category && x.garment !== p.garment).filter((_, k) => k % 7 === 0).slice(0, 4);
-const views = p.images.length ? p.images.length : 4;
-const bgs = ['var(--snow)', 'var(--ice)', '#eef0f2', '#f3f1ee'];
-
-// Rating breakdown derived from the average (placeholder until a reviews app is connected)
-const dist = [5, 4, 3, 2, 1].map((s) => {
-  const w = Math.max(0.02, 1 - Math.abs(p.rating - s) / 2.2);
-  return [s, w] as const;
-});
-const total = dist.reduce((a, [, w]) => a + w, 0);
-const sampleReviews = [
-  { name: 'Sam T.', stars: 5, title: 'Better than expected', body: `Quality is way better than the price suggests. The ${p.colors[0].name.toLowerCase()} colour is exactly like the photos.`, size: p.sizes[Math.min(1, p.sizes.length - 1)] },
-  { name: 'Nia W.', stars: 5, title: 'Fits perfectly', body: 'True to size and so comfortable. Already planning to grab another colour.', size: p.sizes[Math.min(2, p.sizes.length - 1)] },
-  { name: 'Leo P.', stars: 4, title: 'Great, runs slightly big', body: 'Love the look. I would size down if you are between sizes.', size: p.sizes[0] },
-];
+const completeLook = inDept(p.dept).filter((x) => x.category !== p.category).filter((_, k) => k % 3 === 0).slice(0, 4);
 ---
-<Base title={p.name} description={p.description}>
+<Base title={p.name} description={p.description || `${p.name} from ${dept.title}.`}>
   <div class="wrap">
     <nav class="crumbs" aria-label="Breadcrumb">
       <a href="/">Home</a><span>/</span><a href={`/${dept.slug}`}>{dept.name}</a><span>/</span><a href={`/${dept.slug}/${cat.slug}`}>{cat.name}</a><span>/</span><span>{p.name}</span>
@@ -41,12 +28,10 @@ const sampleReviews = [
 
     <div class="pdp" data-pdp={JSON.stringify(pdpItem)}>
       <div class="gallery-wrap">
-        <div class="gallery" data-gallery>
-          {Array.from({ length: views }, (_, k) => (
-            <div class="shot" style={`background:${bgs[k % bgs.length]}`}>
-              {p.images.length
-                ? <ProductImage product={p} index={k} eager={k < 2} />
-                : <div class="pimg" data-gallery-art style={k === 1 ? 'transform:scale(1.5) translateY(10%)' : k === 2 ? 'transform:scaleX(-1)' : k === 3 ? 'transform:scale(2.2) translate(-8%,8%)' : ''} set:html={garmentSvg(p.garment, p.colors[0].hex)} />}
+        <div class={`gallery ${p.images.length === 1 ? 'one' : ''}`} data-gallery>
+          {p.images.map((src, k) => (
+            <div class="shot">
+              <img src={src} alt={k === 0 ? p.name : `${p.name}, view ${k + 1}`} loading={k < 2 ? 'eager' : 'lazy'} decoding="async" />
               {k === 0 && (
                 <div class="badges">
                   {p.salePrice && <span class="badge sale">-{discount(p)}%</span>}
@@ -56,55 +41,66 @@ const sampleReviews = [
             </div>
           ))}
         </div>
-        <div class="dots">{Array.from({ length: views }, (_, k) => <span data-dot class={k === 0 ? 'on' : ''}></span>)}</div>
+        {p.images.length > 1 && <div class="dots">{p.images.map((_, k) => <span data-dot class={k === 0 ? 'on' : ''}></span>)}</div>}
       </div>
 
       <div class="buy">
         <div class="buy-inner">
           <p class="eyebrow">{dept.title}</p>
           <h1 class="pname">{p.name}</h1>
-          <a class="stars" href="#reviews"><b>{'★'.repeat(Math.round(p.rating))}{'☆'.repeat(5 - Math.round(p.rating))}</b> {p.rating} ({p.reviews} reviews)</a>
+          {p.reviews > 0 && <a class="stars" href="#reviews"><b>{'★'.repeat(Math.round(p.rating))}{'☆'.repeat(5 - Math.round(p.rating))}</b> {p.rating} ({p.reviews} reviews)</a>}
           <div class="price big">
-            {p.salePrice ? <><span class="now">{money(p.salePrice)}</span><s>{money(p.price)}</s><span class="badge sale">Save {discount(p)}%</span></> : <span>{money(p.price)}</span>}
+            {price === undefined
+              ? <span class="tba">Price coming soon</span>
+              : p.salePrice && p.price ? <><span class="now">{money(p.salePrice)}</span><s>{money(p.price)}</s><span class="badge sale">Save {discount(p)}%</span></> : <span>{money(price)}</span>}
           </div>
-          <p class="klarna">or 4 interest-free payments of <strong>{money(price / 4)}</strong> with Klarna / Afterpay</p>
+          {price !== undefined && <p class="klarna">or 4 interest-free payments of <strong>{money(price / 4)}</strong> with Klarna / Afterpay</p>}
 
-          <div class="opt-head"><span>Colour: <strong data-color-label>{p.colors[0].name}</strong></span></div>
-          <div class="colors">
-            {p.colors.map((c, k) => <button type="button" class="csw" data-color={c.name} data-hex={c.hex} aria-pressed={k === 0 ? 'true' : 'false'} aria-label={c.name} style={`background:${c.hex}`}></button>)}
-          </div>
+          {p.colors.length > 0 && (
+            <>
+              <div class="opt-head"><span>Colour: <strong data-color-label>{colour!.name}</strong></span></div>
+              <div class="colors">
+                {p.colors.map((c, k) => <button type="button" class="csw" data-color={c.name} data-hex={c.hex} aria-pressed={k === 0 ? 'true' : 'false'} aria-label={c.name} style={`background:${c.hex}`}></button>)}
+              </div>
+            </>
+          )}
 
-          <div class="opt-head">
-            <span>Size: <strong data-size-label>{p.sizes.length === 1 ? p.sizes[0] : 'Select'}</strong></span>
-            {p.sizes.length > 1 && <button type="button" class="sg" data-open="sizeguide"><Icon name="ruler" /> Size guide</button>}
-          </div>
-          <div class="sizes-pick" data-size-box>
-            {p.sizes.map((s) => <button type="button" data-pick-size={s} aria-pressed="false">{s}</button>)}
-          </div>
-          <p class="size-msg" data-size-msg hidden>Please select a size</p>
+          {p.sizes.length > 0 && (
+            <>
+              <div class="opt-head">
+                <span>Size: <strong data-size-label>{p.sizes.length === 1 ? p.sizes[0] : 'Select'}</strong></span>
+                {p.sizes.length > 1 && <button type="button" class="sg" data-open="sizeguide"><Icon name="ruler" /> Size guide</button>}
+              </div>
+              <div class="sizes-pick" data-size-box>
+                {p.sizes.map((s) => <button type="button" data-pick-size={s} aria-pressed="false">{s}</button>)}
+              </div>
+              <p class="size-msg" data-size-msg hidden>Please select a size</p>
+            </>
+          )}
 
           <div class="actions">
-            <button class="btn block" type="button" data-add>Add to bag · {money(price)}</button>
-            <button class="wish-big" type="button" data-wish={JSON.stringify({ slug: p.slug, name: p.name, price, garment: p.garment, color: p.colors[0].name, hex: p.colors[0].hex, img: p.images[0] ?? '' })} aria-pressed="false" aria-label="Save to wishlist"><Icon name="heart" /></button>
+            {buyable
+              ? <button class="btn block" type="button" data-add>Add to bag · {money(price!)}</button>
+              : <button class="btn block" type="button" disabled>Coming soon</button>}
+            <button class="wish-big" type="button" data-wish={JSON.stringify(item)} aria-pressed="false" aria-label="Save to wishlist"><Icon name="heart" /></button>
           </div>
+          {!buyable && <p class="soon-note">This piece isn't available to order yet. Save it to your wishlist, or <a href="#nl-email">join the list</a> to hear when it drops.</p>}
 
-          <ul class="perks">
-            <li><Icon name="truck" /> <span><strong>Free shipping</strong> on orders over $75. Arrives in 3–7 business days.</span></li>
-            <li><Icon name="return" /> <span><strong>Free 30-day returns</strong> and exchanges.</span></li>
-            <li><Icon name="gift" /> <span>Earn <strong>{Math.round(price)} Arctic points</strong> with this order.</span></li>
-          </ul>
-
-          <details class="acc" open>
-            <summary>Description</summary>
-            <p>{p.description}</p>
-          </details>
-          <details class="acc">
-            <summary>Details &amp; care</summary>
-            <ul>{p.details.map((d) => <li>{d}</li>)}</ul>
-          </details>
+          {p.description && (
+            <details class="acc" open>
+              <summary>Description</summary>
+              <p>{p.description}</p>
+            </details>
+          )}
+          {p.details.length > 0 && (
+            <details class="acc">
+              <summary>Details &amp; care</summary>
+              <ul>{p.details.map((d) => <li>{d}</li>)}</ul>
+            </details>
+          )}
           <details class="acc">
             <summary>Shipping &amp; returns</summary>
-            <p>Standard shipping is free on orders over $75, otherwise $7.95. Express shipping available at checkout. Return unworn items within 30 days for a full refund or exchange. <a href="/help#returns" style="text-decoration:underline">Full policy</a></p>
+            <p>See our <a href="/help#shipping" style="text-decoration:underline">shipping</a> and <a href="/help#returns" style="text-decoration:underline">returns</a> information.</p>
           </details>
         </div>
       </div>
@@ -117,35 +113,8 @@ const sampleReviews = [
       </section>
     )}
 
-    <section class="section reviews-sec" id="reviews">
-      <div class="section-head"><h2 class="h2">Reviews</h2><button class="btn ghost" type="button" disabled title="Connect a reviews app to enable">Write a review</button></div>
-      <div class="rev-grid">
-        <div class="summary">
-          <strong class="avg">{p.rating}</strong>
-          <div class="stars"><b>{'★'.repeat(Math.round(p.rating))}{'☆'.repeat(5 - Math.round(p.rating))}</b></div>
-          <span style="color:var(--muted);font-size:13px">Based on {p.reviews} reviews</span>
-          <div class="dist">
-            {dist.map(([s, w]) => <div class="drow"><span>{s}★</span><i><em style={`width:${(w / total) * 100}%`}></em></i></div>)}
-          </div>
-          <div class="fit"><span>Runs small</span><i><em></em></i><span>Runs big</span></div>
-          <p class="fit-label">Most say: <strong>True to size</strong></p>
-        </div>
-        <div class="rev-list">
-          <p class="note">Sample reviews shown until your reviews app (e.g. Judge.me, Okendo or Yotpo) is connected.</p>
-          {sampleReviews.map((r) => (
-            <article class="rev">
-              <div class="row"><div class="stars"><b>{'★'.repeat(r.stars)}{'☆'.repeat(5 - r.stars)}</b></div><small>Size purchased: {r.size}</small></div>
-              <h4>{r.title}</h4>
-              <p>{r.body}</p>
-              <small><strong>{r.name}</strong> · Verified buyer</small>
-            </article>
-          ))}
-        </div>
-      </div>
-    </section>
-
     {similar.length > 0 && (
-      <section class="section" style="padding-top:0">
+      <section class="section">
         <div class="section-head">
           <h2 class="h2">You may also like</h2>
           <div class="rail-nav">
@@ -163,20 +132,24 @@ const sampleReviews = [
     </section>
   </div>
 
-  <div class="sticky-bar" data-sticky-bar>
-    <div class="wrap sb-inner">
-      <div class="sb-name"><strong>{p.name}</strong><span>{money(price)}</span></div>
-      <button class="btn" type="button" data-add-sticky>Add to bag</button>
+  {buyable && (
+    <div class="sticky-bar" data-sticky-bar>
+      <div class="wrap sb-inner">
+        <div class="sb-name"><strong>{p.name}</strong><span>{money(price!)}</span></div>
+        <button class="btn" type="button" data-add-sticky>Add to bag</button>
+      </div>
     </div>
-  </div>
+  )}
 </Base>
 
 <style>
   .pdp { display: grid; grid-template-columns: 1.35fr 1fr; gap: clamp(24px, 4vw, 64px); align-items: start; }
   .gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .shot { position: relative; aspect-ratio: 3/4; border-radius: 16px; overflow: hidden; }
-  .shot .pimg { position: absolute; inset: 0; }
-  .shot :global(.pimg svg) { width: 70%; }
+  .shot { position: relative; aspect-ratio: 3/4; border-radius: 16px; overflow: hidden; background: var(--snow); }
+  .shot img { width: 100%; height: 100%; object-fit: cover; }
+  .gallery.one { grid-template-columns: minmax(0, 1fr); max-width: 680px; }
+  .soon-note { font-size: 13px; color: var(--muted); margin: 12px 0 18px; }
+  .soon-note a { text-decoration: underline; }
   .dots { display: none; }
   .buy { position: sticky; top: calc(var(--header-h) + 16px); }
   .pname { font-family: var(--display); font-weight: 800; font-stretch: 108%; text-transform: uppercase; font-size: clamp(26px, 2.8vw, 40px); line-height: 1; margin: 8px 0 10px; }

@@ -2,7 +2,7 @@
 // State lives in localStorage until a commerce backend (e.g. Shopify) is connected.
 import { garmentSvg, type Garment } from '../data/garments';
 
-export interface Item { slug: string; name: string; price: number; garment: Garment; color: string; hex: string; img?: string }
+export interface Item { slug: string; name: string; /** null = not priced yet */ price: number | null; garment: Garment; color: string; hex: string; img?: string }
 interface Line extends Item { size: string; qty: number }
 
 const FREE_SHIP = 75;
@@ -71,7 +71,7 @@ function setQty(i: number, qty: number) {
   persistCart();
 }
 
-const subtotal = () => cart.reduce((s, l) => s + l.price * l.qty, 0);
+const subtotal = () => cart.reduce((s, l) => s + (l.price ?? 0) * l.qty, 0);
 const units = () => cart.reduce((s, l) => s + l.qty, 0);
 
 function lineHtml(l: Line, i: number) {
@@ -86,7 +86,7 @@ function lineHtml(l: Line, i: number) {
         <button type="button" data-qty="${i}" data-d="1" aria-label="Increase">+</button>
       </div>
     </div>
-    <div class="right"><span>${money(l.price * l.qty)}</span><button type="button" class="remove" data-remove="${i}">Remove</button></div>
+    <div class="right"><span>${money((l.price ?? 0) * l.qty)}</span><button type="button" class="remove" data-remove="${i}">Remove</button></div>
   </div>`;
 }
 
@@ -172,7 +172,8 @@ function miniCard(i: Item & { was?: number }, withWish = false) {
   const wishBtn = withWish
     ? `<button class="wish" type="button" data-wish='${esc(JSON.stringify(i))}' aria-pressed="true" aria-label="Remove from wishlist"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 20s-7.5-4.6-9.2-9.3C1.7 7.5 3.8 4.5 7 4.5c2 0 3.4 1.1 5 3 1.6-1.9 3-3 5-3 3.2 0 5.3 3 4.2 6.2C19.5 15.4 12 20 12 20Z"/></svg></button>`
     : '';
-  const price = i.was ? `<span class="now">${money(i.price)}</span><s>${money(i.was)}</s>` : `<span>${money(i.price)}</span>`;
+  const price = i.price == null ? '<span class="tba">Price coming soon</span>'
+    : i.was ? `<span class="now">${money(i.price)}</span><s>${money(i.was)}</s>` : `<span>${money(i.price)}</span>`;
   return `<article class="card">
     <div class="media"><a class="hit" href="/products/${esc(i.slug)}" aria-label="${esc(i.name)}"></a><div class="pimg main">${thumb(i)}</div>${wishBtn}</div>
     <div class="info"><a class="name" href="/products/${esc(i.slug)}">${esc(i.name)}</a><div class="price">${price}</div></div>
@@ -185,7 +186,7 @@ function renderCounts() {
 }
 
 /* ---------- Search ---------- */
-interface Indexed { s: string; n: string; d: string; c: string; p: number; sp?: number; g: Garment; h: string; cn: string; i?: string }
+interface Indexed { s: string; n: string; d: string; c: string; p?: number; sp?: number; g: Garment; h: string; cn: string; i?: string }
 let index: Indexed[] | null = null;
 async function getIndex() {
   if (!index) index = await fetch('/search-index.json').then((r) => r.json());
@@ -202,7 +203,7 @@ export async function searchProducts(q: string, limit = 24) {
     })
     .slice(0, limit);
 }
-const toItem = (p: Indexed): Item & { was?: number } => ({ slug: p.s, name: p.n, price: p.sp ?? p.p, was: p.sp ? p.p : undefined, garment: p.g, color: p.cn, hex: p.h, img: p.i });
+const toItem = (p: Indexed): Item & { was?: number } => ({ slug: p.s, name: p.n, price: p.sp ?? p.p ?? null, was: p.sp ? p.p : undefined, garment: p.g, color: p.cn, hex: p.h, img: p.i });
 
 let searchTimer = 0;
 function wireSearch() {

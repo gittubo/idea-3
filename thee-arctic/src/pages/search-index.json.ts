@@ -13,9 +13,9 @@ export const GET: APIRoute = () => {
       p: p.price,
       sp: p.salePrice,
       g: p.garment,
-      h: p.colors[0].hex,
-      cn: p.colors[0].name,
-      i: p.images[0],
+      h: p.colors[0]?.hex ?? '#cccccc',
+      cn: p.colors[0]?.name ?? '',
+      i: p.card ?? p.images[0],
     };
   });
   return new Response(JSON.stringify(rows), { headers: { 'Content-Type': 'application/json' } });
