@@ -1,0 +1,7 @@
+{
+  "t_far": 0.15, "t_near": 0.368, "edge": 0.02,
+  "far_pad": 0.06, "far_horizon": 0.22, "far_bottom": 0.62, "far_d0": 0.0, "far_d1": 0.16,
+  "z": {"far": 12.0, "near": 1.9},
+  "webp_q": 88,
+  "pad": 0.07
+}
