@@ -73,7 +73,7 @@ html.released:not(.touch) canvas.depth { cursor: none; }
 .ui > * { pointer-events: auto; }
 
 .brand {
-  position: absolute; top: 28px; left: 32px; display: flex; align-items: center; gap: 12px;
+  position: absolute; top: calc(28px + env(safe-area-inset-top, 0px)); left: calc(32px + env(safe-area-inset-left, 0px)); display: flex; align-items: center; gap: 12px;
   color: var(--gilt); letter-spacing: 0.42em; font-size: 13px; font-weight: 500; text-decoration: none;
 }
 .brand svg { width: 18px; height: 22px; }
@@ -85,22 +85,22 @@ html.released:not(.touch) canvas.depth { cursor: none; }
 .icon-btn:hover, .icon-btn:focus-visible { opacity: 1; }
 .icon-btn:focus-visible { outline: 1px solid var(--gilt); outline-offset: 4px; border-radius: 50%; }
 .icon-btn svg { width: 22px; height: 22px; }
-.back-btn { top: 18px; right: 22px; opacity: 0; pointer-events: none; }
+.back-btn { top: calc(18px + env(safe-area-inset-top, 0px)); right: calc(22px + env(safe-area-inset-right, 0px)); opacity: 0; pointer-events: none; }
 html.inside .back-btn { opacity: 0.75; pointer-events: auto; }
 
 .progress {
-  position: absolute; right: 34px; top: 30vh; height: 40vh; width: 1px; opacity: 0;
+  position: absolute; right: calc(34px + env(safe-area-inset-right, 0px)); top: 30vh; height: 40vh; width: 1px; opacity: 0;
   background: rgba(176, 141, 87, 0.22); pointer-events: none;
 }
 .progress .fill { position: absolute; inset: 0; background: var(--gilt); transform-origin: top; transform: scaleY(0); }
 .progress i { position: absolute; left: -3px; width: 7px; height: 1px; background: var(--gilt); }
 
-.scroll-hint { position: absolute; left: 50%; bottom: 34px; translate: -50% 0; color: var(--gilt); pointer-events: none; }
+.scroll-hint { position: absolute; left: 50%; bottom: calc(34px + env(safe-area-inset-bottom, 0px)); translate: -50% 0; color: var(--gilt); pointer-events: none; }
 .scroll-hint svg { width: 22px; height: 34px; display: block; }
 .scroll-hint .wheel { animation: wheel 2.4s ease-in-out infinite; }
 @keyframes wheel { 0%, 15% { transform: translateY(0); opacity: 1; } 70% { transform: translateY(7px); opacity: 0; } 100% { opacity: 0; } }
 
-.lens-btn { left: 50%; bottom: 26px; translate: -50% 0; opacity: 0; pointer-events: none; }
+.lens-btn { left: 50%; bottom: calc(26px + env(safe-area-inset-bottom, 0px)); translate: -50% 0; opacity: 0; pointer-events: none; }
 html.released .lens-btn { opacity: 0.75; pointer-events: auto; }
 html.looking .lens-btn { opacity: 1; color: var(--ivory); }
 
@@ -136,9 +136,9 @@ html.no-webgl .fallback {
 }
 
 @media (max-width: 640px) {
-  .brand { top: 20px; left: 18px; }
-  .back-btn { top: 10px; right: 8px; }
-  .progress { right: 14px; }
+  .brand { top: calc(20px + env(safe-area-inset-top, 0px)); left: calc(18px + env(safe-area-inset-left, 0px)); }
+  .back-btn { top: calc(10px + env(safe-area-inset-top, 0px)); right: calc(8px + env(safe-area-inset-right, 0px)); }
+  .progress { right: calc(14px + env(safe-area-inset-right, 0px)); }
 }
 
 @media (prefers-reduced-motion: reduce) {
