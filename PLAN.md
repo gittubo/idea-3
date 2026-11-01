@@ -1,132 +1,200 @@
-# OCULA: Website Plan
+# TUBO: Website Plan
 
-Status: **draft for discussion.** Nothing gets built until the open decisions at the bottom are settled.
-
----
-
-## 1. The rule everything follows
-
-**The camera tells the story. Nothing on screen is written to explain a piece.**
-
-- No captions, descriptions, wall-label text, quotes, voice-over or narration.
-- The visitor understands a piece only through where the camera goes, how long it stays and what it reveals.
-- Navigation is wordless too: it works through space, light, motion, icons and sound.
-- Text that is never seen is still needed: screen-reader labels, page titles and search metadata. These keep the site accessible and findable without showing visitors any words.
+Status: **v2. Decisions locked, piece concepts drafted.** Nothing gets built until the last open items (Section 9) are settled.
 
 ---
 
-## 2. The visitor's journey
+## 1. Decisions locked
 
-```
-Threshold  →  Grand Hall  →  Room  →  Piece (the camera journey)  →  back to Room / next Piece
-```
-
-### 2.1 Threshold (arrival)
-- The visitor arrives to a black screen, a faint grain and the frame-and-lens logo glowing softly.
-- The lens in the logo pulses slowly. Clicking, tapping or scrolling makes it open like an iris, and the visitor passes through it into the museum.
-- There is no "Enter" button text. The pulsing lens is the invitation.
-
-### 2.2 Grand Hall (overview)
-- A dark space with each room shown as a lit doorway or a single representative frame.
-- Each room has its own light temperature (warm candle, cold moonlight, oxblood dusk), so rooms can be told apart without names.
-- Format options (decision D3):
-  - **A. Corridor walk (recommended).** Scrolling moves the visitor sideways along a lit wall with depth and parallax. It feels like walking, works well on phones and loads fast.
-  - **B. Walkable 3D gallery.** The visitor moves freely in 3D. It is the most immersive option but heavy, hard to control on phones and easy to get lost in.
-  - **C. Constellation.** Frames float in darkness and the visitor drifts between them. It is more abstract and less like a museum.
-
-### 2.3 Room
-- Pieces hang on the wall in sequence, each with its own pool of light.
-- Hovering over a piece (or centring it on a phone) makes its light brighten slightly and turns the cursor into the lens.
-- Selecting a piece starts the camera journey.
-
-### 2.4 Piece: the camera journey (the core of the site)
-1. **Approach.** The camera pushes toward the frame on the wall. The frame edges slide past the screen until the painting fills it.
-2. **Establish.** The full painting is held still for a moment so the visitor sees it the way it hangs on the wall.
-3. **Search.** Scrolling drives the camera through the painting, drifting, hesitating and changing direction as if looking for something. It passes clues: a glance, a hand, an object in shadow.
-4. **Discovery.** The camera finds the hidden detail and holds on it. The scroll gets "heavier" here so the visitor stays longer.
-5. **Return.** The camera pulls back to the full painting. The same image now reads differently because the visitor knows what is in it.
-6. **Release.** The frame returns to the wall and the visitor is back in the room, facing the next piece.
-
-Interaction details:
-- Scrolling backward rewinds the camera, so the visitor controls time.
-- A thin gold line at the edge shows progress, with small marks for each "stop" in the search.
-- Optional free-look mode after Return (decision D6): the visitor drags a lens over the full-resolution painting to explore it themselves.
-
-### 2.5 Wordless navigation
-| Need | Wordless solution |
-|---|---|
-| Enter the museum | The pulsing lens in the logo |
-| Go back | A frame-corner icon in the top left, or scrolling back past the start |
-| Change room | Doorways of light at the ends of the corridor |
-| Progress in a piece | The gold line with stop marks |
-| Sound on or off | A small sound-wave icon |
-| Know where you are | The room's light colour and a dot map of rooms |
-
----
-
-## 3. Making each piece (content pipeline)
-
-For every piece:
-
-1. **Source image.** A high-resolution file, at least 4000 px on the long edge, with clear rights to use it (decision D1).
-2. **Story beat sheet (internal only, never shown).** One sentence on what the piece is about, then 4–6 camera stops: where the camera looks, in what order and why. This is the script the camera follows.
-3. **Camera paths.** Two versions, because phones are portrait and computers are landscape: a wide path for computers and a tall, vertical path for phones.
-4. **Generate the camera movement** (decision D2):
-   - **AI image-to-video.** A video model moves only the camera through the still image. It looks cinematic, but the model redraws pixels and can change faces, hands and brushwork. Every clip has to be checked against the original painting.
-   - **2.5D depth camera.** An AI depth map splits the painting into layers, and the site moves a real camera through those layers in the browser. The painting's pixels stay exactly as they are, the motion is fully controllable and files are smaller. The motion is less free-flowing than AI video.
-   - **Recommendation:** try both on one piece in Phase 1 and decide by eye.
-5. **Generate in segments.** One short clip per camera stop, joined together. Long single AI clips drift and distort.
-6. **Quality check.** Make sure nothing in the painting moves or changes, the camera feels like it is searching, and the Discovery shot lands.
-7. **Prepare for scroll playback.** Export each clip as an image sequence (or as video where every frame is a keyframe) so scrolling stays smooth in every browser, including iPhone Safari. Target size: about 10–20 MB per piece, loaded only when the visitor approaches it.
-
----
-
-## 4. Look, feel and sound
-
-- **Visual identity:** from the brand kit in `brand/ocula-brandkit-v1.png`. That means Gallery Black, Gallery Ivory, Gilt and Oxblood, film grain and chiaroscuro light.
-  - The "Look closer." tagline and the type specimen are left out of the site because of the no-text rule. Whether the OCULA wordmark itself appears is decision D4.
-- **Motion:** slow and weighted, with smooth scrolling and nothing snappy. The camera eases like a person who is looking carefully.
-- **Cursor:** a small gold ring (the lens) that grows over pieces.
-- **Sound (decision D5):** room tone, faint footsteps when moving along the corridor, a low tone that rises during Search and resolves at Discovery. Off by default and turned on with an icon. There is never voice.
-
----
-
-## 5. Technology
-
-| Part | Choice | Why |
+| # | Decision | Answer |
 |---|---|---|
-| Site framework | Astro (static) | Fast, simple and cheap to host. Each piece is a page with its own address that can be shared. |
-| Scroll and motion | GSAP ScrollTrigger + Lenis | Industry standard for scroll-driven animation |
-| Camera playback | Canvas image sequences, or WebGL for the 2.5D option | Smooth backward and forward scrubbing on all devices |
-| 3D (only if option B is chosen) | Three.js | |
-| Hosting | Vercel or Netlify, with media on a CDN | |
-| Performance targets | First screen in under 2 s, 60 fps scrolling, and a lighter version for slow connections and reduced-motion settings | |
+| Name | Museum name | **Tubo** |
+| D1 | The pieces | **Original artworks we generate ourselves**, using Leonardo da Vinci's work as the visual reference |
+| D2 | Camera method | **3D depth camera.** It moves through the original pixels and never redraws them. |
+| D3 | Layout | **A corridor you walk along by scrolling** |
+| D4 | Text | **A few words, only where truly needed** (full list in Section 6) |
+| D5 | Sound | **Ambient soundscapes**, which visitors can turn on or off at any time |
+| D6 | Free-look mode | **Yes** |
+| D7 | Extra pages (about, contact, shop) | **None** |
 
 ---
 
-## 6. Build phases
+## 2. The rule everything follows
+
+**The camera tells the story.** Pieces have no captions, descriptions, quotes or voice. Visitors understand each piece only through where the camera goes, how long it stays and what it reveals. The few words that appear are labels, never explanation.
+
+---
+
+## 3. The visitor's journey
+
+```
+Threshold  →  Corridor · Room I  →  archway  →  Corridor · Room II  →  …
+                    │
+                    └─ select a piece → camera journey → free-look → back to the wall
+```
+
+The Grand Hall is merged into the corridor. The museum is **one continuous corridor**, and an archway separates each room. That is simpler, never lets anyone get lost and always feels like walking.
+
+### 3.1 Threshold
+- The visitor arrives to a black screen with film grain. The Tubo mark glows softly and its lens pulses slowly.
+- Clicking, tapping or scrolling opens the lens like an iris. The camera passes through it and the corridor fades up from darkness.
+- The first time, a small animated scroll icon appears (an icon, not a word) and fades once the visitor moves.
+
+### 3.2 The corridor
+- **How it works:** scrolling down moves the camera sideways along a gallery wall. It is drawn in real 3D perspective, with the floor, the ceiling's edge and a soft floor reflection.
+- **Light:** each piece hangs in its own pool of light and the space between pieces falls into darkness, so walking feels like moving from one discovery to the next.
+- **Rooms:** each room has its own light temperature. Room I is warm candlelight; Room II is cool moonlight. Walking through an archway shifts the colour of the light and the soundscape crossfades to the next room.
+- **Wall layout:** pieces are spaced about one screen-width apart. As a piece reaches the centre, its light brightens and the cursor becomes the lens.
+- **On phones:** the same sideways walk, driven by a vertical swipe. Portrait-shaped paintings fill the phone screen well.
+
+### 3.3 A piece: the camera journey
+1. **Approach.** The camera moves up to the frame until the painting fills the screen.
+2. **Establish.** It pauses on the full painting.
+3. **Search.** Scrolling drives the depth camera through the painting's layers, drifting, hesitating and passing clues.
+4. **Discovery.** The camera holds on the hidden detail. The scroll becomes "heavier" so the visitor stays longer.
+5. **Return.** It pulls back to the full painting, which now reads differently.
+6. **Free-look.** The scroll lock releases. The visitor can drag a gold lens (about 2.5× magnification) anywhere over the full-resolution painting. A single frame-corner icon takes them back to the wall.
+
+Scrolling backward always rewinds the camera. A thin gold line at the screen edge shows progress, with a small mark at each camera stop.
+
+---
+
+## 4. How the 3D depth camera works
+
+The painting's visible pixels never change. The camera moves through them in real 3D.
+
+1. **Generate the painting** at high resolution (Section 5).
+2. **Split it into depth layers.** Usually 3–5 layers, such as the background landscape, middle ground, figure, hands and foreground objects. Each layer is cut out from the original painting.
+3. **Fill in what is hidden behind each layer.** When the camera moves, it sees slightly around objects. Those hidden areas are painted in once, in the same style. Since the artwork is ours, this adds to the painting without altering anything visible.
+4. **Make a depth map** for each layer so surfaces have gentle relief (a cheek curves, a rock juts out) rather than looking like flat cardboard cut-outs.
+5. **Place the layers in a WebGL scene** (Three.js) with a real perspective camera.
+6. **Camera path:** the camera stops for each piece (Section 7) are stored as positions in the scene. Scrolling moves the camera smoothly between them.
+7. **Finish:** light film grain, a soft vignette and gentle out-of-focus blur on layers far from the camera's focus, so it feels like a lens rather than a zoom.
+
+Why this beats AI video here: it is faithful to the painting, smooth in both directions, sharp at any frame, and much smaller to download (one image set per piece instead of hundreds of video frames).
+
+---
+
+## 5. Making the art (Leonardo as a visual reference)
+
+**Visual references from Leonardo's work** (style only, never copies of compositions):
+
+- *Sfumato*: soft smoky edges and no hard outlines.
+- *Chiaroscuro*: figures emerging from deep shadow.
+- Atmospheric blue distance: rocky landscapes that fade into haze.
+- Pyramidal figure groups, expressive hands and pointing gestures, enigmatic half-smiles and sidelong glances.
+- Notebook drawings: red and black chalk, sepia ink, anatomical and mechanical studies, swirling water and storm studies, and mirror-writing as texture (illegible, decorative only).
+- Surfaces: aged varnish, fine crackle, warm umber grounds.
+
+**Production per piece:**
+
+1. Generate the painting at the highest available resolution, then upscale it to at least 4000 px on the long edge.
+2. Check the style against the references, the clarity of the hidden detail, and hands and faces.
+3. Split the painting into layers, fill the hidden areas behind them, then make the depth maps (Section 4).
+4. Write the camera path and tune it in the browser.
+5. Compress the files to AVIF or WebP. Target about 3–6 MB per piece, loaded as the visitor walks toward it.
+
+Each piece also gets a **private story sheet** (never shown on the site): one line of meaning, the hidden detail, and the camera stops.
+
+---
+
+## 6. Every word that appears on the site
+
+| Where | Text | Why it is needed |
+|---|---|---|
+| Threshold and a small corner mark | **TUBO** (wordmark) | The museum's name |
+| Archways | **I**, **II** (Roman numerals carved into the stone) | So visitors know where they are |
+| Small wall plaque, shown only after the Return | **Piece title** (no description) | Identifies the work. **To confirm (Q2).** |
+| Browser tab | "Tubo", or "Tubo · Piece title" | Tabs and bookmarks |
+| Shown only if the browser can't run the site | One short line asking the visitor to update their browser | Basic courtesy |
+
+Everything else is an icon: sound on/off, back to the wall, the scroll hint and the lens. Screen-reader labels and search-engine information exist but are never visible.
+
+---
+
+## 7. Draft pieces: 6 pieces across 2 rooms (to review)
+
+Each piece has a hidden detail the camera finds. The story is never written on the site; the descriptions below are only for us.
+
+### Room I: Oil (warm candlelight)
+
+**1. The Kept Letter**
+- *The painting:* a young woman in a three-quarter portrait with folded hands, a faint smile, and a rocky blue landscape behind her.
+- *Camera stops:* her eyes looking off to one side → following that look to a winding road in the distance → a tiny rider leaving → back to her hands → **a folded letter with a broken seal, hidden under her sleeve.**
+- *Meaning:* the smile hides a goodbye.
+
+**2. The Apprentice**
+- *The painting:* a dim workshop. An old master stands at an easel and a boy stands in the shadows.
+- *Camera stops:* the master's unfinished painting → his hand trembling over the palette → his clouded eye → the boy's hand, stained with the same paint → **the newest, finest strokes on the canvas are the boy's.**
+- *Meaning:* the hand is being passed on.
+
+**3. The Wings**
+- *The painting:* a hill at dawn. A man stands beside a wood-and-canvas flying machine while villagers watch from below.
+- *Camera stops:* the machine's joints → a crowd laughing → one child not laughing, looking up → the man's arm in a splint → **a broken first wing lying half-buried in the grass behind him.**
+- *Meaning:* he has fallen before and is trying again.
+
+### Room II: Codex (cool moonlight, drawings on paper)
+
+**4. Study of a Hand**
+- *The painting:* a red-chalk notebook page of anatomical studies of an adult hand, surrounded by mirror-writing.
+- *Camera stops:* tendons → measurement lines → the margins → **a tiny, tender sketch of a child's hand holding a finger.**
+- *Meaning:* all this science began with a loss.
+
+**5. The Deluge**
+- *The painting:* a sepia storm study of spiralling water, collapsing hills and wind.
+- *Camera stops:* following the spirals inward through the chaos → a broken tree → **a small boat with one lit lamp and a family inside.**
+- *Meaning:* hope survives inside the storm.
+
+**6. The Empty Chair**
+- *The painting:* an ink-and-wash sketch of a long table set for a meal, with guests mid-gesture.
+- *Camera stops:* the faces → the gestures all leaning toward one point → an untouched place setting at the end → **a dog lying by the door, waiting.**
+- *Meaning:* someone is not coming home.
+
+---
+
+## 8. Sound
+
+- **One ambient soundscape per room:**
+  - Room I: low warm room tone, a faint crackle of candles, distant rain.
+  - Room II: cool air, quiet paper rustle, a far-off bell.
+- **Inside a piece:** the room sound dims, and a low tone rises during the Search and resolves at the Discovery.
+- **Off by default.** Browsers block sound until the visitor interacts, so the visitor turns it on. The sound icon stays in a corner at all times and the choice is remembered.
+- **Sources:** generated or royalty-free licensed audio, never voice. Sound fades up and down, never cuts.
+
+---
+
+## 9. Last open items
+
+| # | Question | My suggestion |
+|---|---|---|
+| Q1 | How many pieces at launch? | 6 across 2 rooms (Section 7) |
+| Q2 | Show the piece title on a small plaque after the Return? | Yes, title only, small, in Gilt colour |
+| Q3 | Keep, change or replace the 6 piece ideas? | Review Section 7 |
+| Q4 | Redo the brand kit with the name Tubo? | Yes. The frame-and-lens mark still fits ("tubo" means tube, like looking through a telescope). |
+
+---
+
+## 10. Technology
+
+| Part | Choice |
+|---|---|
+| Site framework | Astro (static) |
+| 3D | Three.js (corridor and depth camera) |
+| Scrolling and motion | GSAP ScrollTrigger + Lenis |
+| Sound | Web Audio API (crossfades, per-room soundscapes) |
+| Hosting | Vercel or Netlify, with media on a CDN |
+| Targets | First screen in under 2 s, 60 fps on mid-range phones, a simplified fade-only version for people who turn off motion in their device settings, and a fallback for weak devices (pan and zoom without 3D) |
+
+---
+
+## 11. Build phases
 
 | Phase | What gets built | Done when |
 |---|---|---|
-| **0. Decide** | Settle D1–D8 below and pick the launch pieces | Every open decision is answered |
-| **1. One piece, end to end** | One painting fully produced (both camera methods) and playing by scroll on computer and phone | You watch it and say "yes, this is it." This is the riskiest step, so it comes first. |
-| **2. Room and corridor** | Walking along the wall, light pools, approach and release transitions | Moving from piece to piece feels continuous |
-| **3. Threshold and Grand Hall** | Iris entrance, the hall of rooms, wordless navigation, room map | A first-time visitor finds their way with no words |
-| **4. Atmosphere** | Sound, grain, cursor, free-look mode, loading states (a lens slowly focusing instead of a spinner) | |
-| **5. Content production** | Every remaining piece through the pipeline in Section 3 | All pieces pass the quality check |
-| **6. Polish and launch** | Speed, phone testing, accessibility, search metadata, domain | Launch |
-
----
-
-## 7. Open decisions
-
-| # | Decision | Options |
-|---|---|---|
-| D1 | What are the pieces? | Your own artwork / public-domain old masters / commissioned. How many at launch? (Suggest 5–8 across 2 rooms.) |
-| D2 | Camera method | AI video / 2.5D depth camera / test both (recommended) |
-| D3 | Grand Hall format | Corridor walk (recommended) / 3D gallery / constellation |
-| D4 | How strict is "no text"? | No storytelling text but the logo is allowed / absolutely zero visible letters, with the logo mark only |
-| D5 | Sound | Yes, off by default (recommended) / yes, on after entering / none |
-| D6 | Free-look mode after each piece | Yes / no |
-| D7 | Pages beyond the museum (about, contact, shop) | None / a hidden minimal page. These would need text. |
-| D8 | Name and domain | Keep OCULA / your own name |
+| **0. Finish planning** | Answer Q1–Q4 and redo the brand kit as Tubo | Plan approved |
+| **1. One piece, end to end** | Piece 1 ("The Kept Letter"): generate, split into layers, depth camera, scroll journey, free-look. Computer and phone. | You watch it and say "yes, this is it" |
+| **2. Corridor** | The 3D wall walk, light pools, approach and return transitions, Room I with placeholders | Walking and entering a piece feel continuous |
+| **3. Threshold and rooms** | Iris entrance, archways, room light shifts, wordless navigation | A first-time visitor finds their way without help |
+| **4. Sound and atmosphere** | Soundscapes, the on/off toggle, grain, lens cursor, loading state (a lens slowly coming into focus) | |
+| **5. Remaining pieces** | Pieces 2–6 through the production steps in Section 5 | All pass the quality check |
+| **6. Polish and launch** | Speed, real-phone testing, accessibility, search information, domain | Launch |
