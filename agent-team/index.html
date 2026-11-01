@@ -158,6 +158,28 @@ h1 span { color: var(--amber); text-shadow: 0 0 24px rgba(242,163,58,.35); }
 .stat b { display: block; font-family: var(--display); font-size: 22px; font-variant-numeric: tabular-nums; line-height: 1; }
 .stat span { font-family: var(--mono); font-size: 9.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
 
+/* publish */
+.lbl { display: block; font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 10px 0 5px; }
+.lbl span { text-transform: none; letter-spacing: 0; color: var(--faint); }
+#publish textarea, #publish input[type=datetime-local], #publish input[type=file] { width: 100%; background: #0a0b0d; color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; font: inherit; font-size: 12.5px; }
+#publish textarea { resize: vertical; min-height: 84px; }
+#publish textarea:focus, #publish input:focus { border-color: var(--amber); outline: none; }
+#publish :disabled { opacity: .55; cursor: not-allowed; }
+.count { font-family: var(--mono); font-size: 10px; color: var(--faint); text-align: right; margin-top: 3px; }
+.count.over { color: var(--ember); }
+.chans { display: flex; flex-wrap: wrap; gap: 6px; }
+.chan { display: flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px 3px 4px; font-size: 11.5px; cursor: pointer; user-select: none; }
+.chan input { position: absolute; opacity: 0; pointer-events: none; }
+.chan .ico { width: 20px; height: 20px; font-size: 9px; border-radius: 50%; }
+.chan:has(input:checked) { border-color: var(--amber); background: rgba(242,163,58,.12); }
+.chan:has(input:focus-visible) { outline: 2px solid var(--amber); outline-offset: 2px; }
+.pubrow { display: flex; align-items: center; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+.go { border: 1px solid var(--amber); background: var(--amber); color: #1a1206; font-weight: 600; border-radius: 6px; padding: 7px 16px; cursor: pointer; }
+.go:hover:not(:disabled) { filter: brightness(1.1); }
+.pubmsg { font-size: 11.5px; color: var(--muted); flex: 1; min-width: 0; }
+.pubmsg.ok { color: var(--green); }
+.pubmsg.bad { color: var(--ember); }
+
 .loopline { margin-top: 14px; font-family: var(--mono); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--ember); text-align: center; border-top: 1px solid rgba(226,72,61,.5); padding-top: 8px; }
 
 @keyframes pulse { 50% { opacity: .35; } }
@@ -242,8 +264,25 @@ h1 span { color: var(--amber); text-shadow: 0 0 24px rgba(242,163,58,.35); }
     </div>
   </section>
 
-  <!-- column 4: agent in focus -->
+  <!-- column 4: publish + agent in focus -->
   <section class="col">
+    <form class="panel hot" id="publish" novalidate>
+      <div class="ph"><h2>Publish</h2><span class="pill" id="pubState">Checking…</span></div>
+      <p class="sub" id="pubNote">Posts for real to the accounts you connected in Postiz.</p>
+      <label class="lbl" for="pubText">Post</label>
+      <textarea id="pubText" rows="4" placeholder="Write the caption or post…" disabled></textarea>
+      <div class="count" id="pubCount">0 characters</div>
+      <label class="lbl" for="pubFile">Photo or video <span>needed for Instagram and TikTok</span></label>
+      <input type="file" id="pubFile" accept="image/*,video/*" multiple disabled>
+      <div class="lbl">Post to</div>
+      <div class="chans" id="pubChans"><div class="empty">No accounts loaded yet.</div></div>
+      <label class="lbl" for="pubWhen">When <span>leave empty to post now</span></label>
+      <input type="datetime-local" id="pubWhen" disabled>
+      <div class="pubrow">
+        <button type="submit" class="go" id="pubGo" disabled>Post now</button>
+        <span class="pubmsg" id="pubMsg" role="status"></span>
+      </div>
+    </form>
     <div class="panel focus">
       <div class="ph"><span class="eyebrow">Agent in focus</span><span class="topic" id="topic">TOPIC · "IS RETINOL WORTH IT"</span></div>
       <h2 class="big" id="fName">Content Engine</h2>
@@ -448,6 +487,91 @@ h1 span { color: var(--amber); text-shadow: 0 0 24px rgba(242,163,58,.35); }
   }
   frame();
   if (!reduce) setInterval(frame, 1400);
+
+  /* real publishing through server.mjs */
+  const P = {
+    instagram: ["IG", "#c23d8f", 2200, true], tiktok: ["TT", "#2a2a2e", 2200, true], x: ["X", "#3a3a40", 280, false],
+    linkedin: ["in", "#2a6fb0", 3000, false], facebook: ["f", "#3b5bdb", 63206, false],
+  };
+  const pub = { form: $("#publish"), text: $("#pubText"), file: $("#pubFile"), when: $("#pubWhen"), go: $("#pubGo"),
+                msg: $("#pubMsg"), state: $("#pubState"), note: $("#pubNote"), chans: $("#pubChans"), count: $("#pubCount") };
+  let channels = [];
+  const setMsg = (t, cls = "") => { pub.msg.textContent = t; pub.msg.className = "pubmsg " + cls; };
+  const setState = (t, cls) => { pub.state.textContent = t; pub.state.className = "pill " + (cls || ""); };
+  const selected = () => channels.filter((c) => pub.chans.querySelector(`input[value="${CSS.escape(c.id)}"]`)?.checked);
+  function refresh() {
+    const n = pub.text.value.length, sel = selected();
+    const limit = sel.length ? Math.min(...sel.map((c) => P[c.platform][2])) : null;
+    pub.count.textContent = limit ? `${n} / ${limit} characters` : `${n} characters`;
+    pub.count.classList.toggle("over", limit !== null && n > limit);
+    pub.go.textContent = pub.when.value ? "Schedule" : "Post now";
+  }
+  async function api(path, init) {
+    const r = await fetch(path, init);
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.error || `Request failed (${r.status}).`);
+    return data;
+  }
+  async function connect() {
+    try {
+      const st = await api("/api/status");
+      if (!st.configured) {
+        setState("No key", "warn");
+        pub.note.textContent = "The posting server is running but has no POSTIZ_API_KEY. Add it and restart.";
+        return;
+      }
+      channels = (await api("/api/channels")).channels;
+      if (!channels.length) {
+        setState("No accounts", "warn");
+        pub.chans.innerHTML = '<div class="empty">No Instagram, TikTok, X, LinkedIn or Facebook accounts are connected in Postiz yet.</div>';
+        return;
+      }
+      pub.chans.innerHTML = channels.map((c) => {
+        const [ab, col] = P[c.platform];
+        return `<label class="chan"><input type="checkbox" value="${c.id}"><span class="ico" style="--c:${col}">${ab}</span><span class="nm"></span></label>`;
+      }).join("");
+      pub.chans.querySelectorAll(".nm").forEach((el, i) => { el.textContent = channels[i].name; });
+      [pub.text, pub.file, pub.when, pub.go].forEach((el) => { el.disabled = false; });
+      setState(`${channels.length} connected`, "ok");
+    } catch (e) {
+      setState("Offline", "warn");
+      pub.note.textContent = location.protocol === "file:" || !location.port
+        ? "Publishing needs the posting server. Run it with node agent-team/server.mjs and open the address it prints."
+        : e.message;
+    }
+  }
+  pub.form.addEventListener("input", refresh);
+  pub.form.addEventListener("change", refresh);
+  pub.form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const sel = selected(), files = [...pub.file.files];
+    if (!sel.length) return setMsg("Pick at least one account.", "bad");
+    const needMedia = sel.filter((c) => P[c.platform][3]);
+    if (needMedia.length && !files.length) return setMsg(`${needMedia.map((c) => c.name).join(", ")} ${needMedia.length > 1 ? "need" : "needs"} a photo or video.`, "bad");
+    const over = sel.filter((c) => pub.text.value.length > P[c.platform][2]);
+    if (over.length) return setMsg(`Too long for ${over.map((c) => c.name).join(", ")}.`, "bad");
+    pub.go.disabled = true;
+    try {
+      const media = [];
+      for (const f of files) {
+        setMsg(`Uploading ${f.name}…`);
+        media.push(await api(`/api/upload?filename=${encodeURIComponent(f.name)}`, { method: "POST", headers: { "Content-Type": f.type || "application/octet-stream" }, body: f }));
+      }
+      setMsg("Sending to Postiz…");
+      const when = pub.when.value ? new Date(pub.when.value).toISOString() : null;
+      const out = await api("/api/publish", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: pub.text.value, media, channelIds: sel.map((c) => c.id), when }) });
+      const t = new Date(out.scheduledFor);
+      setMsg(when ? `Scheduled for ${t.toLocaleString()} on ${out.channels.join(", ")}.` : `Sent to ${out.channels.join(", ")}. It goes live within a minute.`, "ok");
+      addMsg("Publishing & Social", "Owner", `${when ? "Scheduled" : "Published"} to ${out.channels.join(", ")}.`);
+      pub.text.value = ""; pub.file.value = ""; pub.when.value = ""; refresh();
+    } catch (err) {
+      setMsg(err.message, "bad");
+    } finally {
+      pub.go.disabled = false;
+    }
+  });
+  connect();
 
   const clock = () => { $("#clock").textContent = "LIVE " + now(); };
   clock();
