@@ -137,6 +137,8 @@ const rows: Row[] = [
   ['velia-wrap-top-and-fluid-midi-skirt', 'Vélia Wrap Top and Fluid Midi Skirt', 'women', 'matching-sets', 'set', 2, ['pieces-that-go-together']],
   ['vera-off-shoulder-top-and-asymmetric-mini-skirt', 'Véra Off-Shoulder Top and Asymmetric Mini Skirt', 'women', 'matching-sets', 'set', 2, ['pieces-that-go-together']],
   ['verona-two-piece', 'Vérona Two-Piece', 'women', 'matching-sets', 'set', 2, ['pieces-that-go-together']],
+  // Batch 3
+  ['arctic-zip-boots', 'Arctic Zip Boots', 'men', 'shoes', 'shoe', 1],
 ];
 
 export const lineup: Product[] = rows.map(([slug, name, dept, category, garment, views, collections = []]) => ({
