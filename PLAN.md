@@ -1,6 +1,6 @@
 # TUBO: Website Plan
 
-Status: **v2. Decisions locked, piece concepts drafted.** Nothing gets built until the last open items (Section 9) are settled.
+Status: **v3. Planning complete.** Ready for Phase 1.
 
 ---
 
@@ -104,7 +104,7 @@ Each piece also gets a **private story sheet** (never shown on the site): one li
 |---|---|---|
 | Threshold and a small corner mark | **TUBO** (wordmark) | The museum's name |
 | Archways | **I**, **II** (Roman numerals carved into the stone) | So visitors know where they are |
-| Small wall plaque, shown only after the Return | **Piece title** (no description) | Identifies the work. **To confirm (Q2).** |
+| Small wall plaque, shown only after the Return | **Piece title** (no description) | Identifies the work |
 | Browser tab | "Tubo", or "Tubo · Piece title" | Tabs and bookmarks |
 | Shown only if the browser can't run the site | One short line asking the visitor to update their browser | Basic courtesy |
 
@@ -145,10 +145,11 @@ Each piece has a hidden detail the camera finds. The story is never written on t
 - *Camera stops:* following the spirals inward through the chaos → a broken tree → **a small boat with one lit lamp and a family inside.**
 - *Meaning:* hope survives inside the storm.
 
-**6. The Empty Chair**
-- *The painting:* an ink-and-wash sketch of a long table set for a meal, with guests mid-gesture.
-- *Camera stops:* the faces → the gestures all leaning toward one point → an untouched place setting at the end → **a dog lying by the door, waiting.**
-- *Meaning:* someone is not coming home.
+**6. The Reflection**
+- *The painting:* a sepia-ink optics page with a large cross-section of a human eye, rays of light drawn converging through the lens, small diagrams of mirrors and a darkened pinhole room, and mirror-writing.
+- *Camera stops:* the light rays → following them inward through the lens diagram → the pinhole room with its upside-down image → the large drawn eye → into its pupil → **reflected in the pupil, a tiny, carefully drawn woman standing in a doorway, the only face on the page.**
+- *Meaning:* every study of seeing is really about who we choose to look at.
+- It is the last piece in the museum, ending on looking itself, which echoes the Tubo lens.
 
 ---
 
@@ -163,14 +164,14 @@ Each piece has a hidden detail the camera finds. The story is never written on t
 
 ---
 
-## 9. Last open items
+## 9. Final decisions
 
-| # | Question | My suggestion |
+| # | Question | Answer |
 |---|---|---|
-| Q1 | How many pieces at launch? | 6 across 2 rooms (Section 7) |
-| Q2 | Show the piece title on a small plaque after the Return? | Yes, title only, small, in Gilt colour |
-| Q3 | Keep, change or replace the 6 piece ideas? | Review Section 7 |
-| Q4 | Redo the brand kit with the name Tubo? | Yes. The frame-and-lens mark still fits ("tubo" means tube, like looking through a telescope). |
+| Q1 | Number of pieces at launch | **6 across 2 rooms** |
+| Q2 | Piece title plaque | **Yes.** It appears after the Return and shows the title only, small, in Gilt colour. |
+| Q3 | Piece ideas | **Pieces 1–5 kept. "The Empty Chair" replaced by "The Reflection".** |
+| Q4 | Brand kit | **Redone as Tubo:** `brand/tubo-brandkit-v1.png` |
 
 ---
 
@@ -191,7 +192,7 @@ Each piece has a hidden detail the camera finds. The story is never written on t
 
 | Phase | What gets built | Done when |
 |---|---|---|
-| **0. Finish planning** | Answer Q1–Q4 and redo the brand kit as Tubo | Plan approved |
+| **0. Finish planning** | ✅ Done | |
 | **1. One piece, end to end** | Piece 1 ("The Kept Letter"): generate, split into layers, depth camera, scroll journey, free-look. Computer and phone. | You watch it and say "yes, this is it" |
 | **2. Corridor** | The 3D wall walk, light pools, approach and return transitions, Room I with placeholders | Walking and entering a piece feel continuous |
 | **3. Threshold and rooms** | Iris entrance, archways, room light shifts, wordless navigation | A first-time visitor finds their way without help |
