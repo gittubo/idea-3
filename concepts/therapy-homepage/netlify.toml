@@ -1,0 +1,6 @@
+# Deploy settings when this folder is connected to Netlify through Git.
+# In Netlify, set "Base directory" to concepts/therapy-homepage.
+# The site is already built (plain HTML), so there is no build command.
+[build]
+  publish = "."
+  command = ""
