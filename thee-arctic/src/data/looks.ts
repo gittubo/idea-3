@@ -18,7 +18,7 @@ export const looks: Look[] = [
   // From the Models set
   { id: 'look-10', image: '/looks/look-10.webp', dept: 'women', items: [] },
   { id: 'look-11', image: '/looks/look-11.webp', dept: 'men', items: ['atelier-tailored-suit'] },
-  { id: 'look-12', image: '/looks/look-12.webp', dept: 'women', items: ['sculpted-tailored-jumpsuit'] },
+  { id: 'look-12', image: '/looks/look-12.webp', dept: 'women', items: ['sculpted-tailored-jumpsuit', 'arctic-zip-boots'] },
   { id: 'look-13', image: '/looks/look-13.webp', dept: 'women', items: ['long-sleeve-bodysuit'] },
   { id: 'look-14', image: '/looks/look-14.webp', dept: 'women', items: [] },
   { id: 'look-15', image: '/looks/look-15.webp', dept: 'sports', items: [] },
