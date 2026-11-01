@@ -1,0 +1,7 @@
+{
+  "name": "design-md",
+  "version": "1.0.0",
+  "description": "84 ready-made DESIGN.md design systems (Apple, Linear, Stripe, Vercel, ...) that Claude can apply when you ask for UI in a given style.",
+  "author": { "name": "gittubo" },
+  "license": "MIT"
+}

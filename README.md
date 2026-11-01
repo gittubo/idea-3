@@ -45,3 +45,13 @@ npx vercel@latest --prod
 | The six paintings: placement, light, guide stops | `src/pieces/collection.ts` |
 | Depth and layer pipeline | `pipeline/` (`depth.py`, `make_layers.py`, one `.json` per painting) |
 | Source paintings and depth maps | `art/` |
+
+## Claude Code plugin: design-md
+
+This repository is also a Claude Code plugin marketplace. Its `design-md` plugin gives Claude a library of 84 DESIGN.md design systems (Apple, Linear, Stripe, Vercel and more, from [VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md)), which it uses when you ask for UI in a given style. Install it once and it works in every project:
+
+```
+/plugin install design-md --marketplace gittubo/idea-3
+```
+
+The plugin lives in [`plugins/design-md/`](plugins/design-md/).

@@ -1,0 +1,16 @@
+{
+  "name": "gittubo",
+  "owner": {
+    "name": "gittubo"
+  },
+  "metadata": {
+    "description": "gittubo's Claude Code plugins."
+  },
+  "plugins": [
+    {
+      "name": "design-md",
+      "source": "./plugins/design-md",
+      "description": "84 ready-made DESIGN.md design systems that Claude can apply when you ask for UI in a given style."
+    }
+  ]
+}
