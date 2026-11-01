@@ -29,7 +29,8 @@ Node 20 or newer.
 
 ## Adding your own content
 
-- **Products:** `src/data/catalog.ts`. The catalog is empty; the comment above `products` shows the format of one entry. Until products are added, listing pages show a "coming soon" notice.
+- **Products:** `src/data/products.ts`, one row per piece (slug, name, department, category, number of photos, collections). Photos are in `public/products/<slug>/` as WebP: `1.webp`, `2.webp` (front/back) and `card.webp`. Price, sizes and colours are empty until supplied, so pieces show "Price coming soon".
+- **Shop the look:** `src/data/looks.ts` links each outfit photo in `public/looks/` to the products worn in it. Used on the home page, the Lookbook and product pages.
 - **Product photos:** put them in `public/products/<product-slug>/1.jpg, 2.jpg …` and list them in the product's `images` array. No artwork is drawn in their place: images come only from your photos.
 - **Landing page / hero:** `src/data/site.ts` points at `public/media/landing-16x9.mp4` and `landing-9x16.mp4` (compressed, no audio).
 - **Logo:** `src/components/Logo.astro` (instructions inside). The favicon is `public/favicon.svg`.

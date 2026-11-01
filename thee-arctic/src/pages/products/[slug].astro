@@ -4,6 +4,7 @@ import ProductCard from '../../components/ProductCard.astro';
 import Icon from '../../components/Icon.astro';
 import { products, getDept, inCategory, inDept, money, discount, priceOf, canBuy } from '../../data/catalog';
 import type { Product } from '../../data/catalog';
+import { looksWith, lookItems } from '../../data/looks';
 
 export function getStaticPaths() {
   return products.map((p) => ({ params: { slug: p.slug }, props: { p } }));
@@ -17,6 +18,8 @@ const colour = p.colors[0];
 const item = { slug: p.slug, name: p.name, price: price ?? null, garment: p.garment, color: colour?.name ?? '', hex: colour?.hex ?? '#cccccc', img: p.card ?? p.images[0] ?? '' };
 const pdpItem = { ...item, images: p.images };
 
+const look = looksWith(p.slug)[0];
+const lookPieces = look ? lookItems(look).filter((x) => x.slug !== p.slug) : [];
 const similar = inCategory(p.dept, p.category).filter((x) => x.slug !== p.slug).slice(0, 8);
 const completeLook = inDept(p.dept).filter((x) => x.category !== p.category).filter((_, k) => k % 3 === 0).slice(0, 4);
 ---
@@ -106,7 +109,20 @@ const completeLook = inDept(p.dept).filter((x) => x.category !== p.category).fil
       </div>
     </div>
 
-    {completeLook.length > 0 && (
+    {look && (
+      <section class="section shop-look">
+        <a class="sl-img" href={`/lookbook#${look.id}`}><img src={look.image} alt="Styled look featuring this piece" loading="lazy" /></a>
+        <div>
+          <p class="eyebrow">Pieces that go together</p>
+          <h2 class="h2" style="margin:6px 0 18px">Shop the look</h2>
+          {lookPieces.length
+            ? <div class="sl-items">{lookPieces.map((x, i) => <ProductCard product={x} idx={i} />)}</div>
+            : <p style="color:var(--muted)">See how it's styled in the <a href={`/lookbook#${look.id}`} style="text-decoration:underline">lookbook</a>.</p>}
+        </div>
+      </section>
+    )}
+
+    {!look && completeLook.length > 0 && (
       <section class="section" style="padding-bottom:0">
         <div class="section-head"><h2 class="h2">Complete the look</h2></div>
         <div class="grid">{completeLook.map((x, i) => <ProductCard product={x} idx={i} />)}</div>
@@ -184,6 +200,10 @@ const completeLook = inDept(p.dept).filter((x) => x.category !== p.category).fil
   .acc p, .acc ul { margin: 0 0 18px; color: var(--ink-2); font-size: 14px; }
   .acc ul { padding-left: 18px; display: grid; gap: 4px; }
 
+  .shop-look { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(20px, 3vw, 48px); align-items: start; padding-bottom: 0; }
+  .sl-img img { width: 100%; border-radius: 18px; background: var(--snow); }
+  .sl-items { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 12px; }
+  @media (max-width: 860px) { .shop-look { grid-template-columns: 1fr; } }
   .rev-grid { display: grid; grid-template-columns: 300px 1fr; gap: 40px; }
   .summary { display: grid; gap: 6px; align-content: start; background: var(--snow); padding: 24px; border-radius: 18px; }
   .avg { font-family: var(--display); font-size: 56px; font-weight: 800; line-height: 1; }
@@ -216,6 +236,10 @@ const completeLook = inDept(p.dept).filter((x) => x.category !== p.category).fil
     .dots span { width: 6px; height: 6px; border-radius: 50%; background: #cfd5db; transition: all .3s; }
     .dots span:global(.on) { background: var(--ink); width: 18px; border-radius: 6px; }
     .buy { position: static; }
-    .rev-grid { grid-template-columns: 1fr; }
+    .shop-look { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(20px, 3vw, 48px); align-items: start; padding-bottom: 0; }
+  .sl-img img { width: 100%; border-radius: 18px; background: var(--snow); }
+  .sl-items { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 12px; }
+  @media (max-width: 860px) { .shop-look { grid-template-columns: 1fr; } }
+  .rev-grid { grid-template-columns: 1fr; }
   }
 </style>

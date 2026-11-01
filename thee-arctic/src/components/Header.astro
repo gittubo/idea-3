@@ -1,5 +1,6 @@
 ---
-import { departments, collections } from '../data/catalog';
+import { departments, collections, inDept } from '../data/catalog';
+import { looks } from '../data/looks';
 import Icon from './Icon.astro';
 import Logo from './Logo.astro';
 
@@ -7,9 +8,9 @@ const announcements = [
   'THEE ARCTIC · Season 01',
   'Join the list for early access. <a href="#nl-email">Sign up</a>',
 ];
-const deptGradient: Record<string, string> = Object.fromEntries(
-  ['women', 'curve', 'men', 'kids', 'sports', 'beauty'].map((d, i) => [d, `linear-gradient(160deg, ${['#3a3a38', '#4a4a47', '#2b2b2b', '#55524d', '#333331', '#5e5a55'][i]}, #0b0b0b)`]),
-);
+// Feature tiles use the brand's own photos: a look photo when the department has one, else its first product
+const deptFeature = (slug: string) => looks.find((l) => l.dept === slug)?.image ?? inDept(slug)[0]?.card ?? inDept(slug)[0]?.images[0];
+const featuredCollection = collections[0];
 ---
 <div class="announce" data-announce>
   <ul>{announcements.map((a, i) => <li class={i === 0 ? 'on' : ''} set:html={a} />)}</ul>
@@ -42,8 +43,8 @@ const deptGradient: Record<string, string> = Object.fromEntries(
                   <ul class="cols">{d.categories.map((c) => <li><a href={`/${d.slug}/${c.slug}`}>{c.name}</a></li>)}</ul>
                 </div>
                 <div class="feature">
-                  <a href={`/${d.slug}`} style={`background:${deptGradient[d.slug]}`}><span>{d.tagline}</span></a>
-                  <a href="/collections/arctic-essentials" style="background:linear-gradient(160deg,#d9d7d2,#8f8c86)"><span>Arctic Essentials</span></a>
+                  {deptFeature(d.slug) && <a href={`/${d.slug}`}><img src={deptFeature(d.slug)} alt="" loading="lazy" /><span>Shop {d.name}</span></a>}
+                  {featuredCollection && <a href={`/collections/${featuredCollection.slug}`}><img src={featuredCollection.cover} alt="" loading="lazy" /><span>{featuredCollection.name}</span></a>}
                 </div>
               </div>
             </div>
@@ -67,8 +68,8 @@ const deptGradient: Record<string, string> = Object.fromEntries(
                 </ul>
               </div>
               <div class="feature">
-                <a href="/collections/polar-night" style="background:linear-gradient(160deg,#2b2b2b,#0b0b0b)"><span>Polar Night</span></a>
-                <a href="/collections/whiteout" style="background:linear-gradient(160deg,#ffffff,#d9d7d2)"><span style="color:var(--ink);text-shadow:none">Whiteout</span></a>
+                {featuredCollection && <a href={`/collections/${featuredCollection.slug}`}><img src={featuredCollection.cover} alt="" loading="lazy" /><span>{featuredCollection.name}</span></a>}
+                {looks[0] && <a href="/lookbook"><img src={looks[0].image} alt="" loading="lazy" /><span>Shop the look</span></a>}
               </div>
             </div>
           </div>

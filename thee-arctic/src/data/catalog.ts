@@ -125,12 +125,9 @@ export const departments: Department[] = [
   },
 ];
 
-export interface Collection { slug: string; name: string; blurb: string }
+export interface Collection { slug: string; name: string; blurb: string; cover: string }
 export const collections: Collection[] = [
-  { slug: 'arctic-essentials', name: 'Arctic Essentials', blurb: 'The everyday staples. Clean, heavy, forever.' },
-  { slug: 'polar-night', name: 'Polar Night', blurb: 'An all-black capsule for after dark.' },
-  { slug: 'whiteout', name: 'Whiteout', blurb: 'Tonal whites and ice greys, head to toe.' },
-  { slug: 'expedition', name: 'Expedition', blurb: 'Technical outerwear built for real weather.' },
+  { slug: 'pieces-that-go-together', name: 'Pieces That Go Together', blurb: 'Two-piece sets made to be worn together.', cover: '/products/isabelle-two-piece-set/card.webp' },
 ];
 
 export const palette: Color[] = [

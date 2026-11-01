@@ -1,23 +1,40 @@
 ---
 import Base from '../layouts/Base.astro';
-// Campaign imagery: add more files to /public/media and list them here.
-const looks = [
-  { src: '/media/season01-group.jpg', alt: 'THEE ARCTIC Season 01 group look' },
-];
+import ProductCard from '../components/ProductCard.astro';
+import { looks, lookItems } from '../data/looks';
 ---
-<Base title="Lookbook">
+<Base title="Lookbook" description="Pieces that go together: shop THEE ARCTIC Season 01 looks.">
   <section class="wrap page-hero">
     <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a><span>/</span><span>Lookbook</span></nav>
     <p class="eyebrow">Season 01</p>
-    <h1 class="display">Lookbook</h1>
+    <h1 class="display">Pieces that go together</h1>
   </section>
-  <section class="wrap looks">
-    <video class="look wide" src="/media/landing-16x9.mp4" poster="/media/landing-16x9.jpg" muted loop playsinline autoplay aria-label="Season 01 campaign film"></video>
-    {looks.map((l) => <img class="look" src={l.src} alt={l.alt} loading="lazy" />)}
+  <section class="wrap">
+    <video class="film" src="/media/landing-16x9.mp4" poster="/media/landing-16x9.jpg" muted loop playsinline autoplay aria-label="Season 01 campaign film"></video>
   </section>
+  {looks.map((l, k) => {
+    const items = lookItems(l);
+    return (
+      <section class="wrap look reveal" id={l.id}>
+        <img class="look-img" src={l.image} alt={`Look ${String(k + 1).padStart(2, '0')}`} loading="lazy" />
+        <div class="look-side">
+          <p class="eyebrow">Look {String(k + 1).padStart(2, '0')}</p>
+          <h2 class="h2">Shop the look</h2>
+          {items.length
+            ? <div class="look-items">{items.map((p, i) => <ProductCard product={p} idx={i} />)}</div>
+            : <p class="muted">The pieces in this look drop soon.</p>}
+        </div>
+      </section>
+    );
+  })}
 </Base>
 <style>
-  .looks { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; align-items: stretch; }
-  .look { width: 100%; height: 100%; object-fit: cover; border-radius: 18px; background: #0b0b0b; }
-  @media (max-width: 760px) { .looks { grid-template-columns: 1fr; } }
+  .film { width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 20px; background: #0b0b0b; margin-bottom: clamp(40px, 6vw, 80px); }
+  .look { display: grid; grid-template-columns: 1.3fr 1fr; gap: clamp(20px, 3vw, 48px); align-items: start; margin-bottom: clamp(48px, 7vw, 96px); scroll-margin-top: calc(var(--header-h) + 16px); }
+  .look-img { width: 100%; border-radius: 18px; background: var(--snow); }
+  .look-side { position: sticky; top: calc(var(--header-h) + 16px); }
+  .look-side .h2 { margin: 6px 0 18px; }
+  .look-items { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 12px; }
+  .muted { color: var(--muted); }
+  @media (max-width: 860px) { .look { grid-template-columns: 1fr; } .look-side { position: static; } }
 </style>
