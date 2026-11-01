@@ -1,42 +1,44 @@
 /**
  * The museum controller.
  *
- * Corridor: scrolling walks sideways along the wall; the nearest painting's lamp brightens.
- * Entering: the camera moves square-on to the painting while the gallery lamps go out, until
- * the view is pixel-identical to the depth camera's home view, then hands over to it.
- * Piece: scrolling drives the depth camera (see camera-path.ts), then the plaque and the lens.
- * Leaving: the reverse; the visitor is back at the wall, facing the same painting.
+ * Hall: drag to look around; click or tap the floor to walk there, or a painting
+ * to walk up to it. Arriving at a painting, the camera settles square-on while the
+ * hall dims, then hands over (pixel-for-pixel) to the explorer.
+ * Explorer: the visitor zooms and moves through the painting freely.
+ * Leaving (zoom all the way out, back icon, Escape): step back into the hall.
  */
-import Lenis from 'lenis';
 import * as THREE from 'three';
-import { Corridor, lerpPose, newPose } from './corridor';
+import { Hall, EYE, copyPose, newPose, type Pose } from './hall';
 import { DepthScene, type PieceMeta } from './depth-scene';
-import { CameraPath, type CameraPose } from './camera-path';
+import { Explorer } from './explorer';
 import type { RoomEntry } from '../pieces/room-1';
 
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
 const ease = (t: number) => t * t * (3 - 2 * t);
 const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+const HALL_DIM = 0.3;     // how lit the hall stays around a painting being explored
+const START = { x: 0, z: 6.2, yaw: 0, pitch: 0.06 };
 
-const LENS_ZOOM = 2.5;
-const WALK = 1.1;        // screen heights of scrolling per painting
-const MARGIN = 0.6;      // paintings' worth of wall before the first and after the last
-const EXIT_ZONE = 0.5;   // screen heights past the release that walk you back out to the wall
+type Mode = 'hall' | 'moving' | 'exploring' | 'leaving';
+interface Journey { scene: DepthScene; explorer: Explorer }
 
-type Mode = 'corridor' | 'entering' | 'piece' | 'leaving';
-interface Journey { scene: DepthScene; path: CameraPath }
+/** A camera move: position along a curve, gaze turning smoothly between directions. */
+interface Move {
+  from: Pose; to: Pose; ctrl: THREE.Vector3 | null;
+  start: number; dur: number; walk: number; // walk: metres walked on the floor (for the step rhythm)
+  painting: number;                          // painting being approached, or -1
+  done: () => void;
+}
 
 export async function startMuseum(entries: RoomEntry[]) {
   const $ = <T extends HTMLElement>(sel: string) => document.querySelector(sel) as T;
   const root = document.documentElement;
   const canvas = $<HTMLCanvasElement>('canvas.depth');
-  const spacer = $('.spacer'), plaque = $('.plaque'), lens = $('.lens'), cursor = $('.cursor');
-  const progress = $('.progress'), progressFill = $('.progress .fill'), blackout = $('.blackout');
-  const hint = $('.scroll-hint'), lensBtn = $<HTMLButtonElement>('.lens-btn'), backBtn = $<HTMLButtonElement>('.back-btn');
+  const plaque = $('.plaque'), cursor = $('.cursor'), hint = $('.hint');
+  const backBtn = $<HTMLButtonElement>('.back-btn');
   const finePointer = matchMedia('(pointer: fine)').matches;
   if (!finePointer) root.classList.add('touch');
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const ENTER_TIME = reduced ? 0.8 : 2.2, LEAVE_TIME = reduced ? 0.8 : 1.9;
   const small = Math.min(screen.width, screen.height) < 700 || ((navigator as any).deviceMemory ?? 8) < 4;
 
   let renderer: THREE.WebGLRenderer;
@@ -47,27 +49,28 @@ export async function startMuseum(entries: RoomEntry[]) {
     return;
   }
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.05;
+  renderer.toneMappingExposure = 1.25;
+  renderer.autoClear = false;
+  renderer.setClearColor(0x060606, 1);
 
-  const corridor = new Corridor(renderer, entries);
-  await corridor.load();
-  const n = entries.length;
+  const hall = new Hall(renderer, entries);
+  await hall.load();
 
-  // ---- journeys are loaded on demand, when the visitor walks up to a painting --------
+  // ---- paintings' depth layers load in the background ----------------------------------
   const journeys = new Map<number, Promise<Journey>>();
   const ready = new Map<number, Journey>();
   function loadJourney(i: number): Promise<Journey> {
     let p = journeys.get(i);
     if (!p) {
-      const piece = entries[i].piece!;
+      const base = entries[i].base;
       p = (async () => {
-        const meta: PieceMeta = await fetch(`${piece.base}/layers.json`).then((r) => r.json());
+        const meta: PieceMeta = await fetch(`${base}/layers.json`).then((r) => r.json());
         const scene = new DepthScene(renderer, meta);
-        await scene.load(piece.base, small ? 'half' : 'full');
-        const path = new CameraPath(scene, piece.stops);
+        await scene.load(base, small ? 'half' : 'full');
         scene.resize(vw, vh);
-        path.layout(aspect);
-        const j = { scene, path };
+        const explorer = new Explorer(scene);
+        explorer.layout(vw / vh);
+        const j = { scene, explorer };
         ready.set(i, j);
         return j;
       })();
@@ -75,307 +78,372 @@ export async function startMuseum(entries: RoomEntry[]) {
     }
     return p;
   }
-  const preload = (i: number) => { if (i >= 0 && entries[i].piece && !journeys.has(i)) loadJourney(i); };
 
   // ---- state ----------------------------------------------------------------------------
-  let mode: Mode = 'corridor';
+  let mode: Mode = 'hall';
   let active = -1;
-  let lean = 0;
-  let transitionStart = 0;
-  const pose = newPose(), fromPose = newPose(), toPose = newPose();
-  const camPose: CameraPose = { pos: new THREE.Vector3(), target: new THREE.Vector3(), fov: 30, focus: 0, visible: 1 };
-  let lenis: Lenis | null = null;
+  let move: Move | null = null;
+  const pose = newPose();
+  const look = { pos: new THREE.Vector3(START.x, EYE, START.z), yaw: START.yaw, pitch: START.pitch };
+  const goal = { pos: look.pos.clone(), yaw: look.yaw, pitch: look.pitch };
+  let hover = -1;
 
   // ---- layout ------------------------------------------------------------------------
-  let vw = 0, vh = 0, aspect = 1;
-  const home = { w: 0, h: 0, x: 0, y: 0 };
-  const corridorScroll = (t: number) => (t + MARGIN) * WALK * vh;
-  const walkT = () => (lenis ? lenis.scroll : 0) / (WALK * vh) - MARGIN;
-  function homeVisible(i: number) {
-    const s0 = entries[i].piece!.stops[0];
-    const A = ready.get(i)?.scene.aspect ?? entries[i].aspect;
-    return Math.max(s0.h, ((s0.w ?? 0) * A) / aspect);
-  }
-  function setHome() {
-    const j = ready.get(active);
-    if (!j) return;
-    home.h = vh / homeVisible(active); home.w = home.h * j.scene.aspect;
-    home.x = (vw - home.w) / 2; home.y = (vh - home.h) / 2;
-  }
-  function setSpace() {
-    const j = mode === 'corridor' ? null : ready.get(active);
-    spacer.style.height = j
-      ? `${(j.path.length + entries[active].piece!.release + EXIT_ZONE + 1) * vh}px`
-      : `${((n - 1 + MARGIN * 2) * WALK + 1) * vh}px`;
-  }
+  let vw = 0, vh = 0;
   function resize() {
-    const keep = mode === 'corridor' ? walkT() : (lenis?.scroll ?? 0) / Math.max(1, vh);
-    vw = innerWidth; vh = innerHeight; aspect = vw / vh;
-    renderer.setPixelRatio(Math.min(devicePixelRatio, small ? 1.75 : 2));
+    vw = innerWidth; vh = innerHeight;
+    const dpr = Math.min(devicePixelRatio, small ? 1.75 : 2);
+    renderer.setPixelRatio(dpr);
     renderer.setSize(vw, vh, false);
-    corridor.layout(aspect);
-    for (const j of ready.values()) { j.scene.resize(vw, vh); j.path.layout(aspect); }
-    setHome();
-    setSpace();
-    if (lenis) {
-      lenis.resize();
-      lenis.scrollTo(mode === 'corridor' ? corridorScroll(keep) : keep * vh, { immediate: true, force: true });
-    }
+    hall.layout(vw, vh, dpr);
+    for (const j of ready.values()) { j.scene.resize(vw, vh); j.explorer.layout(vw / vh); }
+    if (mode === 'exploring' && ready.has(active)) hall.homePose(active, ready.get(active)!.explorer.homeVisible, pose);
   }
   resize();
-  const L = new Lenis({ lerp: reduced ? 1 : 0.07, wheelMultiplier: 0.75, touchMultiplier: 1.2 });
-  lenis = L;
   addEventListener('resize', resize);
 
-  // ---- snapping: when the visitor stops near a painting, drift to face it ------------
-  let lastUserScroll = performance.now(), snapping = false;
-  L.on('scroll', () => { if (!snapping) lastUserScroll = performance.now(); });
-  function walkTo(i: number, duration = 1.6) {
-    snapping = true;
-    L.scrollTo(corridorScroll(i), { duration, easing: easeInOut, onComplete: () => { snapping = false; lastUserScroll = performance.now(); } });
+  function lookPose(out: Pose) {
+    const cp = Math.cos(look.pitch);
+    out.pos.copy(look.pos);
+    out.target.set(look.pos.x - Math.sin(look.yaw) * cp * 10, look.pos.y + Math.sin(look.pitch) * 10, look.pos.z - Math.cos(look.yaw) * cp * 10);
+    out.fov = hall.fov;
+    return out;
   }
-  addEventListener('wheel', () => { snapping = false; }, { passive: true });
-  addEventListener('touchstart', () => { snapping = false; }, { passive: true });
+  function setLookFrom(p: Pose) {
+    const d = new THREE.Vector3().subVectors(p.target, p.pos).normalize();
+    look.pos.set(p.pos.x, EYE, p.pos.z);
+    look.yaw = Math.atan2(-d.x, -d.z);
+    look.pitch = Math.asin(THREE.MathUtils.clamp(d.y, -1, 1));
+    goal.pos.copy(look.pos); goal.yaw = look.yaw; goal.pitch = look.pitch;
+  }
 
-  // ---- entering and leaving -----------------------------------------------------------
-  async function enter(i: number, instant = false) {
-    if (mode !== 'corridor' || !entries[i].piece) return;
-    mode = 'entering';
+  // ---- moves ----------------------------------------------------------------------------
+  const tmpA = new THREE.Vector3(), tmpB = new THREE.Vector3(), q = new THREE.Quaternion(), q0 = new THREE.Quaternion();
+  function startMove(to: Pose, opts: { ctrl?: THREE.Vector3 | null; painting?: number; done: () => void; speed?: number }) {
+    const from = copyPose(pose, newPose());
+    const dist = from.pos.distanceTo(opts.ctrl ?? to.pos) + (opts.ctrl ? opts.ctrl.distanceTo(to.pos) : 0);
+    const flat = Math.hypot(to.pos.x - from.pos.x, to.pos.z - from.pos.z);
+    const dur = reduced ? 0.6 : THREE.MathUtils.clamp(dist / (opts.speed ?? 2.1) + 0.7, 1.4, 5.2);
+    move = { from, to: copyPose(to, newPose()), ctrl: opts.ctrl ?? null, start: performance.now(), dur: dur * 1000, walk: flat, painting: opts.painting ?? -1, done: opts.done };
+    mode = 'moving';
+  }
+  function stepMove(now: number) {
+    const m = move!;
+    const t = clamp01((now - m.start) / m.dur);
+    const e = easeInOut(t);
+    // position: straight, or a gentle curve through a control point
+    if (m.ctrl) {
+      const a = 1 - e;
+      pose.pos.set(0, 0, 0).addScaledVector(m.from.pos, a * a).addScaledVector(m.ctrl, 2 * a * e).addScaledVector(m.to.pos, e * e);
+    } else pose.pos.lerpVectors(m.from.pos, m.to.pos, e);
+    // footsteps: a slight rise and fall while walking on the floor
+    if (!reduced && m.walk > 0.5) pose.pos.y += Math.sin(e * Math.PI * Math.max(2, Math.round(m.walk / 0.75))) * 0.014 * Math.sin(Math.PI * e);
+    // gaze: turn toward where we are going a little ahead of the body
+    const g = ease(clamp01(t * 1.5));
+    tmpA.subVectors(m.from.target, m.from.pos); const la = tmpA.length(); tmpA.normalize();
+    tmpB.subVectors(m.to.target, m.to.pos); const lb = tmpB.length(); tmpB.normalize();
+    q0.setFromUnitVectors(tmpA, tmpB);
+    q.identity().slerp(q0, g);
+    tmpA.applyQuaternion(q).multiplyScalar(la + (lb - la) * g);
+    pose.target.copy(pose.pos).add(tmpA);
+    pose.fov = m.from.fov + (m.to.fov - m.from.fov) * e;
+    if (m.painting >= 0) {
+      // the hall dims as we settle in front of the painting
+      const s = ease(clamp01((t - 0.6) / 0.4));
+      hall.setDim(1 - (1 - HALL_DIM) * s);
+      hall.setLit(m.painting, 1 - s);
+    }
+    if (t >= 1) { move = null; m.done(); }
+  }
+
+  function walkToPainting(i: number) {
+    if (mode === 'exploring' || mode === 'leaving') return;
     active = i;
-    L.stop();
-    root.classList.add('waiting');
-    await loadJourney(i);
-    root.classList.remove('waiting', 'over');
-    fromPose.pos.copy(pose.pos); fromPose.target.copy(pose.target); fromPose.fov = pose.fov;
-    corridor.homePose(i, homeVisible(i), toPose);
-    transitionStart = performance.now() - (instant ? ENTER_TIME * 1000 : 0);
+    root.classList.add('walked');
+    const jp = loadJourney(i);
+    const visible = ready.get(i)?.explorer.homeVisible ?? Math.max(1.18, (1.12 * entries[i].aspect) / (vw / vh));
+    const home = hall.homePose(i, visible, newPose());
+    const stand = hall.standPose(i, newPose());
+    const fromDist = Math.hypot(pose.pos.x - stand.pos.x, pose.pos.z - stand.pos.z);
+    // walk to a spot in front of the painting, then step up close; curve only when coming from afar
+    const ctrl = fromDist > 1.5 ? new THREE.Vector3(stand.pos.x, EYE, stand.pos.z) : null;
+    startMove(home, {
+      ctrl, painting: i,
+      done: async () => {
+        root.classList.add('waiting');
+        const j = await jp;
+        root.classList.remove('waiting');
+        explore(i, j);
+      },
+    });
+  }
+
+  function walkToPoint(p: THREE.Vector3) {
+    if (mode === 'exploring' || mode === 'leaving') return;
+    root.classList.add('walked');
+    const to = newPose();
+    to.pos.set(p.x, EYE, p.z);
+    hall.clamp(to.pos);
+    const dir = new THREE.Vector3(to.pos.x - pose.pos.x, 0, to.pos.z - pose.pos.z);
+    if (dir.lengthSq() < 0.04) return;
+    dir.normalize();
+    to.target.copy(to.pos).addScaledVector(dir, 10);
+    to.target.y = EYE + 0.35;
+    to.fov = hall.fov;
+    startMove(to, { done: () => { setLookFrom(pose); mode = 'hall'; } });
+  }
+
+  // ---- exploring ---------------------------------------------------------------------------
+  let outPull = 0;
+  function explore(i: number, j: Journey) {
+    mode = 'exploring';
+    active = i;
+    j.explorer.layout(vw / vh);
+    j.explorer.reset(true);
+    hall.homePose(i, j.explorer.homeVisible, pose);
+    hall.apply(pose);
+    hall.setDim(HALL_DIM);
+    hall.setLit(i, 0);
     plaque.textContent = entries[i].title;
-    canvas.setAttribute('aria-label', `${entries[i].title}. ${entries[i].piece!.alt}`);
-  }
-  function finishEnter() {
-    mode = 'piece';
-    setHome();
-    setSpace();
-    L.resize();
-    L.scrollTo(0, { immediate: true, force: true });
-    L.start();
+    canvas.setAttribute('aria-label', `${entries[i].title}. ${entries[i].alt}`);
     root.classList.add('inside');
-    if (location.hash.slice(1) !== entries[active].slug) { suppressHash = true; location.hash = entries[active].slug; }
+    outPull = 0;
+    if (location.hash.slice(1) !== entries[i].slug) { suppressHash = true; location.hash = entries[i].slug; }
   }
-  function leave(atHome: boolean) {
-    if (mode !== 'piece') return;
+
+  let leaveStart = 0;
+  function leave() {
+    if (mode !== 'exploring') return;
     mode = 'leaving';
-    L.stop();
-    setLookMode(false);
-    root.classList.remove('inside', 'released');
-    // from mid-journey, fade to black first, then rise from the home view
-    transitionStart = performance.now() + (atHome ? 0 : 450);
-    if (!atHome) blackout.classList.add('on');
-    corridor.homePose(active, homeVisible(active), fromPose);
-    corridor.walkPose(active, 0, toPose);
+    leaveStart = performance.now();
+    ready.get(active)!.explorer.reset();
+    root.classList.remove('inside');
+    canvas.setAttribute('aria-label', 'A dark exhibition hall with large paintings, each under its own spotlights.');
     if (location.hash.length > 1) { suppressHash = true; location.replace('#'); }
   }
-  function finishLeave() {
-    mode = 'corridor';
-    setSpace();
-    L.resize();
-    L.scrollTo(corridorScroll(active), { immediate: true, force: true });
-    L.start();
-    lastUserScroll = performance.now();
+  function stepBack() {
+    const i = active;
+    const stand = hall.standPose(i, newPose());
+    const dimFrom = HALL_DIM;
+    startMove(stand, { done: () => { setLookFrom(pose); mode = 'hall'; hall.setDim(1); hall.setLit(i, 1); } });
+    // brighten as we step back (reverse of the approach)
+    const m = move!;
+    const base = m.done;
+    m.painting = -1;
+    m.done = base;
+    lightUp = { start: m.start, dur: m.dur, from: dimFrom, i };
   }
+  let lightUp: { start: number; dur: number; from: number; i: number } | null = null;
 
-  // ---- hash: each piece has its own address --------------------------------------------
+  // ---- each painting has its own address -----------------------------------------------
   let suppressHash = false;
-  function fromHash(instant: boolean) {
+  function fromHash() {
     const slug = decodeURIComponent(location.hash.slice(1));
-    const i = entries.findIndex((e) => e.slug === slug && e.piece);
-    if (mode === 'piece' && entries[active].slug !== slug) leave(false);
-    else if (mode === 'corridor' && i >= 0) {
-      L.scrollTo(corridorScroll(i), { immediate: true, force: true });
-      corridor.walkPose(i, 0, pose);
-      enter(i, instant);
+    const i = entries.findIndex((e) => e.slug === slug);
+    if (mode === 'exploring' && entries[active].slug !== slug) leave();
+    else if ((mode === 'hall' || mode === 'moving') && i >= 0) walkToPainting(i);
+  }
+  addEventListener('hashchange', () => { if (suppressHash) { suppressHash = false; return; } fromHash(); });
+
+  // ---- input --------------------------------------------------------------------------------
+  const pointers = new Map<number, { x: number; y: number }>();
+  let downAt = { x: 0, y: 0, t: 0 }, dragged = false, lastTap = { t: 0, x: 0, y: 0 };
+  let pinch = { dist: 0, mx: 0, my: 0 };
+  let lastMoveT = 0;
+
+  canvas.addEventListener('pointerdown', (e) => {
+    try { canvas.setPointerCapture(e.pointerId); } catch { /* synthetic or already-released pointer */ }
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.size === 1) { downAt = { x: e.clientX, y: e.clientY, t: performance.now() }; dragged = false; lastMoveT = performance.now(); }
+    if (pointers.size === 2) {
+      const [a, b] = [...pointers.values()];
+      pinch = { dist: Math.hypot(a.x - b.x, a.y - b.y), mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 };
+      dragged = true;
     }
-  }
-  addEventListener('hashchange', () => { if (suppressHash) { suppressHash = false; return; } fromHash(false); });
+    if (mode === 'exploring') ready.get(active)!.explorer.stop();
+  });
 
-  // ---- free-look lens ---------------------------------------------------------------------
-  let lookMode = false;
-  function loadFull() {
-    const url = `${entries[active].piece!.base}/full.webp`;
-    if (lens.dataset.src !== url) { lens.dataset.src = url; lens.style.backgroundImage = `url(${url})`; }
-  }
-  function placeLens(cx: number, cy: number, lift = 0) {
-    const r = lens.offsetWidth / 2;
-    const px = cx - home.x, py = cy - home.y;
-    const inside = px >= 0 && py >= 0 && px <= home.w && py <= home.h;
-    lens.classList.toggle('on', inside);
-    if (!inside) return;
-    lens.style.transform = `translate(${cx - r}px, ${cy - r - lift}px)`;
-    lens.style.backgroundSize = `${home.w * LENS_ZOOM}px ${home.h * LENS_ZOOM}px`;
-    lens.style.backgroundPosition = `${-(px * LENS_ZOOM - r)}px ${-(py * LENS_ZOOM - r)}px`;
-  }
-  function setLookMode(on: boolean) {
-    if (lookMode === on) return;
-    lookMode = on;
-    root.classList.toggle('looking', on);
-    lensBtn.setAttribute('aria-pressed', String(on));
-    if (on) { L.stop(); placeLens(vw / 2, vh / 2); } else { if (mode === 'piece') L.start(); lens.classList.remove('on'); }
-  }
-  lensBtn.addEventListener('click', () => setLookMode(!lookMode));
-
-  // ---- pointer, touch, keys -------------------------------------------------------------
-  const ndc = new THREE.Vector2(-9, -9);
-  let pointerDirty = false;
-  addEventListener('pointermove', (e) => {
-    ndc.set((e.clientX / vw) * 2 - 1, -(e.clientY / vh) * 2 + 1);
-    pointerDirty = true;
+  canvas.addEventListener('pointermove', (e) => {
     if (e.pointerType === 'mouse') { cursor.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`; root.classList.add('pointer-seen'); }
-    if (mode === 'piece' && root.classList.contains('released')) {
-      const touch = e.pointerType !== 'mouse';
-      if (!touch || lookMode) placeLens(e.clientX, e.clientY, touch ? 90 : 0);
+    const p = pointers.get(e.pointerId);
+    if (!p) {
+      // hovering (mouse): light up the painting under the cursor
+      if (mode === 'hall') {
+        const pick = hall.pick((e.clientX / vw) * 2 - 1, -(e.clientY / vh) * 2 + 1);
+        hover = pick?.kind === 'painting' ? pick.index : -1;
+        root.classList.toggle('over', hover >= 0);
+      }
+      return;
+    }
+    const dx = e.clientX - p.x, dy = e.clientY - p.y;
+    p.x = e.clientX; p.y = e.clientY;
+    if (Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) > 6) dragged = true;
+    const now = performance.now(), dt = Math.max(0.001, (now - lastMoveT) / 1000);
+    lastMoveT = now;
+
+    if (mode === 'exploring') {
+      const ex = ready.get(active)!.explorer;
+      if (pointers.size === 1) ex.panBy(dx, dy, vw, vh, dt);
+      else if (pointers.size === 2) {
+        const [a, b] = [...pointers.values()];
+        const dist = Math.hypot(a.x - b.x, a.y - b.y), mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+        const f = dist / Math.max(1, pinch.dist);
+        if (ex.goalZoom <= 1.001 && f < 1) { outPull += 1 - f; if (outPull > 0.35) leave(); }
+        else outPull = 0;
+        ex.zoomAt(f, mx, my, vw, vh);
+        ex.panBy(mx - pinch.mx, my - pinch.my, vw, vh);
+        pinch = { dist, mx, my };
+      }
+    } else if (mode === 'hall' && pointers.size === 1 && dragged) {
+      // look around
+      const k = (hall.fov / 55) * (e.pointerType === 'touch' ? 0.8 : 1);
+      goal.yaw += dx * 0.0042 * k;
+      goal.pitch = THREE.MathUtils.clamp(goal.pitch + dy * 0.003 * k, -0.35, 0.5);
     }
   });
-  document.addEventListener('pointerleave', () => { lens.classList.remove('on'); root.classList.remove('over', 'pointer-seen'); });
-  canvas.addEventListener('click', (e) => {
-    if (mode === 'piece' && lookMode) { placeLens(e.clientX, e.clientY, e.pointerType === 'mouse' ? 0 : 90); return; }
-    if (mode !== 'corridor') return;
-    const i = corridor.pick((e.clientX / vw) * 2 - 1, -(e.clientY / vh) * 2 + 1);
-    if (i < 0) return;
-    if (entries[i].piece) enter(i); else walkTo(i);
-  });
-  backBtn.addEventListener('click', () => leave(false));
 
-  // scrolling back past the very start of a journey returns to the wall
-  let pull = 0;
+  const endPointer = (e: PointerEvent) => {
+    if (!pointers.has(e.pointerId)) return;
+    pointers.delete(e.pointerId);
+    if (pointers.size === 1) { const [a] = [...pointers.values()]; downAt = { x: a.x, y: a.y, t: performance.now() }; }
+    if (pointers.size > 0) return;
+    if (mode === 'exploring') ready.get(active)!.explorer.release();
+    if (dragged || e.type === 'pointercancel') return;
+    const now = performance.now();
+    const isTap = now - downAt.t < 450;
+    if (!isTap) return;
+    if (mode === 'exploring') {
+      // double-tap / double-click: look closer here, or step back to the whole painting
+      if (now - lastTap.t < 320 && Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y) < 30) {
+        const ex = ready.get(active)!.explorer;
+        if (ex.goalZoom > 2.2) ex.reset(); else ex.zoomAt(2.6, e.clientX, e.clientY, vw, vh);
+        lastTap.t = 0;
+      } else lastTap = { t: now, x: e.clientX, y: e.clientY };
+      return;
+    }
+    if (mode !== 'hall' && mode !== 'moving') return;
+    const pick = hall.pick((e.clientX / vw) * 2 - 1, -(e.clientY / vh) * 2 + 1);
+    if (!pick) return;
+    if (mode === 'moving') { if (move?.painting !== -1) return; move = null; setLookFrom(pose); mode = 'hall'; }
+    if (pick.kind === 'painting') walkToPainting(pick.index);
+    else walkToPoint(pick.point);
+  };
+  canvas.addEventListener('pointerup', endPointer);
+  canvas.addEventListener('pointercancel', endPointer);
+
   addEventListener('wheel', (e) => {
-    if (mode !== 'piece' || lookMode) return;
-    if (L.scroll <= 1 && e.deltaY < 0) { pull += -e.deltaY; if (pull > 260) { pull = 0; leave(true); } } else pull = 0;
-  }, { passive: true });
-  let touchY = 0;
-  addEventListener('touchstart', (e) => { touchY = e.touches[0].clientY; }, { passive: true });
-  addEventListener('touchmove', (e) => {
-    if (mode === 'piece' && !lookMode && L.scroll <= 1 && e.touches[0].clientY - touchY > 120) leave(true);
-  }, { passive: true });
+    e.preventDefault();
+    const dy = e.deltaY * (e.deltaMode === 1 ? 16 : 1);
+    if (mode === 'exploring') {
+      const ex = ready.get(active)!.explorer;
+      if (ex.goalZoom <= 1.001 && dy > 0) { outPull += dy; if (outPull > 320) leave(); return; }
+      outPull = 0;
+      ex.zoomAt(Math.exp(-dy * 0.0016), e.clientX, e.clientY, vw, vh);
+    } else if (mode === 'hall') {
+      // walk forward and back along the gaze
+      const f = new THREE.Vector3(-Math.sin(goal.yaw), 0, -Math.cos(goal.yaw));
+      goal.pos.addScaledVector(f, -dy * 0.006);
+      hall.clamp(goal.pos);
+      root.classList.add('walked');
+    }
+  }, { passive: false });
 
   addEventListener('keydown', (e) => {
-    if (mode === 'corridor') {
-      const t = Math.max(0, Math.min(n - 1, Math.round(walkT())));
-      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); walkTo(Math.min(n - 1, t + 1)); }
-      if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); walkTo(Math.max(0, t - 1)); }
-      if ((e.key === 'Enter' || e.key === ' ') && document.activeElement === document.body && entries[t].piece) {
-        e.preventDefault();
-        enter(t);
-      }
-    } else if (mode === 'piece' && e.key === 'Escape') {
-      if (lookMode) setLookMode(false); else leave(false);
+    if (mode === 'exploring') {
+      const ex = ready.get(active)!.explorer;
+      const step = 0.14;
+      const keys: Record<string, () => void> = {
+        ArrowLeft: () => ex.panBy(vw * step, 0, vw, vh), ArrowRight: () => ex.panBy(-vw * step, 0, vw, vh),
+        ArrowUp: () => ex.panBy(0, vh * step, vw, vh), ArrowDown: () => ex.panBy(0, -vh * step, vw, vh),
+        '+': () => ex.zoomAt(1.5, vw / 2, vh / 2, vw, vh), '=': () => ex.zoomAt(1.5, vw / 2, vh / 2, vw, vh),
+        '-': () => (ex.goalZoom <= 1.001 ? leave() : ex.zoomAt(1 / 1.5, vw / 2, vh / 2, vw, vh)),
+        '0': () => ex.reset(), Escape: () => leave(),
+      };
+      if (keys[e.key]) { e.preventDefault(); keys[e.key](); }
+    } else if (mode === 'hall') {
+      const f = new THREE.Vector3(-Math.sin(goal.yaw), 0, -Math.cos(goal.yaw));
+      const k = e.key.toLowerCase();
+      if (k === 'arrowup' || k === 'w') goal.pos.addScaledVector(f, 1.2);
+      else if (k === 'arrowdown' || k === 's') goal.pos.addScaledVector(f, -1.2);
+      else if (k === 'arrowleft' || k === 'a') goal.yaw += 0.25;
+      else if (k === 'arrowright' || k === 'd') goal.yaw -= 0.25;
+      else return;
+      e.preventDefault();
+      hall.clamp(goal.pos);
+      root.classList.add('walked');
     }
   });
 
-  // keyboard and screen-reader route along the wall
+  // on-screen zoom buttons
+  $('.zoom-in').addEventListener('click', () => { if (mode === 'exploring') ready.get(active)!.explorer.zoomAt(1.6, vw / 2, vh / 2, vw, vh); });
+  $('.zoom-out').addEventListener('click', () => {
+    if (mode !== 'exploring') return;
+    const ex = ready.get(active)!.explorer;
+    if (ex.goalZoom <= 1.001) leave(); else ex.zoomAt(1 / 1.6, vw / 2, vh / 2, vw, vh);
+  });
+  $('.zoom-fit').addEventListener('click', () => { if (mode === 'exploring') ready.get(active)!.explorer.reset(); });
+  backBtn.addEventListener('click', () => leave());
+
+  // keyboard and screen-reader route to each painting
   document.querySelectorAll<HTMLButtonElement>('.wall-nav button').forEach((b) => {
-    const i = Number(b.dataset.index);
-    b.addEventListener('focus', () => { if (mode === 'corridor') walkTo(i, 1.2); });
-    b.addEventListener('click', () => { if (entries[i].piece) enter(i); else walkTo(i); });
+    b.addEventListener('click', () => {
+      const i = Number(b.dataset.index);
+      if (mode === 'exploring') { leave(); return; }
+      walkToPainting(i);
+    });
   });
 
-  // ---- frame loop -----------------------------------------------------------------------
+  // ---- frame loop ---------------------------------------------------------------------------
+  (window as any).__tuboState = () => ({ mode, active, pos: pose.pos.toArray().map((v) => +v.toFixed(2)), target: pose.target.toArray().map((v) => +v.toFixed(2)), fov: +pose.fov.toFixed(1), move: move && { dur: move.dur, painting: move.painting, to: move.to.pos.toArray().map((v) => +v.toFixed(2)) } });
+  lookPose(pose);
   let last = performance.now();
-  const start = last;
   root.classList.add('ready');
-  if (location.hash.length > 1) fromHash(true);
-  else setTimeout(() => { if (mode === 'corridor' && L.scroll < 2) walkTo(0, 3.2); }, 900);
+  if (location.hash.length > 1) setTimeout(fromHash, 300);
+  // preload every painting's layers once the hall is up
+  setTimeout(() => entries.forEach((_, i) => loadJourney(i)), 1200);
 
   function frame(now: number) {
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
-    L.raf(now);
-    const time = (now - start) / 1000;
+    renderer.setRenderTarget(null);
+    renderer.clear();
 
-    if (mode === 'corridor') {
-      const t = walkT();
-      const vel = reduced ? 0 : L.velocity;
-      lean += (THREE.MathUtils.clamp(vel * 0.012, -0.55, 0.55) - lean) * Math.min(1, dt * 2.5);
-      const nearest = Math.max(0, Math.min(n - 1, Math.round(t)));
-      const focus = Math.abs(t - nearest) < 0.32 ? nearest : -1;
-      preload(nearest);
-      corridor.walkPose(t, lean, pose);
-      corridor.apply(pose);
-      corridor.setAmbient(1);
-      corridor.update(focus, dt);
-      if (pointerDirty && finePointer) {
-        pointerDirty = false;
-        const hover = corridor.pick(ndc.x, ndc.y);
-        root.classList.toggle('over', hover >= 0 && !!entries[hover].piece);
-      }
-      // drift to face the nearest painting once the visitor stops
-      const off = t - nearest;
-      if (!snapping && now - lastUserScroll > 380 && Math.abs(off) > 0.004 && Math.abs(off) < 0.46) walkTo(nearest, 1.1 + Math.abs(off) * 1.6);
-      corridor.render();
-      hint.style.opacity = String(1 - clamp01(L.scroll / (0.25 * vh)));
-      progress.style.opacity = '0';
-    } else if (mode === 'entering' && ready.has(active)) {
-      const k = clamp01((now - transitionStart) / (ENTER_TIME * 1000));
-      lerpPose(fromPose, toPose, easeInOut(k), pose);
-      corridor.apply(pose);
-      const dark = ease(clamp01((k - 0.3) / 0.65));
-      corridor.setAmbient(1 - dark);
-      corridor.setLit(active, 1 - dark);
-      corridor.update(active, dt);
-      corridor.render();
-      if (k >= 1) finishEnter();
-    } else if (mode === 'piece') {
-      const j = ready.get(active)!;
-      const piece = entries[active].piece!;
-      const x = L.scroll / vh;
-      const tJourney = j.path.length;
-      j.path.pose(Math.min(Math.max(x, 0), tJourney), aspect, camPose, time);
-      j.scene.camera.position.copy(camPose.pos);
-      j.scene.camera.fov = camPose.fov;
-      j.scene.camera.updateProjectionMatrix();
-      j.scene.camera.lookAt(camPose.target);
-      j.scene.setOverscan(clamp01((1 - camPose.visible) / 0.15));
-      j.scene.render();
-      root.style.setProperty('--focus', camPose.focus.toFixed(3));
-      progress.style.opacity = String(1 - clamp01((x - tJourney) * 3));
-      progressFill.style.transform = `scaleY(${clamp01(x / tJourney)})`;
-      if (progress.dataset.piece !== piece.slug) {
-        progress.dataset.piece = piece.slug;
-        progress.querySelectorAll('i').forEach((el) => el.remove());
-        for (const m of j.path.marks()) {
-          const tick = document.createElement('i');
-          tick.style.top = `${(m / tJourney) * 100}%`;
-          progress.appendChild(tick);
-        }
-      }
-      const r = clamp01((x - tJourney) / piece.release);
-      plaque.style.opacity = String(ease(clamp01((r - 0.05) / 0.4)));
-      plaque.style.transform = `translate(${home.x + home.w - plaque.offsetWidth}px, ${Math.min(vh - plaque.offsetHeight - 12, home.y + home.h + 14)}px)`;
-      const released = r > 0.25;
-      if (x > tJourney * 0.75) loadFull();
-      root.classList.toggle('released', released);
-      if (!released) { setLookMode(false); lens.classList.remove('on'); }
-      hint.style.opacity = '0';
-      // scrolling on past the end walks back out to the wall
-      if (x > tJourney + piece.release + EXIT_ZONE * 0.6) leave(true);
-    } else if (mode === 'leaving') {
-      if (now < transitionStart) {
-        ready.get(active)!.scene.render(); // fading to black over the depth view
-      } else {
-        blackout.classList.remove('on');
-        plaque.style.opacity = '0';
-        progress.style.opacity = '0';
-        root.style.setProperty('--focus', '0');
-        const k = clamp01((now - transitionStart) / (LEAVE_TIME * 1000));
-        lerpPose(fromPose, toPose, easeInOut(k), pose);
-        corridor.apply(pose);
-        const light = ease(clamp01(k / 0.7));
-        corridor.setAmbient(light);
-        corridor.setLit(active, light);
-        corridor.update(active, dt);
-        corridor.render();
-        if (k >= 1) finishLeave();
-      }
+    if (mode === 'hall') {
+      const k = 1 - Math.exp(-dt * 6);
+      look.pos.lerp(goal.pos, k);
+      look.yaw += (goal.yaw - look.yaw) * k;
+      look.pitch += (goal.pitch - look.pitch) * k;
+      lookPose(pose);
+    } else if (mode === 'moving') {
+      stepMove(now);
     }
+
+    if (mode === 'exploring' || mode === 'leaving') {
+      const j = ready.get(active)!;
+      j.explorer.update(dt);
+      const visible = j.explorer.visible;
+      // the dimmed hall shows around the painting only while the whole painting is in view
+      if (visible > 0.95) { hall.apply(pose); hall.update(-1, dt); hall.render(false); renderer.clearDepth(); }
+      j.scene.render();
+      plaque.style.opacity = String(mode === 'exploring' ? 1 - clamp01((j.explorer.zoom - 1) / 0.25) : 0);
+      const hh = vh / j.explorer.homeVisible, hw = hh * j.scene.aspect;
+      plaque.style.transform = `translate(${(vw + hw) / 2 - plaque.offsetWidth}px, ${Math.min(vh - plaque.offsetHeight - 12, (vh + hh) / 2 + 14)}px)`;
+      if (mode === 'leaving' && (j.explorer.atHome() || now - leaveStart > 1200)) {
+        j.explorer.reset(true);
+        stepBack();
+      }
+    } else {
+      if (lightUp && move) {
+        const s = ease(clamp01((now - lightUp.start) / lightUp.dur / 0.7));
+        hall.setDim(lightUp.from + (1 - lightUp.from) * s);
+        hall.setLit(lightUp.i, s);
+      } else if (lightUp && !move) lightUp = null;
+      plaque.style.opacity = '0';
+      hall.apply(pose);
+      hall.update(mode === 'hall' ? hover : -1, dt);
+      hall.render(true);
+    }
+    hint.style.opacity = root.classList.contains('walked') || mode !== 'hall' ? '0' : '';
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);

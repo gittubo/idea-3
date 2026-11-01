@@ -59,7 +59,7 @@ export class DepthScene {
   /** The renderer is shared with the corridor. Shaders here output raw texture values, so the painting is shown exactly as stored. */
   constructor(private renderer: THREE.WebGLRenderer, private meta: PieceMeta) {
     this.aspect = meta.width / meta.height;
-    this.scene.background = new THREE.Color(0x0e0d0c);
+    // no background: the dimmed hall shows around the painting
   }
 
   /** Disparity (1/z) is linear in depth, so near objects separate more than far ones. */

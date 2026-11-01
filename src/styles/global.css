@@ -11,24 +11,23 @@
 }
 
 * { box-sizing: border-box; }
-html, body { margin: 0; background: var(--black); color: var(--ivory); }
+html, body { margin: 0; height: 100%; overflow: hidden; background: var(--black); color: var(--ivory); }
 body { font-family: var(--serif); -webkit-font-smoothing: antialiased; overscroll-behavior: none; }
 button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 /* ---- stage ---------------------------------------------------------------- */
 .stage { position: fixed; inset: 0; overflow: hidden; }
-.spacer { height: 100vh; }
 
-canvas.depth { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+canvas.depth { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; user-select: none; -webkit-user-select: none; }
 html:not(.touch) canvas.depth { cursor: none; }
 html.waiting canvas.depth { cursor: progress; }
 
 .vignette {
   position: absolute; inset: 0; pointer-events: none;
   background: radial-gradient(ellipse at center,
-    transparent calc(52% - var(--focus) * 22%),
-    rgba(14, 13, 12, calc(0.32 + var(--focus) * 0.55)) 100%);
+    transparent 55%,
+    rgba(6, 6, 6, 0.38) 100%);
 }
 .grain {
   position: absolute; inset: -60%; pointer-events: none; opacity: 0.075;
@@ -60,30 +59,17 @@ html.waiting canvas.depth { cursor: progress; }
 .back-btn { top: calc(18px + env(safe-area-inset-top, 0px)); right: calc(22px + env(safe-area-inset-right, 0px)); opacity: 0; pointer-events: none; }
 html.inside .back-btn { opacity: 0.75; pointer-events: auto; }
 
-.progress {
-  position: absolute; right: calc(34px + env(safe-area-inset-right, 0px)); top: 30vh; height: 40vh; width: 1px; opacity: 0;
-  background: rgba(176, 141, 87, 0.22); pointer-events: none;
+.hint { position: absolute; left: 50%; bottom: calc(34px + env(safe-area-inset-bottom, 0px)); translate: -50% 0; color: var(--gilt); pointer-events: none; transition: opacity 0.8s ease; }
+.hint svg { width: 40px; height: 40px; display: block; }
+.hint .ripple { transform-origin: 20px 20px; animation: ripple 2.2s ease-out infinite; }
+@keyframes ripple { 0% { transform: scale(0.6); opacity: 1; } 100% { transform: scale(3); opacity: 0; } }
+
+.zoom-controls {
+  position: absolute; left: 50%; bottom: calc(22px + env(safe-area-inset-bottom, 0px)); translate: -50% 0;
+  display: flex; gap: 6px; opacity: 0; pointer-events: none; transition: opacity 0.5s ease;
 }
-.progress .fill { position: absolute; inset: 0; background: var(--gilt); transform-origin: top; transform: scaleY(0); }
-.progress i { position: absolute; left: -3px; width: 7px; height: 1px; background: var(--gilt); }
-
-.scroll-hint { position: absolute; left: 50%; bottom: calc(34px + env(safe-area-inset-bottom, 0px)); translate: -50% 0; color: var(--gilt); pointer-events: none; }
-.scroll-hint svg { width: 22px; height: 34px; display: block; }
-.scroll-hint .wheel { animation: wheel 2.4s ease-in-out infinite; }
-@keyframes wheel { 0%, 15% { transform: translateY(0); opacity: 1; } 70% { transform: translateY(7px); opacity: 0; } 100% { opacity: 0; } }
-
-.lens-btn { left: 50%; bottom: calc(26px + env(safe-area-inset-bottom, 0px)); translate: -50% 0; opacity: 0; pointer-events: none; }
-html.released .lens-btn { opacity: 0.75; pointer-events: auto; }
-html.looking .lens-btn { opacity: 1; color: var(--ivory); }
-
-.lens {
-  position: absolute; top: 0; left: 0; width: 210px; height: 210px; border-radius: 50%;
-  border: 1px solid rgba(176, 141, 87, 0.85); background-color: var(--black); background-repeat: no-repeat;
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.65), inset 0 0 22px rgba(0, 0, 0, 0.45);
-  opacity: 0; pointer-events: none; transition: opacity 0.35s ease;
-}
-.lens.on { opacity: 1; }
-html.touch .lens { width: 150px; height: 150px; }
+.zoom-controls .icon-btn { position: static; }
+html.inside .zoom-controls { opacity: 1; pointer-events: auto; }
 
 .plaque {
   position: absolute; top: 0; left: 0; opacity: 0; pointer-events: none;
@@ -96,7 +82,7 @@ html.touch .lens { width: 150px; height: 150px; }
 /* ---- cursor: a small gold ring that opens into a lens over a painting ---------- */
 .cursor { position: absolute; top: 0; left: 0; pointer-events: none; opacity: 0; transition: opacity 0.3s ease; }
 html.pointer-seen:not(.touch) .cursor { opacity: 1; }
-html.released .cursor, html.touch .cursor { opacity: 0 !important; }
+html.touch .cursor { opacity: 0 !important; }
 .cursor i {
   position: absolute; left: -7px; top: -7px; width: 14px; height: 14px; border-radius: 50%;
   border: 1px solid var(--gilt); transition: transform 0.45s cubic-bezier(.2,.7,.2,1), background-color 0.45s ease;
@@ -118,6 +104,8 @@ html.waiting .cursor i { animation: focus 1.4s ease-in-out infinite; }
 }
 .wall-nav button:focus-visible { opacity: 1; outline: none; border-color: rgba(176, 141, 87, 0.6); }
 html.inside .wall-nav { display: none; }
+html.inside canvas.depth { cursor: grab; }
+html.inside .cursor { opacity: 0 !important; }
 
 /* ---- loading & fallback ------------------------------------------------------ */
 .loading {
@@ -136,9 +124,8 @@ html.no-webgl .fallback {
 @media (max-width: 640px) {
   .brand { top: calc(20px + env(safe-area-inset-top, 0px)); left: calc(18px + env(safe-area-inset-left, 0px)); }
   .back-btn { top: calc(10px + env(safe-area-inset-top, 0px)); right: calc(8px + env(safe-area-inset-right, 0px)); }
-  .progress { right: calc(14px + env(safe-area-inset-right, 0px)); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .grain, .scroll-hint .wheel, .loading svg { animation: none; }
+  .grain, .hint .ripple, .loading svg { animation: none; }
 }

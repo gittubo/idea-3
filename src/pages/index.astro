@@ -5,11 +5,10 @@ import { room1 } from '../pieces/room-1';
 // The Tubo mark: a picture frame whose edge opens into a lens.
 const mark = 'M37 17.5V2.5H3v43h34V30.5A6.5 6.5 0 0 1 37 17.5Z';
 ---
-<Base title="Tubo" description="Tubo is a wordless museum: a camera searches through each painting and lets it tell its own story.">
+<Base title="Tubo" description="Tubo is a wordless museum: walk through a dark hall of paintings and explore each one up close.">
   <div class="stage">
-    <canvas class="depth" role="img" aria-label="A gallery wall with paintings, each under its own lamp."></canvas>
+    <canvas class="depth" role="img" aria-label="A dark exhibition hall with large paintings, each under its own spotlights."></canvas>
     <div class="vignette" aria-hidden="true"></div>
-    <div class="lens" aria-hidden="true"></div>
     <div class="plaque"></div>
 
     <div class="ui">
@@ -18,33 +17,37 @@ const mark = 'M37 17.5V2.5H3v43h34V30.5A6.5 6.5 0 0 1 37 17.5Z';
         <span aria-hidden="true">TUBO</span>
       </a>
 
-      <nav class="wall-nav" aria-label="Paintings on the wall">
+      <nav class="wall-nav" aria-label="Paintings in the hall">
         {room1.map((e, i) => <button type="button" data-index={i}>{e.title}</button>)}
       </nav>
 
-      <button class="icon-btn back-btn" type="button" aria-label="Back to the wall">
+      <button class="icon-btn back-btn" type="button" aria-label="Step back into the hall">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true">
           <path d="M3 9V3h6M21 15v6h-6" /><path d="M15 9 9 15M9 15V10.5M9 15h4.5" />
         </svg>
       </button>
 
-      <div class="progress" aria-hidden="true"><div class="fill"></div></div>
-
-      <div class="scroll-hint" aria-hidden="true">
-        <svg viewBox="0 0 22 34" fill="none" stroke="currentColor" stroke-width="1.2">
-          <rect x="1" y="1" width="20" height="32" rx="10" /><line class="wheel" x1="11" y1="8" x2="11" y2="12" stroke-linecap="round" />
+      <!-- first visit: tap or click to walk -->
+      <div class="hint" aria-hidden="true">
+        <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.2">
+          <circle class="ripple" cx="20" cy="20" r="6" /><circle cx="20" cy="20" r="3" fill="currentColor" stroke="none" />
         </svg>
       </div>
 
-      <button class="icon-btn lens-btn" type="button" aria-label="Look closer with a lens" aria-pressed="false">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true">
-          <circle cx="10.5" cy="10.5" r="6.5" /><path d="m15.5 15.5 5 5" /><circle cx="10.5" cy="10.5" r="2.2" />
-        </svg>
-      </button>
+      <div class="zoom-controls">
+        <button class="icon-btn zoom-out" type="button" aria-label="Zoom out">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="M6 12h12" /></svg>
+        </button>
+        <button class="icon-btn zoom-fit" type="button" aria-label="Show the whole painting">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><rect x="5" y="4" width="14" height="16" /><rect x="8.5" y="7.5" width="7" height="9" /></svg>
+        </button>
+        <button class="icon-btn zoom-in" type="button" aria-label="Zoom in">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="M6 12h12M12 6v12" /></svg>
+        </button>
+      </div>
     </div>
 
     <div class="cursor" aria-hidden="true"><i></i></div>
-    <div class="blackout" aria-hidden="true"></div>
     <div class="grain" aria-hidden="true"></div>
     <div class="loading" aria-hidden="true">
       <svg viewBox="0 0 40 48" fill="none" stroke="currentColor" stroke-width="2.4"><path d={mark} /></svg>
@@ -52,7 +55,6 @@ const mark = 'M37 17.5V2.5H3v43h34V30.5A6.5 6.5 0 0 1 37 17.5Z';
     <p class="fallback">This museum needs a newer browser with 3D graphics turned on.</p>
     <noscript><p class="fallback" style="display:grid">This museum needs JavaScript turned on.</p></noscript>
   </div>
-  <div class="spacer" aria-hidden="true"></div>
 
   <script>
     import { startMuseum } from '../scripts/museum';

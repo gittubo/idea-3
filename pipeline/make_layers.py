@@ -79,36 +79,45 @@ def mirror_fill(col, mask):
 
 layers = []
 
-# ---- far: landscape -------------------------------------------------------
-pad = int(cfg['far_pad'] * W)
-far_region = dilate((a_far > 0.5), pad)
-far_region = cv2.GaussianBlur(far_region, (0, 0), 4).clip(0, 1)
-hole = (a_far < 0.98) & (far_region > 0)
-far_col = rgb.copy()
-far_col[hole] = mirror_fill(rgb, a_far > 0.5)[hole]
-ys = np.linspace(0, 1, H, dtype=np.float32)[:, None].repeat(W, 1)
-h0, h1 = cfg['far_horizon'], cfg['far_bottom']
-t = np.clip((ys - h0) / (h1 - h0), 0, 1); t = t * t * (3 - 2 * t)
-far_depth = cfg['far_d0'] + (cfg['far_d1'] - cfg['far_d0']) * t
-layers.append(('far', far_col, far_region, far_depth))
+single = cfg.get('mode') == 'single'
+if single:
+    # one layer: the whole painting on a smoothed depth surface (gentle parallax, nothing can tear)
+    Ds = cv2.GaussianBlur(D, (0, 0), cfg.get('blur', 14))
+    ones = np.ones((H, W), np.float32); zeros = np.zeros((H, W), np.float32)
+    a_far = a_mid = zeros; a_front = ones
+    far_depth = mid_depth = zeros; front_depth = Ds
+    layers = [('front', rgb, ones, Ds)]
+else:
+    # ---- far: landscape -------------------------------------------------------
+    pad = int(cfg['far_pad'] * W)
+    far_region = dilate((a_far > 0.5), pad)
+    far_region = cv2.GaussianBlur(far_region, (0, 0), 4).clip(0, 1)
+    hole = (a_far < 0.98) & (far_region > 0)
+    far_col = rgb.copy()
+    far_col[hole] = mirror_fill(rgb, a_far > 0.5)[hole]
+    ys = np.linspace(0, 1, H, dtype=np.float32)[:, None].repeat(W, 1)
+    h0, h1 = cfg['far_horizon'], cfg['far_bottom']
+    t = np.clip((ys - h0) / (h1 - h0), 0, 1); t = t * t * (3 - 2 * t)
+    far_depth = cfg['far_d0'] + (cfg['far_d1'] - cfg['far_d0']) * t
+    layers.append(('far', far_col, far_region, far_depth))
 
-# ---- mid: architecture ----------------------------------------------------
-mid_alpha = np.clip(1 - a_far, 0, 1)  # opaque everywhere except the window
-hole = (a_mid < 0.98) & (mid_alpha > 0)
-mid_col = rgb.copy()
-mid_fill = inpaint(push_pull(rgb, (a_mid > 0.98).astype(np.float32)), hole & (a_front > 0.02))
-mid_col[hole] = mid_fill[hole]
-mid_depth = push_pull(D[..., None], (a_mid > 0.98).astype(np.float32))[..., 0]
-mid_depth = cv2.GaussianBlur(mid_depth, (0, 0), 6)
-mid_depth = np.clip(mid_depth, t_far + 0.12, t_near - 0.01)  # architecture never reads as distance
-layers.append(('mid', mid_col, mid_alpha, mid_depth))
+    # ---- mid: architecture ----------------------------------------------------
+    mid_alpha = np.clip(1 - a_far, 0, 1)  # opaque everywhere except the window
+    hole = (a_mid < 0.98) & (mid_alpha > 0)
+    mid_col = rgb.copy()
+    mid_fill = inpaint(push_pull(rgb, (a_mid > 0.98).astype(np.float32)), hole & (a_front > 0.02))
+    mid_col[hole] = mid_fill[hole]
+    mid_depth = push_pull(D[..., None], (a_mid > 0.98).astype(np.float32))[..., 0]
+    mid_depth = cv2.GaussianBlur(mid_depth, (0, 0), 6)
+    mid_depth = np.clip(mid_depth, t_far + 0.12, t_near - 0.01)  # architecture never reads as distance
+    layers.append(('mid', mid_col, mid_alpha, mid_depth))
 
-# ---- front: figure + parapet ---------------------------------------------
-front_col = push_pull(rgb, (a_front > 0.98).astype(np.float32))
-front_col = np.where(a_front[..., None] > 0.02, rgb, front_col)  # bleed colour past edges
-front_depth = push_pull(D[..., None], (a_front > 0.9).astype(np.float32))[..., 0]
-front_depth = cv2.GaussianBlur(front_depth, (0, 0), 3)
-layers.append(('front', front_col, a_front, front_depth))
+    # ---- front: figure + parapet ---------------------------------------------
+    front_col = push_pull(rgb, (a_front > 0.98).astype(np.float32))
+    front_col = np.where(a_front[..., None] > 0.02, rgb, front_col)  # bleed colour past edges
+    front_depth = push_pull(D[..., None], (a_front > 0.9).astype(np.float32))[..., 0]
+    front_depth = cv2.GaussianBlur(front_depth, (0, 0), 3)
+    layers.append(('front', front_col, a_front, front_depth))
 
 meta = {'width': W, 'height': H, 'z': cfg['z'], 'layers': []}
 P = int(cfg['pad'] * W)  # reflected margin so parallax never shows past the painting's edge

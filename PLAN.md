@@ -1,6 +1,24 @@
 # TUBO: Website Plan
 
-Status: **v3. Planning complete.** Ready for Phase 1.
+Status: **v4. Exhibition hall with free exploration** (see the next section).
+
+## v4 direction change: the exhibition hall
+
+Following the reference photo (a dark exhibition hall with monumental paintings, ceiling track lights and a polished concrete floor), the museum changes in two ways. These replace the corridor (Section 3.2) and the scroll-driven camera journey (Section 3.3):
+
+1. **The hall.** One large, dark hall with black steel trusses and track lights. Monumental unframed paintings stand around it, each under its own spotlights, mirrored in the floor.
+   - **Click or tap a painting:** the camera walks over to it.
+   - **Click or tap the floor or a wall:** you walk there. You always stop at a respectful distance from the paintings.
+   - **Drag:** look around.
+   - **Wheel or arrow keys:** step forward and back.
+2. **Free exploration.** Arriving at a painting, the hall dims and the visitor explores the painting themselves.
+   - **Zoom:** wheel, pinch, double-tap, or the − / fit / + buttons.
+   - **Move:** drag (with inertia) or the arrow keys.
+   - The depth layers remain, so moving shows real parallax.
+   - Zooming out past the whole painting, the back icon, or Escape walks you back into the hall.
+   - There is no scripted storyline. The story sheets in Section 7 stay as internal notes for composing each painting.
+
+All three Room I paintings are explorable. "The Apprentice" and "The Wings" use a single smoothed depth layer (`"mode": "single"` in `pipeline/*.json`).
 
 ---
 
@@ -194,7 +212,7 @@ Each piece has a hidden detail the camera finds. The story is never written on t
 |---|---|---|
 | **0. Finish planning** | ✅ Done | |
 | **1. One piece, end to end** | ✅ Done: "The Kept Letter" with the depth camera, plaque and lens | Approved |
-| **2. Corridor** | ✅ Done: 3D wall walk with Room I ("The Apprentice" and "The Wings" hang on the wall; their camera journeys come in Phase 5), lamp pools, snapping, enter and leave transitions, an address per piece (`#the-kept-letter`) | Walking and entering a piece feel continuous |
+| **2. Hall** | ✅ Done (v4): exhibition hall, walk-to-click, free exploration of all three Room I paintings | Approved by you |
 | **3. Threshold and rooms** | Iris entrance, archways, room light shifts, wordless navigation | A first-time visitor finds their way without help |
 | **4. Sound and atmosphere** | Soundscapes, the on/off toggle, grain, lens cursor, loading state (a lens slowly coming into focus) | |
 | **5. Remaining pieces** | Pieces 2–6 through the production steps in Section 5 | All pass the quality check |
