@@ -1,0 +1,456 @@
+<title>Social Agent Control Room</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a wall-sized control room. Four columns read left to right as the loop:
+   inputs -> orchestrator + knowledge -> eight departments -> agent in focus. Single dark look by choice. */
+:root {
+  color-scheme: dark;
+  --bg: #0f1013;
+  --panel: #17181c;
+  --panel-2: #1e2025;
+  --line: #3a3127;
+  --amber: #f2a33a;
+  --amber-dim: #8a5d24;
+  --ember: #e2483d;
+  --violet: #8b6cf0;
+  --cyan: #3fc7d6;
+  --green: #4fd17a;
+  --fg: #ece6dc;
+  --muted: #9a9389;
+  --faint: #5f5a53;
+  --display: "Chakra Petch", "Arial Narrow", system-ui, sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--bg); color: var(--fg); }
+body {
+  font-family: var(--body);
+  font-size: 13px;
+  line-height: 1.45;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 18px 28px;
+  background-image:
+    radial-gradient(ellipse at 20% 0%, rgba(242,163,58,.07), transparent 55%),
+    radial-gradient(ellipse at 90% 100%, rgba(226,72,61,.06), transparent 50%);
+}
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+
+/* ---------- top bar ---------- */
+.top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; margin-bottom: 16px; }
+.live { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--amber); box-shadow: 0 0 10px var(--amber); animation: pulse 1.6s ease-in-out infinite; }
+.live b { color: var(--fg); font-weight: 600; }
+h1 { margin: 0; font-family: var(--display); font-weight: 700; font-size: clamp(22px, 3.2vw, 40px); letter-spacing: .01em; text-transform: uppercase; line-height: 1; text-wrap: balance; }
+h1 span { color: var(--amber); text-shadow: 0 0 24px rgba(242,163,58,.35); }
+.clock { font-family: var(--mono); font-size: 12px; color: var(--ember); border: 1px solid var(--ember); padding: 4px 10px; border-radius: 3px; display: flex; gap: 8px; align-items: center; }
+.clock::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--ember); animation: pulse 1s infinite; }
+
+/* ---------- grid ---------- */
+.wall { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr) minmax(0, 1.5fr) minmax(0, 1.25fr); gap: 14px; align-items: start; }
+.col { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+@media (max-width: 1280px) { .wall { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 720px)  { .wall { grid-template-columns: minmax(0, 1fr); } }
+
+.panel {
+  background: linear-gradient(180deg, var(--panel-2), var(--panel));
+  border: 1px solid var(--amber-dim);
+  border-radius: 8px;
+  padding: 12px 14px 14px;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.4), 0 0 22px rgba(242,163,58,.06) inset;
+  position: relative;
+  min-width: 0;
+}
+.panel.hot { border-color: var(--amber); box-shadow: 0 0 18px rgba(242,163,58,.18), 0 0 22px rgba(242,163,58,.06) inset; }
+.ph { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.ph h2 { margin: 0; font-family: var(--display); font-size: 15px; text-transform: uppercase; letter-spacing: .04em; display: flex; gap: 6px; align-items: baseline; }
+.ph h2 small { font-family: var(--mono); font-size: 10px; color: var(--faint); font-weight: 400; }
+.sub { color: var(--muted); font-size: 11.5px; margin: 2px 0 10px; }
+.pill { font-family: var(--mono); font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; padding: 2px 7px; border-radius: 3px; background: rgba(242,163,58,.16); color: var(--amber); border: 1px solid var(--amber-dim); white-space: nowrap; }
+.pill.ok { color: var(--green); background: rgba(79,209,122,.12); border-color: rgba(79,209,122,.4); }
+.pill.warn { color: var(--ember); background: rgba(226,72,61,.12); border-color: rgba(226,72,61,.45); }
+
+/* tool tiles */
+.tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px 6px; }
+.tile { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; min-width: 0; }
+.ico { width: 34px; height: 34px; border-radius: 8px; display: grid; place-items: center; font-family: var(--display); font-weight: 700; font-size: 13px; color: #fff; background: var(--c, #444); box-shadow: 0 2px 0 rgba(0,0,0,.35); transition: transform .25s, box-shadow .25s; }
+.tile.ping .ico { transform: translateY(-2px); box-shadow: 0 0 0 2px var(--amber), 0 0 16px var(--amber); }
+.tile > span:not(.ico) { font-size: 9.5px; color: var(--muted); line-height: 1.2; overflow-wrap: anywhere; }
+.tiles.sm { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.tiles.sm .ico { width: 26px; height: 26px; font-size: 10.5px; border-radius: 6px; }
+
+.chip { display: inline-block; font-family: var(--mono); font-size: 10px; padding: 2px 7px; border-radius: 3px; border: 1px solid var(--violet); color: #c9b9ff; background: rgba(139,108,240,.14); margin-bottom: 8px; }
+.foot { font-size: 11px; color: var(--muted); margin-top: 10px; }
+
+/* orchestrator */
+.steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.step { border: 1px solid var(--line); background: rgba(0,0,0,.25); border-radius: 6px; padding: 8px; min-width: 0; transition: border-color .3s, background .3s; }
+.step b { display: block; font-size: 12.5px; }
+.step i { font-style: normal; font-family: var(--mono); font-size: 10px; color: var(--faint); }
+.step.done b::after { content: " ✓"; color: var(--green); }
+.step.on { border-color: var(--amber); background: rgba(242,163,58,.1); }
+.step.on i { color: var(--amber); }
+.models { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; align-items: center; }
+.model { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
+.model .ico { width: 22px; height: 22px; font-size: 10px; border-radius: 5px; }
+
+/* knowledge */
+.kgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.kfile { border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px; font-family: var(--mono); font-size: 11px; min-width: 0; transition: border-color .3s, background .3s; }
+.kfile b { color: var(--fg); font-weight: 600; }
+.kfile div { color: var(--faint); font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kfile.read { border-color: var(--amber); background: rgba(242,163,58,.08); }
+.kfile.read div { color: var(--amber); }
+.access { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 10px; }
+.acc { text-align: center; font-size: 9.5px; color: var(--muted); border: 1px solid transparent; border-radius: 6px; padding: 5px 2px; overflow-wrap: anywhere; }
+.acc.on { border-color: var(--violet); background: rgba(139,108,240,.12); color: #d6cbff; }
+.acc em { display: block; font-style: normal; font-size: 15px; margin-bottom: 2px; color: var(--fg); }
+
+/* departments */
+.depts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 420px) { .depts { grid-template-columns: minmax(0, 1fr); } }
+.dept { border: 1px solid var(--line); border-radius: 7px; padding: 9px 10px 10px; background: rgba(0,0,0,.22); cursor: pointer; text-align: left; min-width: 0; transition: border-color .25s, box-shadow .25s; }
+.dept:hover { border-color: var(--amber-dim); }
+.dept[aria-pressed="true"] { border-color: var(--amber); box-shadow: 0 0 14px rgba(242,163,58,.2); }
+.dept .dh { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; margin-bottom: 7px; }
+.dept h3 { margin: 0; font-family: var(--display); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+.dept h3 small { font-family: var(--mono); color: var(--faint); font-weight: 400; margin-right: 4px; }
+.status { font-family: var(--mono); font-size: 10.5px; color: var(--muted); margin-top: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bar { height: 3px; border-radius: 2px; background: rgba(255,255,255,.07); margin-top: 6px; overflow: hidden; }
+.bar i { display: block; height: 100%; width: 30%; background: linear-gradient(90deg, var(--green), var(--cyan)); transition: width .9s ease; }
+
+/* approvals */
+.queue { display: flex; flex-direction: column; gap: 6px; }
+.qi { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; font-size: 11.5px; min-width: 0; }
+.qi p { margin: 0; flex: 1; min-width: 0; }
+.qi p small { display: block; color: var(--faint); font-family: var(--mono); font-size: 10px; }
+.qi button { border: 1px solid var(--green); background: rgba(79,209,122,.12); color: var(--green); border-radius: 4px; padding: 3px 9px; font-size: 11px; cursor: pointer; white-space: nowrap; }
+.qi button:hover { background: rgba(79,209,122,.25); }
+.qi.done { opacity: .45; }
+.qi.done button { border-color: var(--faint); color: var(--muted); background: none; cursor: default; }
+.empty { color: var(--faint); font-family: var(--mono); font-size: 11px; padding: 6px 2px; }
+
+/* agent in focus */
+.focus { border-color: var(--amber); }
+.eyebrow { font-family: var(--mono); font-size: 10px; letter-spacing: .16em; color: var(--muted); text-transform: uppercase; }
+.focus h2.big { margin: 4px 0 2px; font-family: var(--display); font-size: clamp(20px, 2vw, 28px); text-transform: uppercase; line-height: 1.05; }
+.topic { font-family: var(--mono); font-size: 10.5px; color: var(--amber); text-align: right; }
+.prog { height: 3px; background: rgba(255,255,255,.08); border-radius: 2px; margin: 10px 0; overflow: hidden; }
+.prog i { display: block; height: 100%; width: 0; background: var(--amber); transition: width .4s linear; }
+.voice { background: rgba(139,108,240,.18); border: 1px solid var(--violet); border-radius: 6px; padding: 7px 10px; font-size: 12px; color: #e3dbff; margin-bottom: 10px; }
+.feed { display: flex; flex-direction: column; gap: 7px; max-height: 330px; overflow: hidden; }
+.msg { border: 1px solid var(--line); background: rgba(0,0,0,.25); border-radius: 6px; padding: 7px 10px; animation: rise .45s ease both; }
+.msg .mh { display: flex; justify-content: space-between; gap: 8px; font-size: 11px; color: var(--muted); }
+.msg .mh b { color: var(--fg); font-weight: 600; }
+.msg p { margin: 3px 0 0; font-size: 12.5px; }
+.term { margin-top: 10px; background: #0a0b0d; border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; font-family: var(--mono); font-size: 11px; height: 168px; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; }
+.term .tl { white-space: pre; overflow: hidden; text-overflow: ellipsis; color: #b9d7a8; }
+.term .tl.cmd { color: var(--cyan); }
+.term .tl.warn { color: var(--amber); }
+.term .tt { color: var(--faint); margin-bottom: 4px; }
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
+.stat { border-top: 1px solid var(--line); padding-top: 6px; }
+.stat b { display: block; font-family: var(--display); font-size: 22px; font-variant-numeric: tabular-nums; line-height: 1; }
+.stat span { font-family: var(--mono); font-size: 9.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+
+.loopline { margin-top: 14px; font-family: var(--mono); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--ember); text-align: center; border-top: 1px solid rgba(226,72,61,.5); padding-top: 8px; }
+
+@keyframes pulse { 50% { opacity: .35; } }
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition: none !important; } }
+</style>
+
+<header class="top">
+  <div class="live"><span class="dot"></span><span><b>Live</b> · all <b>62</b> agents running</span></div>
+  <h1>AI Native <span>Social Media</span> Agent Team</h1>
+  <div class="clock" id="clock">LIVE 00:00</div>
+</header>
+
+<main class="wall">
+  <!-- column 1: inputs -->
+  <section class="col">
+    <div class="panel">
+      <div class="ph"><h2><small>01</small> Signals</h2><span class="pill">Watching</span></div>
+      <p class="sub">Where every market and brand signal comes from</p>
+      <div class="tiles" id="signals"></div>
+    </div>
+    <div class="panel">
+      <div class="ph"><h2><small>02</small> System of record</h2><span class="pill ok">Synced</span></div>
+      <p class="sub">The customer spine, one unified profile</p>
+      <div class="tiles" id="records"></div>
+    </div>
+    <div class="panel">
+      <div class="ph"><h2>Owner input</h2><span class="pill">Human</span></div>
+      <p class="sub">What the one human sets</p>
+      <span class="chip">brand voice · not counted</span>
+      <div class="tiles" id="owner"></div>
+    </div>
+    <div class="panel">
+      <div class="ph"><h2><small>06</small> The brain</h2><span class="pill">Learning</span></div>
+      <p class="sub">Shared memory every agent reads before it acts</p>
+      <div class="tiles" id="brain"></div>
+      <p class="foot">Closes the loop: results feed back into what the team writes next, so every post learns from the last one.</p>
+    </div>
+  </section>
+
+  <!-- column 2: orchestrator + knowledge -->
+  <section class="col">
+    <div class="panel hot">
+      <div class="ph"><h2><small>03</small> Orchestrator</h2><span class="pill">Running</span></div>
+      <p class="sub">Every event enters here first. Nothing publishes on its own.</p>
+      <div class="steps" id="steps"></div>
+      <p class="foot">Routine content ships end to end. Only budget changes and edge cases reach the owner.</p>
+      <div class="models">
+        <div class="model"><span class="ico" style="--c:#c96f4a">C</span>Claude AI · reasons against the playbook</div>
+        <div class="model"><span class="ico" style="--c:#2f6f5e">LG</span>LangGraph · remembers state</div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ph"><h2><small>04</small> Knowledge layer + access</h2><span class="pill">Running</span></div>
+      <p class="sub">The brand brain, one shared workspace · brand OS file system</p>
+      <div class="kgrid" id="kfiles"></div>
+      <div class="access" id="access"></div>
+    </div>
+    <div class="panel">
+      <div class="ph"><h2>What interrupts the loop</h2><span class="pill warn" id="qCount">0 waiting</span></div>
+      <p class="sub">All you do is check and approve</p>
+      <div class="queue" id="queue"></div>
+    </div>
+  </section>
+
+  <!-- column 3: departments -->
+  <section class="col">
+    <div class="panel">
+      <div class="ph"><h2><small>05</small> Departments</h2><span class="pill ok">8 online</span></div>
+      <p class="sub">Eight departments an owner recognises. Select one to put it in focus.</p>
+      <div class="depts" id="depts"></div>
+    </div>
+    <div class="panel">
+      <div class="ph"><h2><small>07</small> Engage</h2><span class="pill">Replying</span></div>
+      <p class="sub">Audience, followers, customers, reviewers. Someone sends a message at 2am, the reply is ready.</p>
+      <div class="tiles sm" id="engage"></div>
+    </div>
+    <div class="panel">
+      <div class="ph"><h2><small>08</small> Data &amp; observability</h2><span class="pill ok">Healthy</span></div>
+      <p class="sub">Every run traced, every number sourced</p>
+      <div class="tiles sm" id="obs"></div>
+    </div>
+  </section>
+
+  <!-- column 4: agent in focus -->
+  <section class="col">
+    <div class="panel focus">
+      <div class="ph"><span class="eyebrow">Agent in focus</span><span class="topic" id="topic">TOPIC · "IS RETINOL WORTH IT"</span></div>
+      <h2 class="big" id="fName">Content Engine</h2>
+      <p class="sub" id="fDesc" style="margin:0">Brief, draft, SEO pass, hook. It can't post in a voice that isn't yours.</p>
+      <div class="prog"><i id="prog"></i></div>
+      <div class="voice">Voice: warm, confident, no hard sell. Routine posts can ship without me.</div>
+      <div class="feed" id="feed" aria-live="polite"></div>
+      <div class="term" id="term"><div class="tt">agents · live terminal</div></div>
+      <div class="stats">
+        <div class="stat"><b id="sSignals">0</b><span>Signals today</span></div>
+        <div class="stat"><b id="sPosts">112</b><span>Posts planned</span></div>
+        <div class="stat"><b id="sReplies">97</b><span>Replies written</span></div>
+        <div class="stat"><b id="sReviews">108</b><span>Reviews handled</span></div>
+        <div class="stat"><b id="sLeads">168</b><span>Leads scored</span></div>
+        <div class="stat"><b id="sWait">0</b><span>Waiting on you</span></div>
+      </div>
+    </div>
+  </section>
+</main>
+<p class="loopline">Results feed signals again · the loop never stops</p>
+
+<script>
+(() => {
+  const $ = (s) => document.querySelector(s);
+  const pick = (a) => a[Math.floor(Math.random() * a.length)];
+  const now = () => new Date().toTimeString().slice(0, 5);
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const tiles = (el, list) => {
+    $(el).innerHTML = list.map(([ab, label, c]) =>
+      `<div class="tile"><span class="ico" style="--c:${c}">${ab}</span><span>${label}</span></div>`).join("");
+  };
+
+  tiles("#signals", [["GS","Search queries","#3b7be0"],["GA","Sessions","#e08a2b"],["SR","Semrush keywords","#e2483d"],["GR","Google reviews","#4a9b5a"],
+                     ["IG","FB · IG insights","#c23d8f"],["in","LinkedIn analytics","#2a6fb0"],["YT","YouTube analytics","#d43a32"],["WM","Web mentions","#2fa86a"]]);
+  tiles("#records", [["HS","HubSpot CRM","#e5673a"],["CC","Consent center","#5a7fd6"],["DA","Asset drive","#2f9e7a"],["BW","Brand wiki","#6b6f78"],
+                     ["CDP","Segment CDP","#3fb39b"],["US","Unified store","#d9a12b"],["PC","Publish calendar","#4b8bd9"]]);
+  tiles("#owner",   [["BV","Brand voice","#8b6cf0"],["$","Budget cap","#3c9a6a"],["AL","Approval list","#c98a2b"],["PO","Positioning","#5d6a80"]]);
+  tiles("#brain",   [["AM","Audience memory","#b4423b"],["PS","Post scores","#4e7fbf"],["VS","Voice samples","#7d68c9"],["CP","Competitor patterns","#2a2a2e"],["WR","Weekly reflection","#8c8c92"]]);
+  tiles("#engage",  [["DM","Instagram DMs","#c23d8f"],["CM","Comments","#d4663a"],["RV","Reviews","#4a9b5a"],["EM","Email","#3b7be0"],["CH","Site chat","#6a5cc4"]]);
+  tiles("#obs",     [["TR","Traces","#3fc7d6"],["EV","Evals","#8b6cf0"],["CO","Cost","#d9a12b"],["AL","Alerts","#e2483d"],["LG","Logs","#6b6f78"]]);
+
+  const steps = [["Collects","every signal"],["Scores","what matters now"],["Briefs","the right department"],
+                 ["Drafts","in your voice"],["Schedules","every channel"],["Approves","or tells the owner"]];
+  $("#steps").innerHTML = steps.map(([b, i]) => `<div class="step"><b>${b}</b><i>${i}</i></div>`).join("");
+
+  const kfiles = [["/brand-brain","voice-guide.md"],["/signals-seo","keyword-map.md"],["/content","hook-bank.md"],["/creative","visual-specs.md"],
+                  ["/social","channel-playbook.md"],["/reporting","weekly-roi.md"],["/conversation","reply-tone.md"],["/leads","scoring-rules.md"]];
+  $("#kfiles").innerHTML = kfiles.map(([d, f], k) => `<div class="kfile"><b>${d}</b><div>${(k * 3) % 7 + 2} files · ${f}</div></div>`).join("");
+  const access = [["▣","Owner dashboard"],["●","Approval queue"],["≡","Activity log"],["⚿","Permissions"],["!","Alerts"],["⏻","Kill switch"]];
+  $("#access").innerHTML = access.map(([e, l]) => `<div class="acc"><em>${e}</em>${l}</div>`).join("");
+
+  const depts = [
+    { n:"Market Radar", d:"Trends, competitors and hashtags, scanned every hour.", tools:[["TR","#e2483d"],["GT","#2fa86a"],["SR","#d94a6a"],["BW","#3b7be0"]],
+      st:["trending: retinol, +38%","flagging 3 competitor posts","2 new hashtags rising","rival ad spend up this week"] },
+    { n:"Search Visibility", d:"Keywords, on-page fixes and AI-search answers.", tools:[["GS","#3b7be0"],["AH","#e08a2b"],["SC","#4a9b5a"],["PX","#6a5cc4"]],
+      st:["logging 14 new queries","rank #4 → #2 on 'retinol night'","schema fix queued","answer box captured"] },
+    { n:"Content Engine", d:"Brief, draft, SEO pass, hook. It can't post in a voice that isn't yours.", tools:[["CD","#c96f4a"],["SB","#d9a12b"],["PR","#6b6f78"],["GR","#2f9e7a"]],
+      st:["script ready","drafting reel_042","hook test: 3 variants","caption in brand voice"] },
+    { n:"Creative Studio", d:"Visuals, video cuts and thumbnails, built to spec.", tools:[["FG","#a259ff"],["CV","#20c4cb"],["RW","#2a2a2e"],["HG","#d4663a"]],
+      st:["recording b-roll","rendering 9:16 cut","thumbnail A/B ready","colour grade applied"] },
+    { n:"Reviews & Reputation", d:"Every review answered within the hour, flagged if risky.", tools:[["GR","#4a9b5a"],["TP","#2fa86a"],["YP","#d43a32"],["FB","#3b5bdb"]],
+      st:["reply waiting for you","4 five-star replies sent","1 complaint escalated","rating 4.8 ★ steady"] },
+    { n:"Publishing & Social", d:"Schedules every channel. Routine posts ship themselves.", tools:[["IG","#c23d8f"],["TT","#2a2a2e"],["YT","#d43a32"],["in","#2a6fb0"]],
+      st:["scheduled for 19:00","calendar gap filled","carousel queued","story set for 12:30"] },
+    { n:"Leads & Conversations", d:"DMs and comments become scored, routed leads.", tools:[["DM","#c23d8f"],["HS","#e5673a"],["WA","#2fa86a"],["CL","#5a7fd6"]],
+      st:["1 lead tagged","replying to 6 DMs","hot lead sent to CRM","follow-up drafted"] },
+    { n:"Results & ROI", d:"What worked, what it cost, what to do more of.", tools:[["GA","#e08a2b"],["LK","#4b8bd9"],["SH","#3c9a6a"],["MX","#8b6cf0"]],
+      st:["weekly report built","ROAS 3.4x this week","top post: reel_039","budget pacing on track"] },
+  ];
+  $("#depts").innerHTML = depts.map((d, i) => `
+    <button class="dept" type="button" aria-pressed="${i === 2}">
+      <div class="dh"><h3><small>${String(i + 1).padStart(2, "0")}</small>${d.n}</h3><span class="pill ok">Live</span></div>
+      <div class="tiles sm">${d.tools.map(([a, c]) => `<div class="tile"><span class="ico" style="--c:${c}">${a}</span></div>`).join("")}</div>
+      <div class="status">${d.st[0]}</div>
+      <div class="bar"><i style="width:${35 + (i * 17) % 55}%"></i></div>
+    </button>`).join("");
+
+  const deptButtons = [...document.querySelectorAll(".dept")];
+  deptButtons.forEach((b, i) => b.addEventListener("click", () => {
+    deptButtons.forEach((x) => x.setAttribute("aria-pressed", x === b));
+    $("#fName").textContent = depts[i].n;
+    $("#fDesc").textContent = depts[i].d;
+    addMsg(depts[i].n, "Orchestrator", "In focus. Picking up the current brief.");
+  }));
+
+  /* feed */
+  const topics = ["IS RETINOL WORTH IT","NIGHT ROUTINE IN 3 STEPS","SPF MYTHS","OUR NEW SERUM","BEHIND THE LAB"];
+  const script = [
+    ["Publishing & Social","Orchestrator","A post grew viral overnight. Repurposing it, then boosting."],
+    ["Orchestrator","Content Engine","Brief: 30-second reel on the topic. Angle: purging vs breakout."],
+    ["Orchestrator","All departments","Briefs are out. Content Engine leads, the rest pick up their part."],
+    ["Publishing & Social","Orchestrator","Content calendar looks thin. Handled: filling it, then scheduling posts."],
+    ["Content Engine","Orchestrator","Draft ready, reel_042. Hook scored 8.7 against the voice guide."],
+    ["Market Radar","Orchestrator","Search volume for the topic is up 38%. Moving it to prime time."],
+    ["Creative Studio","Content Engine","Thumbnail and 9:16 cut rendered. Captions burned in."],
+    ["Reviews & Reputation","Owner","One review mentions a reaction. Drafted a careful reply for your approval."],
+    ["Leads & Conversations","Orchestrator","DM at 02:14 asking about pricing. Reply sent, lead scored 82."],
+    ["Results & ROI","Orchestrator","Last week: 3.4x return on ad spend. Recommending more short video."],
+    ["Search Visibility","Content Engine","Add 'retinol at night' to the caption. It ranks #2 now."],
+  ];
+  const feed = $("#feed");
+  function addMsg(from, to, text) {
+    const m = document.createElement("div");
+    m.className = "msg";
+    m.innerHTML = `<div class="mh"><span><b></b> → <span class="to"></span></span><span>${now()}</span></div><p></p>`;
+    m.querySelector("b").textContent = from;
+    m.querySelector(".to").textContent = to;
+    m.querySelector("p").textContent = text;
+    feed.prepend(m);
+    while (feed.children.length > 6) feed.lastChild.remove();
+  }
+  let si = 0;
+  for (let k = 0; k < 5; k++) { const [a, b, c] = script[si++]; addMsg(a, b, c); }
+
+  /* terminal */
+  const term = $("#term");
+  const tlines = [
+    ["cmd","$ orchestrator dispatch --to all"],["","✓ 8 departments briefed"],["cmd","$ agent interrupt --event content-calendar-looks-thin"],
+    ["","✓ claude.fill_calendar()"],["","✓ fills calendar"],["cmd","$ scheduler.schedule_posts()"],["","✓ schedules posts"],
+    ["cmd","$ claude.messages.create({ stream: true })"],["","  tokens: 643"],["","✓ writer.review(draft)"],["warn","  SEO score: 41 → 88"],
+    ["","✓ guardrails.check(draft) voice=pass"],["cmd","$ reply.send --channel ig_dm"],["","✓ lead scored: 82 → crm"],["warn","! approval needed: review_reply_17"],
+  ];
+  let ti = 0;
+  function addLine() {
+    const [cls, t] = tlines[ti++ % tlines.length];
+    const d = document.createElement("div");
+    d.className = "tl " + cls;
+    d.textContent = t;
+    term.appendChild(d);
+    while (term.children.length > 11) term.children[1].remove();
+  }
+  for (let k = 0; k < 9; k++) addLine();
+
+  /* approvals */
+  const approvals = [
+    ["Reply to a sensitive review","Reviews & Reputation · review_reply_17"],
+    ["Raise boost budget by $40","Publishing & Social · edge case"],
+    ["Reel_042 mentions a medical claim","Content Engine · guardrail flag"],
+    ["Collab DM from a creator","Leads & Conversations · partnership"],
+  ];
+  const queue = $("#queue");
+  let aq = 0, waiting = 0;
+  function renderWait() {
+    $("#qCount").textContent = waiting + " waiting";
+    $("#sWait").textContent = waiting;
+    if (!queue.querySelector(".qi")) queue.innerHTML = '<div class="empty">Nothing waiting. Routine work is shipping on its own.</div>';
+  }
+  function addApproval() {
+    if (waiting >= 3) return;
+    const [t, s] = approvals[aq++ % approvals.length];
+    queue.querySelector(".empty")?.remove();
+    const q = document.createElement("div");
+    q.className = "qi";
+    q.innerHTML = `<p><span></span><small></small></p><button type="button">Approve</button>`;
+    q.querySelector("p span").textContent = t;
+    q.querySelector("p small").textContent = s;
+    const btn = q.querySelector("button");
+    btn.addEventListener("click", () => {
+      if (q.classList.contains("done")) return;
+      q.classList.add("done");
+      btn.textContent = "Approved";
+      waiting--;
+      renderWait();
+      addMsg("Owner", "Orchestrator", `Approved: ${t}.`);
+      setTimeout(() => { q.remove(); renderWait(); }, 2200);
+    });
+    queue.prepend(q);
+    waiting++;
+    renderWait();
+  }
+  addApproval(); addApproval();
+
+  /* ticking loop */
+  const counters = { sSignals: 8, sPosts: 112, sReplies: 97, sReviews: 108, sLeads: 168 };
+  const stepEls = [...document.querySelectorAll(".step")];
+  const kf = [...document.querySelectorAll(".kfile")];
+  const ac = [...document.querySelectorAll(".acc")];
+  const pingable = [...document.querySelectorAll("#signals .tile, #engage .tile, #records .tile")];
+  let step = 0, prog = 0, tick = 0;
+  function frame() {
+    tick++;
+    stepEls.forEach((el, k) => { el.classList.toggle("done", k < step); el.classList.toggle("on", k === step); });
+    kf.forEach((el, k) => el.classList.toggle("read", k === tick % kf.length || k === (tick * 3 + 1) % kf.length));
+    ac.forEach((el, k) => el.classList.toggle("on", k === tick % 3));
+    pingable.forEach((el) => el.classList.remove("ping"));
+    pick(pingable).classList.add("ping"); pick(pingable).classList.add("ping");
+    const di = Math.floor(Math.random() * deptButtons.length);
+    deptButtons[di].querySelector(".status").textContent = pick(depts[di].st);
+    deptButtons[di].querySelector(".bar i").style.width = (20 + Math.random() * 80) + "%";
+    const key = pick(Object.keys(counters));
+    counters[key] += 1 + Math.floor(Math.random() * 3);
+    if (Math.random() < .5) counters.sSignals += 1 + Math.floor(Math.random() * 4);
+    Object.entries(counters).forEach(([k, v]) => { $("#" + k).textContent = v; });
+    prog = (prog + 7) % 100;
+    $("#prog").style.width = prog + "%";
+    if (prog < 7) $("#topic").textContent = `TOPIC · "${pick(topics)}"`;
+    addLine();
+    if (tick % 3 === 0) step = (step + 1) % (steps.length + 1);
+    if (tick % 4 === 0) { const [a, b, c] = script[si++ % script.length]; addMsg(a, b, c); }
+    if (tick % 9 === 0) addApproval();
+  }
+  frame();
+  if (!reduce) setInterval(frame, 1400);
+
+  const clock = () => { $("#clock").textContent = "LIVE " + now(); };
+  clock();
+  setInterval(clock, 15000);
+})();
+</script>
