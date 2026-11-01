@@ -6,9 +6,10 @@
 <title>Emotionally Focused Therapy · Kindred Room</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="description" content="What Emotionally Focused Therapy (EFT) is, how it works and what to expect, explained by Helena Marsh, certified EFT therapist in Surry Hills, Sydney.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="preload" as="image" href="images/hands.webp" imagesrcset="images/hands-640.webp 640w, images/hands-1200.webp 1200w, images/hands.webp 1300w" imagesizes="(max-width: 900px) 92vw, 46vw" fetchpriority="high">
+<link rel="preload" href="fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/jost-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body class="no-js">
@@ -48,7 +49,7 @@
           <a class="link" href="#stages">The three stages</a>
         </div>
       </div>
-      <figure class="frame"><img src="images/hands.webp" alt="Two hands reaching toward each other over ivory linen" fetchpriority="high"></figure>
+      <figure class="frame"><img src="images/hands.webp" srcset="images/hands-640.webp 640w, images/hands-1200.webp 1200w, images/hands.webp 1300w" sizes="(max-width: 900px) 92vw, 46vw" alt="Two hands reaching toward each other over ivory linen" fetchpriority="high"></figure>
     </div>
   </section>
 
@@ -72,7 +73,7 @@
       <p class="eyebrow">How it works</p>
       <h2>Three stages of <em>change</em></h2>
       <div class="split" style="margin-top:56px">
-        <figure class="sticky" style="overflow:hidden;aspect-ratio:4/5;max-width:100%;border-radius:300px 300px 0 0"><img src="images/couples.webp" alt="" loading="lazy" style="width:100%;height:115%;object-fit:cover" data-speed="-0.06"></figure>
+        <figure class="sticky" style="overflow:hidden;aspect-ratio:4/5;max-width:100%;border-radius:300px 300px 0 0"><img src="images/couples.webp" srcset="images/couples-640.webp 640w, images/couples.webp 1100w" sizes="(max-width: 900px) 92vw, 46vw" alt="" loading="lazy" style="width:100%;height:115%;object-fit:cover" data-speed="-0.06"></figure>
         <ol class="steps">
           <li><span class="stage">Stage one</span><div><h3>De-escalation</h3><p>We identify the negative cycle that takes over when you feel disconnected, and see how each of you gets caught in it. As you start to see the cycle as the enemy, conflict begins to soften.</p></div></li>
           <li><span class="stage">Stage two</span><div><h3>Restructuring the bond</h3><p>We slowly explore the feelings and needs beneath the reactions: fear of not mattering, of not being enough, of being left. Sharing these, and being met, creates new moments of closeness.</p></div></li>
@@ -95,7 +96,7 @@
   </section>
 
   <figure class="wide-photo">
-    <img src="images/coast.webp" alt="A misty Sydney headland at dawn" loading="lazy" data-speed="0.07">
+    <img src="images/coast.webp" srcset="images/coast-640.webp 640w, images/coast-1200.webp 1200w, images/coast.webp 2400w" sizes="100vw" alt="A misty Sydney headland at dawn" loading="lazy" data-speed="0.07">
     <figcaption>Secure connection is something we build, together.</figcaption>
   </figure>
 
@@ -134,15 +135,15 @@
         <p style="margin-top:22px;max-width:22em">Relationship- and attachment-focused psychotherapy for couples and individuals.</p>
       </div>
       <div>
-        <h4>Therapy</h4>
+        <h2 class="fh">Therapy</h2>
         <ul><li><a href="individual-therapy.html">Individual</a></li><li><a href="couples-therapy.html">Couples</a></li><li><a href="eft.html">EFT</a></li></ul>
       </div>
       <div>
-        <h4>Practice</h4>
+        <h2 class="fh">Practice</h2>
         <ul><li><a href="about.html">About Helena</a></li><li><a href="resources.html">Resources</a></li><li><a href="contact.html">Contact</a></li></ul>
       </div>
       <div>
-        <h4>Visit</h4>
+        <h2 class="fh">Visit</h2>
         <ul><li>Suite 3, 112 Crown Street</li><li>Surry Hills NSW 2010</li><li>(02) 5550 1247</li><li>hello@kindredroom.com.au</li></ul>
       </div>
     </div>
@@ -156,7 +157,7 @@
 
 <div class="cursor" aria-hidden="true"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js"></script>
-<script src="site.js"></script>
+<script src="lenis.min.js" defer></script>
+<script src="site.js" defer></script>
 </body>
 </html>

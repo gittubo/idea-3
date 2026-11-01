@@ -6,9 +6,10 @@
 <title>Couples Therapy · Kindred Room</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="description" content="Emotionally Focused couples therapy in Surry Hills and online. Help for conflict, distance, affairs and rebuilding trust, with Helena Marsh.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="preload" as="image" href="images/couples.webp" imagesrcset="images/couples-640.webp 640w, images/couples.webp 1100w" imagesizes="(max-width: 900px) 92vw, 46vw" fetchpriority="high">
+<link rel="preload" href="fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/jost-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body class="no-js">
@@ -48,7 +49,7 @@
           <a class="link" href="#fees">Fees</a>
         </div>
       </div>
-      <figure class="frame"><img src="images/couples.webp" alt="A couple resting together on a linen sofa" fetchpriority="high"></figure>
+      <figure class="frame"><img src="images/couples.webp" srcset="images/couples-640.webp 640w, images/couples.webp 1100w" sizes="(max-width: 900px) 92vw, 46vw" alt="A couple resting together on a linen sofa" fetchpriority="high"></figure>
     </div>
   </section>
 
@@ -72,7 +73,7 @@
   </section>
 
   <figure class="wide-photo">
-    <img src="images/beach.webp" alt="A couple walking hand in hand along a Sydney beach at golden hour" loading="lazy" data-speed="0.07">
+    <img src="images/beach.webp" srcset="images/beach-640.webp 640w, images/beach-1200.webp 1200w, images/beach.webp 2400w" sizes="100vw" alt="A couple walking hand in hand along a Sydney beach at golden hour" loading="lazy" data-speed="0.07">
     <figcaption>The goal isn't to never disagree. It's to find each other again afterwards.</figcaption>
   </figure>
 
@@ -147,15 +148,15 @@
         <p style="margin-top:22px;max-width:22em">Relationship- and attachment-focused psychotherapy for couples and individuals.</p>
       </div>
       <div>
-        <h4>Therapy</h4>
+        <h2 class="fh">Therapy</h2>
         <ul><li><a href="individual-therapy.html">Individual</a></li><li><a href="couples-therapy.html">Couples</a></li><li><a href="eft.html">EFT</a></li></ul>
       </div>
       <div>
-        <h4>Practice</h4>
+        <h2 class="fh">Practice</h2>
         <ul><li><a href="about.html">About Helena</a></li><li><a href="resources.html">Resources</a></li><li><a href="contact.html">Contact</a></li></ul>
       </div>
       <div>
-        <h4>Visit</h4>
+        <h2 class="fh">Visit</h2>
         <ul><li>Suite 3, 112 Crown Street</li><li>Surry Hills NSW 2010</li><li>(02) 5550 1247</li><li>hello@kindredroom.com.au</li></ul>
       </div>
     </div>
@@ -169,7 +170,7 @@
 
 <div class="cursor" aria-hidden="true"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js"></script>
-<script src="site.js"></script>
+<script src="lenis.min.js" defer></script>
+<script src="site.js" defer></script>
 </body>
 </html>

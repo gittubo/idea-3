@@ -6,9 +6,10 @@
 <title>Kindred Room Psychotherapy</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="description" content="Kindred Room is the Surry Hills practice of Helena Marsh, clinical psychotherapist. Emotionally Focused Therapy for couples and individuals in Sydney and online.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="preload" as="image" href="images/hero.webp" imagesrcset="images/hero-640.webp 640w, images/hero-1200.webp 1200w, images/hero.webp 2400w" imagesizes="100vw" fetchpriority="high">
+<link rel="preload" href="fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/jost-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body class="no-js">
@@ -39,7 +40,7 @@
 
   <section class="hero" aria-label="Introduction">
     <div class="hero-media" data-speed="0.25">
-      <img src="images/hero.webp" alt="A calm, sunlit consulting room with linen armchairs, olive branches and a view of Sydney Harbour" fetchpriority="high">
+      <img src="images/hero.webp" srcset="images/hero-640.webp 640w, images/hero-1200.webp 1200w, images/hero.webp 2400w" sizes="100vw" alt="A calm, sunlit consulting room with linen armchairs, olive branches and a view of Sydney Harbour" fetchpriority="high">
     </div>
     <div class="wrap">
       <div class="hero-copy">
@@ -94,21 +95,21 @@
       </div>
       <div class="cards">
         <a class="card" href="individual-therapy.html">
-          <div class="frame"><img src="images/individual.webp" alt="A woman holding a cup of tea, looking out of a sunlit window" loading="lazy"></div>
+          <div class="frame"><img src="images/individual.webp" srcset="images/individual-640.webp 640w, images/individual.webp 1100w" sizes="(max-width: 900px) 92vw, 46vw" alt="A woman holding a cup of tea, looking out of a sunlit window" loading="lazy"></div>
           <div class="meta"><small>For one</small><small>50 min</small></div>
           <h3>Individual Therapy</h3>
           <p>For anxiety in relationships, grief, life transitions and the patterns you carry from earlier attachments.</p>
           <span class="link">Explore</span>
         </a>
         <a class="card" href="couples-therapy.html">
-          <div class="frame"><img src="images/couples.webp" alt="A couple resting together on a linen sofa, her head on his shoulder" loading="lazy"></div>
+          <div class="frame"><img src="images/couples.webp" srcset="images/couples-640.webp 640w, images/couples.webp 1100w" sizes="(max-width: 900px) 92vw, 46vw" alt="A couple resting together on a linen sofa, her head on his shoulder" loading="lazy"></div>
           <div class="meta"><small>For two</small><small>80 min</small></div>
           <h3>Couples Therapy</h3>
           <p>For couples caught in cycles of distance or conflict, recovering after an affair, or wanting to deepen what's already good.</p>
           <span class="link">Explore</span>
         </a>
         <a class="card" href="eft.html">
-          <div class="frame"><img src="images/hands.webp" alt="Two hands reaching toward each other over soft ivory linen" loading="lazy"></div>
+          <div class="frame"><img src="images/hands.webp" srcset="images/hands-640.webp 640w, images/hands-1200.webp 1200w, images/hands.webp 1300w" sizes="(max-width: 900px) 92vw, 46vw" alt="Two hands reaching toward each other over soft ivory linen" loading="lazy"></div>
           <div class="meta"><small>The approach</small><small>EFT</small></div>
           <h3>Emotionally Focused Therapy</h3>
           <p>A structured, evidence-based approach grounded in attachment science, for lasting emotional connection.</p>
@@ -120,7 +121,7 @@
 
   <section class="breath" id="breath" aria-label="A moment to pause">
     <div class="breath-stage">
-      <img src="images/coast.webp" alt="" loading="lazy">
+      <img src="images/coast.webp" srcset="images/coast-640.webp 640w, images/coast-1200.webp 1200w, images/coast.webp 2400w" sizes="100vw" alt="" loading="lazy">
       <div class="orb" aria-hidden="true"></div>
       <div class="breath-text">
         <p class="cue" data-phase="in" aria-hidden="true">Breathe in<small>Take a moment</small></p>
@@ -135,7 +136,7 @@
   <section class="eft" id="eft">
     <div class="wrap eft-grid">
       <figure class="eft-media">
-        <div class="frame"><img src="images/hands.webp" alt="" loading="lazy" data-speed="-0.08"></div>
+        <div class="frame"><img src="images/hands.webp" srcset="images/hands-640.webp 640w, images/hands-1200.webp 1200w, images/hands.webp 1300w" sizes="(max-width: 900px) 92vw, 46vw" alt="" loading="lazy" data-speed="-0.08"></div>
         <figcaption>EFT is one of the most researched approaches to couples therapy.</figcaption>
       </figure>
       <div>
@@ -155,7 +156,7 @@
   <section class="about" id="about">
     <div class="wrap about-grid">
       <figure class="frame">
-        <img src="images/portrait.webp" alt="Helena Marsh, psychotherapist, seated in her consulting room" loading="lazy" data-speed="-0.06">
+        <img src="images/portrait.webp" srcset="images/portrait-640.webp 640w, images/portrait.webp 1200w" sizes="(max-width: 900px) 92vw, 46vw" alt="Helena Marsh, psychotherapist, seated in her consulting room" loading="lazy" data-speed="-0.06">
         <figcaption class="tag">Helena Marsh<small>Clinical Psychotherapist</small></figcaption>
       </figure>
       <div>
@@ -194,7 +195,7 @@
 
   <section class="resources" id="resources">
     <div class="wrap res-grid">
-      <figure class="frame"><img src="images/stilllife.webp" alt="An open book, reading glasses and a cup of tea on an oak table in afternoon light" loading="lazy"></figure>
+      <figure class="frame"><img src="images/stilllife.webp" srcset="images/stilllife-640.webp 640w, images/stilllife-1200.webp 1200w, images/stilllife.webp 1400w" sizes="(max-width: 900px) 92vw, 46vw" alt="An open book, reading glasses and a cup of tea on an oak table in afternoon light" loading="lazy"></figure>
       <div>
         <p class="eyebrow">Resources</p>
         <h2>Reading for <em>between sessions</em></h2>
@@ -209,7 +210,7 @@
   </section>
 
   <section class="cta" id="contact">
-    <img src="images/hero.webp" alt="" loading="lazy" data-speed="0.07">
+    <img src="images/hero.webp" srcset="images/hero-640.webp 640w, images/hero-1200.webp 1200w, images/hero.webp 2400w" sizes="100vw" alt="" loading="lazy" data-speed="0.07">
     <div class="wrap">
       <p class="eyebrow">Begin when you're ready</p>
       <h2>Reaching out is often <em>the hardest step.</em></h2>
@@ -231,15 +232,15 @@
         <p style="margin-top:22px;max-width:22em">Relationship- and attachment-focused psychotherapy for couples and individuals.</p>
       </div>
       <div>
-        <h4>Therapy</h4>
+        <h2 class="fh">Therapy</h2>
         <ul><li><a href="individual-therapy.html">Individual</a></li><li><a href="couples-therapy.html">Couples</a></li><li><a href="eft.html">EFT</a></li></ul>
       </div>
       <div>
-        <h4>Practice</h4>
+        <h2 class="fh">Practice</h2>
         <ul><li><a href="about.html">About Helena</a></li><li><a href="resources.html">Resources</a></li><li><a href="contact.html">Contact</a></li></ul>
       </div>
       <div>
-        <h4>Visit</h4>
+        <h2 class="fh">Visit</h2>
         <ul><li>Suite 3, 112 Crown Street</li><li>Surry Hills NSW 2010</li><li>(02) 5550 1247</li><li>hello@kindredroom.com.au</li></ul>
       </div>
     </div>
@@ -253,7 +254,7 @@
 
 <div class="cursor" aria-hidden="true"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js"></script>
-<script src="site.js"></script>
+<script src="lenis.min.js" defer></script>
+<script src="site.js" defer></script>
 </body>
 </html>

@@ -23,9 +23,9 @@ HEAD = """<!doctype html>
 <title>{title}</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="description" content="{desc}">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="preload" href="fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/jost-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body class="no-js">
@@ -60,15 +60,15 @@ FOOT = """</main>
         <p style="margin-top:22px;max-width:22em">Relationship- and attachment-focused psychotherapy for couples and individuals.</p>
       </div>
       <div>
-        <h4>Therapy</h4>
+        <h2 class="fh">Therapy</h2>
         <ul><li><a href="individual-therapy.html">Individual</a></li><li><a href="couples-therapy.html">Couples</a></li><li><a href="eft.html">EFT</a></li></ul>
       </div>
       <div>
-        <h4>Practice</h4>
+        <h2 class="fh">Practice</h2>
         <ul><li><a href="about.html">About Helena</a></li><li><a href="resources.html">Resources</a></li><li><a href="contact.html">Contact</a></li></ul>
       </div>
       <div>
-        <h4>Visit</h4>
+        <h2 class="fh">Visit</h2>
         <ul><li>Suite 3, 112 Crown Street</li><li>Surry Hills NSW 2010</li><li>(02) 5550 1247</li><li>hello@kindredroom.com.au</li></ul>
       </div>
     </div>
@@ -82,11 +82,31 @@ FOOT = """</main>
 
 <div class="cursor" aria-hidden="true"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js"></script>
-<script src="site.js"></script>
+<script src="lenis.min.js" defer></script>
+<script src="site.js" defer></script>
 </body>
 </html>
 """
+
+# Full width of each photo in images/, plus the smaller copies made from it.
+WIDTHS = {
+    "hero": 2400, "coast": 2400, "beach": 2400, "shelf": 1600, "stilllife": 1400, "hands": 1300,
+    "portrait": 1200, "writing": 1200, "door": 1200, "individual": 1100, "couples": 1100,
+}
+FULL_BLEED = {"hero", "coast", "beach"}
+
+
+def srcset(name):
+    full = WIDTHS[name]
+    parts = [f"images/{name}-{w}.webp {w}w" for w in (640, 1200) if w < full]
+    return ", ".join(parts + [f"images/{name}.webp {full}w"])
+
+
+def responsive(match):
+    name, rest = match.group(1), match.group(2)
+    sizes = "100vw" if name in FULL_BLEED else "(max-width: 900px) 92vw, 46vw"
+    return f'<img src="images/{name}.webp" srcset="{srcset(name)}" sizes="{sizes}"{rest}'
+
 
 for frag in sorted((HERE / "pages").glob("*.html")):
     text = frag.read_text()
@@ -98,7 +118,16 @@ for frag in sorted((HERE / "pages").glob("*.html")):
         f'        <li><a href="{href}"{current if key == fields.get("nav") else ""}>{label}</a></li>'
         for key, href, label in NAV
     )
+    body = re.sub(r'<img src="images/(\w+)\.webp"([^>]*>)', responsive, text[meta.end():])
+    # Preload the first photo so phones start fetching it before the stylesheet arrives.
+    first = re.search(r'<img src="images/(\w+)\.webp"[^>]*fetchpriority="high"', body)
+    preload = ""
+    if first:
+        name = first.group(1)
+        sizes = "100vw" if name in FULL_BLEED else "(max-width: 900px) 92vw, 46vw"
+        preload = f'<link rel="preload" as="image" href="images/{name}.webp" imagesrcset="{srcset(name)}" imagesizes="{sizes}" fetchpriority="high">\n'
     page = HEAD.format(title=html.escape(fields["title"]), desc=html.escape(fields["desc"]), nav=nav)
-    page += text[meta.end():].rstrip() + "\n\n" + FOOT
+    page = page.replace('<link rel="preload" href="fonts/', preload + '<link rel="preload" href="fonts/', 1)
+    page += body.rstrip() + "\n\n" + FOOT
     (HERE / frag.name).write_text(page)
     print("built", frag.name)
