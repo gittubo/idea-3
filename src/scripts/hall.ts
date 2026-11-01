@@ -23,6 +23,8 @@ export interface HallItem {
   /** Painted surface height in metres. */
   height: number;
   place: Placement;
+  /** Colour of its spotlights: warm for oils (Room I), cool for drawings (Room II). */
+  light?: 'warm' | 'cool';
 }
 
 export interface Pose { pos: THREE.Vector3; target: THREE.Vector3; fov: number }
@@ -34,9 +36,10 @@ export type Pick = { kind: 'painting'; index: number } | { kind: 'floor'; point:
 export const EYE = 1.65;
 const BASE = 0.38;              // paintings stand this far off the floor
 const SURFACE = 0.045;          // painted surface in front of the panel's centre
-export const BOUNDS = { minX: -11, maxX: 11, minZ: -5.5, maxZ: 9.5 };
-const ROOM = { w: 28, d: 22, h: 9.5, z: 0 }; // centred on x = 0, z = ROOM.z
-const SPOT = 260;               // candela per spotlight
+export const BOUNDS = { minX: -10.5, maxX: 10.5, minZ: -7, maxZ: 10 };
+const ROOM = { w: 30, d: 24, h: 9.5, z: -0.5 }; // centred on x = 0, z = ROOM.z
+const SPOT = 300;               // candela per spotlight
+const WASH = 90;                // overhead lights washing the floor
 
 const paintVert = /* glsl */ `
   varying vec2 vUv;
@@ -53,7 +56,7 @@ const paintFrag = /* glsl */ `
     vec3 c = texture2D(map, vUv).rgb;
     float dx = vUv.x - 0.5, dy = 1.0 - vUv.y;
     float pool = exp(-(dx * dx * 2.4 + dy * dy * 1.4));
-    vec3 lit = c * (0.62 + 0.45 * pool) * uGlow;
+    vec3 lit = c * (0.78 + 0.36 * pool) * uGlow;
     c = mix(c, lit, uLit);
     // in the reflection pass the target is linear light
     c = mix(c, pow(c, vec3(2.2)), uToLinear);
@@ -135,7 +138,8 @@ export class Hall {
   private hung: Hung[] = [];
   private pickables: THREE.Object3D[] = [];
   private raycaster = new THREE.Raycaster();
-  private hemi = new THREE.HemisphereLight(0x9aa3b2, 0x1c1b1a, 0.9);
+  private hemi = new THREE.HemisphereLight(0xb4bccb, 0x2a2826, 2.2);
+  private washes: THREE.SpotLight[] = [];
   private glows: THREE.SpriteMaterial[] = [];
   private rtReflect: THREE.WebGLRenderTarget;
   private rtA: THREE.WebGLRenderTarget;
@@ -151,8 +155,8 @@ export class Hall {
   fov = 55;
 
   constructor(private renderer: THREE.WebGLRenderer, readonly items: HallItem[]) {
-    this.scene.background = new THREE.Color(0x060606);
-    this.scene.fog = new THREE.Fog(0x060606, 26, 70);
+    this.scene.background = new THREE.Color(0x0b0b0c);
+    this.scene.fog = new THREE.Fog(0x0b0b0c, 30, 80);
     this.scene.add(this.world);
     const opts = { type: THREE.HalfFloatType, depthBuffer: true };
     this.rtReflect = new THREE.WebGLRenderTarget(1, 1, opts);
@@ -176,7 +180,7 @@ export class Hall {
     // floor: polished concrete, reflection added in its shader
     const concrete = concreteTexture(512);
     concrete.repeat.set(9, 9);
-    const floorMat = new THREE.MeshStandardMaterial({ map: concrete, roughness: 0.55, metalness: 0, color: 0xc4c4c6 });
+    const floorMat = new THREE.MeshStandardMaterial({ map: concrete, roughness: 0.5, metalness: 0, color: 0xffffff });
     floorMat.onBeforeCompile = (sh) => {
       Object.assign(sh.uniforms, this.floorUniforms);
       sh.fragmentShader = 'uniform sampler2D tReflect;\nuniform vec2 uRes;\nuniform float uStrength;\n' +
@@ -198,17 +202,17 @@ export class Hall {
     // walls and ceiling: near-black, barely there
     const shell = this.shell = new THREE.Mesh(
       new THREE.BoxGeometry(ROOM.w, ROOM.h, ROOM.d),
-      new THREE.MeshStandardMaterial({ color: 0x1d1d1f, roughness: 0.95, side: THREE.BackSide }),
+      new THREE.MeshStandardMaterial({ color: 0x3a3a3d, roughness: 0.95, side: THREE.BackSide }),
     );
     shell.position.set(0, ROOM.h / 2 - 0.02, ROOM.z);
     W.add(shell);
     this.pickables.push(shell);
 
     // steel trusses with track lights
-    const steel = new THREE.MeshStandardMaterial({ color: 0x232325, roughness: 0.5, metalness: 0.5 });
+    const steel = new THREE.MeshStandardMaterial({ color: 0x4a4a4f, roughness: 0.5, metalness: 0.45 });
     const fixture = new THREE.MeshBasicMaterial({ color: 0xfff1dc });
     const glowTex = glowTexture();
-    const zs = [-9, -5, -1, 3, 7];
+    const zs = [-10, -6, -2, 2, 6, 10];
     for (const z of zs) {
       const beam = new THREE.Mesh(new THREE.BoxGeometry(ROOM.w, 0.55, 0.28), steel);
       beam.position.set(0, ROOM.h - 0.7, z);
@@ -217,11 +221,11 @@ export class Hall {
       chord.position.set(0, ROOM.h - 1.35, z);
       W.add(chord);
     }
-    for (const x of [-9, -4.5, 0, 4.5, 9]) {
+    for (const x of [-10, -5, 0, 5, 10]) {
       const rail = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, ROOM.d), steel);
       rail.position.set(x, ROOM.h - 1.5, ROOM.z);
       W.add(rail);
-      for (let z = -9.6; z <= 10; z += 3.4) {
+      for (let z = -11; z <= 10.5; z += 3.4) {
         const zz = z + (x * 0.37) % 1.2;
         const can = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, 0.22, 12), steel);
         can.position.set(x, ROOM.h - 1.68, zz);
@@ -237,6 +241,15 @@ export class Hall {
         glow.position.set(x, ROOM.h - 1.86, zz);
         W.add(glow);
       }
+    }
+
+    // overhead washes: soft pools on the concrete, like the reference hall
+    for (const [x, z] of [[-6, 4], [6, 4], [0, -1], [-7, -3], [7, -3], [0, 7]]) {
+      const w = new THREE.SpotLight(0xf3eadf, WASH, 0, 0.62, 1, 2);
+      w.position.set(x, ROOM.h - 1.8, z);
+      w.target.position.set(x, 0, z + 0.5);
+      W.add(w, w.target);
+      this.washes.push(w);
     }
 
     // paintings
@@ -282,7 +295,7 @@ export class Hall {
       const side = new THREE.Vector3(normal.z, 0, -normal.x);
       const lamps: THREE.SpotLight[] = [];
       for (const s of [-1, 1]) {
-        const lamp = new THREE.SpotLight(0xffd9ad, SPOT, 0, 0.42, 0.75, 2);
+        const lamp = new THREE.SpotLight(item.light === 'cool' ? 0xdfe8ff : 0xffd9ad, SPOT, 0, 0.42, 0.75, 2);
         lamp.position.copy(center).addScaledVector(normal, 4.2).addScaledVector(side, s * w * 0.28);
         lamp.position.y = ROOM.h - 1.8;
         lamp.target.position.copy(center).addScaledVector(side, s * w * 0.12);
@@ -367,7 +380,8 @@ export class Hall {
 
   update(hover: number, dt: number) {
     const k = this.dim;
-    this.hemi.intensity = 0.9 * k;
+    this.hemi.intensity = 2.2 * k;
+    for (const w of this.washes) w.intensity = WASH * k;
     for (const g of this.glows) g.opacity = 0.35 + 0.65 * k;
     this.floorUniforms.uStrength.value = 0.62 * k;
     for (let i = 0; i < this.hung.length; i++) {

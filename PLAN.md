@@ -18,7 +18,11 @@ Following the reference photo (a dark exhibition hall with monumental paintings,
    - Zooming out past the whole painting, the back icon, or Escape walks you back into the hall.
    - There is no scripted storyline. The story sheets in Section 7 stay as internal notes for composing each painting.
 
-All three Room I paintings are explorable. "The Apprentice" and "The Wings" use a single smoothed depth layer (`"mode": "single"` in `pipeline/*.json`).
+**v5:** Room II joins the same hall. The hall now holds all six pieces: the oils on the left under warm light, the drawings on the right under cool light. The hall is brighter, closer to the reference photo, with visible trusses and walls and a grey lit floor.
+
+**Optional guided view:** a play button inside each painting moves the camera through that painting's stops (from its story sheet) and ends on the hidden detail, then pulls back to the whole painting. It is off unless the visitor presses it. Any drag, zoom or key press hands control straight back. The stops live in `src/pieces/collection.ts`.
+
+All six paintings are explorable. "The Apprentice" and "The Wings" use a single smoothed depth layer (`"mode": "single"` in `pipeline/*.json`).
 
 ---
 

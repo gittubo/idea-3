@@ -11,13 +11,13 @@ import * as THREE from 'three';
 import { Hall, EYE, copyPose, newPose, type Pose } from './hall';
 import { DepthScene, type PieceMeta } from './depth-scene';
 import { Explorer } from './explorer';
-import type { RoomEntry } from '../pieces/room-1';
+import type { Painting as RoomEntry } from '../pieces/collection';
 
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
 const ease = (t: number) => t * t * (3 - 2 * t);
 const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 const HALL_DIM = 0.3;     // how lit the hall stays around a painting being explored
-const START = { x: 0, z: 6.2, yaw: 0, pitch: 0.06 };
+const START = { x: 0, z: 8.8, yaw: 0, pitch: 0.07 };
 
 type Mode = 'hall' | 'moving' | 'exploring' | 'leaving';
 interface Journey { scene: DepthScene; explorer: Explorer }
@@ -49,7 +49,7 @@ export async function startMuseum(entries: RoomEntry[]) {
     return;
   }
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.25;
+  renderer.toneMappingExposure = 1.3;
   renderer.autoClear = false;
   renderer.setClearColor(0x060606, 1);
 
@@ -357,7 +357,7 @@ export async function startMuseum(entries: RoomEntry[]) {
         ArrowUp: () => ex.panBy(0, vh * step, vw, vh), ArrowDown: () => ex.panBy(0, -vh * step, vw, vh),
         '+': () => ex.zoomAt(1.5, vw / 2, vh / 2, vw, vh), '=': () => ex.zoomAt(1.5, vw / 2, vh / 2, vw, vh),
         '-': () => (ex.goalZoom <= 1.001 ? leave() : ex.zoomAt(1 / 1.5, vw / 2, vh / 2, vw, vh)),
-        '0': () => ex.reset(), Escape: () => leave(),
+        '0': () => ex.reset(), Escape: () => leave(), p: toggleGuide, ' ': toggleGuide,
       };
       if (keys[e.key]) { e.preventDefault(); keys[e.key](); }
     } else if (mode === 'hall') {
@@ -382,6 +382,16 @@ export async function startMuseum(entries: RoomEntry[]) {
     if (ex.goalZoom <= 1.001) leave(); else ex.zoomAt(1 / 1.6, vw / 2, vh / 2, vw, vh);
   });
   $('.zoom-fit').addEventListener('click', () => { if (mode === 'exploring') ready.get(active)!.explorer.reset(); });
+  function toggleGuide() {
+    if (mode !== 'exploring') return;
+    const ex = ready.get(active)!.explorer;
+    if (ex.guiding) { ex.stopGuide(); return; }
+    root.classList.add('guiding');
+    guideBtn.setAttribute('aria-pressed', 'true');
+    ex.playGuide(entries[active].guide, () => { root.classList.remove('guiding'); guideBtn.setAttribute('aria-pressed', 'false'); });
+  }
+  const guideBtn = $<HTMLButtonElement>('.guide-btn');
+  guideBtn.addEventListener('click', toggleGuide);
   backBtn.addEventListener('click', () => leave());
 
   // keyboard and screen-reader route to each painting

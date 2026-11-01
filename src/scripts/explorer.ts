@@ -11,6 +11,11 @@ import { DepthScene } from './depth-scene';
 const PARALLAX = 0.55;   // share of a pan made by moving the camera (the rest is turning it)
 const MIN_VISIBLE = 0.07; // closest zoom: this fraction of the painting's height fills the screen
 
+/** A stop on the optional guided view. h: fraction of the painting's height in view; hold: seconds to linger. */
+export interface GuideStop { u: number; v: number; h: number; hold: number }
+interface View { zoom: number; u: number; v: number }
+const smoother = (t: number) => t * t * t * (t * (t * 6 - 15) + 10);
+
 export class Explorer {
   /** Desired view (set by input) and displayed view (eased toward it). */
   private goal = { zoom: 1, u: 0.5, v: 0.5 };
@@ -20,6 +25,7 @@ export class Explorer {
   homeVisible = 1.18;
   aspect = 1;
   private target = new THREE.Vector3();
+  private guide: { stops: (View & { hold: number; travel: number })[]; from: View; t: number; onEnd: () => void } | null = null;
 
   constructor(readonly scene: DepthScene, private firstH = 1.18, private firstW = 1.12) {
     // reference depth: the median of the painting, so panning feels anchored to its middle ground
@@ -46,7 +52,55 @@ export class Explorer {
     return { su: (vis * this.aspect) / this.scene.aspect, sv: vis };
   }
 
+  get guiding() { return this.guide !== null; }
+
+  /** Play the guided view: the camera travels from stop to stop, then back to the whole painting. */
+  playGuide(stops: GuideStop[], onEnd: () => void) {
+    this.vel.set(0, 0);
+    let prev: View = { ...this.view };
+    const list = [...stops.map((s) => ({ u: s.u, v: s.v, zoom: THREE.MathUtils.clamp(this.homeVisible / s.h, 1, this.maxZoom), hold: s.hold })),
+      { u: 0.5, v: 0.5, zoom: 1, hold: 0 }].map((s) => {
+      const travel = 2.4 + Math.abs(Math.log(s.zoom / prev.zoom)) * 0.5 + Math.hypot(s.u - prev.u, s.v - prev.v) * 2.2;
+      prev = s;
+      return { ...s, travel };
+    });
+    this.guide = { stops: list, from: { ...this.view }, t: 0, onEnd };
+  }
+
+  /** Any input of the visitor's own ends the guided view. */
+  stopGuide() {
+    const g = this.guide;
+    if (!g) return;
+    this.guide = null;
+    g.onEnd();
+  }
+
+  private stepGuide(dt: number) {
+    const g = this.guide!;
+    g.t += dt;
+    let t = g.t, prev: View = g.from;
+    for (const s of g.stops) {
+      if (t < s.travel) {
+        const k = smoother(t / s.travel);
+        // pull back while crossing the painting, then lean in again
+        const across = Math.hypot(s.u - prev.u, s.v - prev.v);
+        const lift = Math.min(across * 1.6, Math.log(Math.min(prev.zoom, s.zoom))) * Math.sin(Math.PI * k);
+        this.goal.zoom = Math.exp(Math.log(prev.zoom) + (Math.log(s.zoom) - Math.log(prev.zoom)) * k - lift);
+        this.goal.u = prev.u + (s.u - prev.u) * k;
+        this.goal.v = prev.v + (s.v - prev.v) * k;
+        this.clampGoal();
+        return;
+      }
+      t -= s.travel;
+      if (t < s.hold) { this.goal.zoom = s.zoom; this.goal.u = s.u; this.goal.v = s.v; this.clampGoal(); return; }
+      t -= s.hold;
+      prev = s;
+    }
+    this.stopGuide();
+  }
+
   reset(instant = false) {
+    this.stopGuide();
     this.goal.zoom = 1; this.goal.u = 0.5; this.goal.v = 0.5;
     this.vel.set(0, 0);
     if (instant) Object.assign(this.view, this.goal);
@@ -54,6 +108,7 @@ export class Explorer {
 
   /** Drag by a number of screen pixels. */
   panBy(dx: number, dy: number, vw: number, vh: number, dt = 0) {
+    this.stopGuide();
     const { su, sv } = this.span(this.goal.zoom);
     const du = (-dx / vw) * su, dv = (-dy / vh) * sv;
     this.goal.u += du; this.goal.v += dv;
@@ -67,6 +122,7 @@ export class Explorer {
 
   /** Zoom by a factor, keeping the point under (sx, sy) in place. */
   zoomAt(factor: number, sx: number, sy: number, vw: number, vh: number) {
+    this.stopGuide();
     const before = this.span(this.goal.zoom);
     const nx = sx / vw - 0.5, ny = sy / vh - 0.5;
     const pu = this.goal.u + nx * before.su, pv = this.goal.v + ny * before.sv;
@@ -87,6 +143,7 @@ export class Explorer {
 
   /** Ease the view toward the goal and place the depth camera. Returns true while still moving. */
   update(dt: number) {
+    if (this.guide) this.stepGuide(dt);
     if (this.vel.lengthSq() > 0) {
       this.goal.u += this.vel.x * dt; this.goal.v += this.vel.y * dt;
       this.vel.multiplyScalar(Math.exp(-dt * 4.5));

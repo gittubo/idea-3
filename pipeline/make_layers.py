@@ -147,6 +147,5 @@ g = far_depth * a_far + mid_depth * a_mid + front_depth * a_front
 g = g / np.maximum(a_far + a_mid + a_front, 1e-6)
 Image.fromarray((g.clip(0, 1) * 255).round().astype(np.uint8)).resize((W // 8, H // 8), Image.LANCZOS).save(f'{out_dir}/depth-global.png')
 src = Image.open(img_p).convert('RGB')
-src.save(f'{out_dir}/full.webp', quality=86, method=6)                       # free-look lens
 src.resize((W // 2, H // 2), Image.LANCZOS).save(f'{out_dir}/wall.webp', quality=84, method=6)  # on the wall
 print('extras written')

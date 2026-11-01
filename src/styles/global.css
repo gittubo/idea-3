@@ -70,6 +70,10 @@ html.inside .back-btn { opacity: 0.75; pointer-events: auto; }
 }
 .zoom-controls .icon-btn { position: static; }
 html.inside .zoom-controls { opacity: 1; pointer-events: auto; }
+.guide-btn .stop { display: none; }
+html.guiding .guide-btn .play { display: none; }
+html.guiding .guide-btn .stop { display: block; }
+html.guiding .guide-btn { opacity: 1; color: var(--ivory); }
 
 .plaque {
   position: absolute; top: 0; left: 0; opacity: 0; pointer-events: none;
