@@ -20,37 +20,9 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .stage { position: fixed; inset: 0; overflow: hidden; }
 .spacer { height: 100vh; }
 
-.wall {
-  position: absolute; inset: 0;
-  background:
-    radial-gradient(ellipse 38% 46% at 50% 26%, rgba(226, 178, 112, 0.2), transparent 72%),
-    radial-gradient(ellipse 70% 60% at 50% 45%, #2b221b 0%, #17130f 58%, var(--black) 100%);
-}
-.wall::after { /* floor shadow line */
-  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 18vh;
-  background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.55));
-}
-
-.hang { position: absolute; top: 0; left: 0; container-type: size; will-change: transform, width, height; }
-.hang img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-.frame {
-  position: absolute; inset: -6.5cqw; transform-origin: center;
-  background:
-    linear-gradient(135deg, #5d4423 0%, #b89259 22%, #6e5229 40%, #cfae72 62%, #7a5a2d 80%, #4a3519 100%);
-  box-shadow:
-    0 3vh 7vh rgba(0, 0, 0, 0.65),
-    inset 0 0 0 1.2cqw rgba(20, 14, 6, 0.28),
-    inset 0 0 0 calc(6.5cqw - 0.8cqw) rgba(255, 228, 170, 0.05),
-    inset 0 0 0 calc(6.5cqw - 0.35cqw) #3a2913;
-}
-.hang::after { /* light from the lamp above */
-  content: ''; position: absolute; inset: 0; pointer-events: none;
-  background: radial-gradient(ellipse 80% 55% at 50% 0%, rgba(255, 214, 150, 0.1), transparent 70%);
-  opacity: calc(1 - var(--depth));
-}
-
-canvas.depth { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0; }
-html.released:not(.touch) canvas.depth { cursor: none; }
+canvas.depth { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+html:not(.touch) canvas.depth { cursor: none; }
+html.waiting canvas.depth { cursor: progress; }
 
 .vignette {
   position: absolute; inset: 0; pointer-events: none;
@@ -120,6 +92,32 @@ html.touch .lens { width: 150px; height: 150px; }
   border: 1px solid rgba(176, 141, 87, 0.7);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55);
 }
+
+/* ---- cursor: a small gold ring that opens into a lens over a painting ---------- */
+.cursor { position: absolute; top: 0; left: 0; pointer-events: none; opacity: 0; transition: opacity 0.3s ease; }
+html.pointer-seen:not(.touch) .cursor { opacity: 1; }
+html.released .cursor, html.touch .cursor { opacity: 0 !important; }
+.cursor i {
+  position: absolute; left: -7px; top: -7px; width: 14px; height: 14px; border-radius: 50%;
+  border: 1px solid var(--gilt); transition: transform 0.45s cubic-bezier(.2,.7,.2,1), background-color 0.45s ease;
+}
+html.over .cursor i { transform: scale(3.4); background-color: rgba(176, 141, 87, 0.08); }
+html.over .cursor i::after {
+  content: ''; position: absolute; left: 50%; top: 50%; width: 2px; height: 2px; margin: -1px; border-radius: 50%; background: var(--gilt);
+}
+html.waiting .cursor i { animation: focus 1.4s ease-in-out infinite; }
+
+.blackout { position: absolute; inset: 0; background: var(--black); opacity: 0; pointer-events: none; transition: opacity 0.45s ease; }
+.blackout.on { opacity: 1; }
+
+/* the wall's paintings as a keyboard route: invisible until focused */
+.wall-nav { position: absolute; left: 50%; bottom: calc(26px + env(safe-area-inset-bottom, 0px)); translate: -50% 0; pointer-events: none; }
+.wall-nav button {
+  position: absolute; left: 0; bottom: 0; translate: -50% 0; white-space: nowrap; opacity: 0; pointer-events: none;
+  font-size: 15px; letter-spacing: 0.04em; color: var(--gilt); padding: 6px 12px; border: 1px solid transparent;
+}
+.wall-nav button:focus-visible { opacity: 1; outline: none; border-color: rgba(176, 141, 87, 0.6); }
+html.inside .wall-nav { display: none; }
 
 /* ---- loading & fallback ------------------------------------------------------ */
 .loading {

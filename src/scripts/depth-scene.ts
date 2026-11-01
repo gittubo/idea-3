@@ -22,11 +22,13 @@ const vert = /* glsl */ `
   uniform float uAspect;   // image width / height
   uniform float uK;        // 2 * tan(homeFov / 2)
   varying vec2 vUv;
+  varying vec2 vG;
   void main() {
     vUv = uv;
     float d = mix(uRange.x, uRange.y, texture2D(uDepth, uv).r);
     float z = 1.0 / mix(uDisp.x, uDisp.y, d);
     vec2 g = vec2(uRect.x + uv.x * uRect.z, uRect.y + (1.0 - uv.y) * uRect.w);
+    vG = g;
     vec3 p = vec3((g.x - 0.5) * uAspect * uK, (0.5 - g.y) * uK, -1.0) * z;
     gl_Position = projectionMatrix * viewMatrix * vec4(p, 1.0);
   }`;
@@ -34,27 +36,30 @@ const vert = /* glsl */ `
 const frag = /* glsl */ `
   uniform sampler2D uColor;
   uniform float uOpacity;
+  uniform float uOverscan; // 0: hide the reflected margin past the painting's edge, 1: show it
   varying vec2 vUv;
+  varying vec2 vG;
   void main() {
     vec4 c = texture2D(uColor, vUv);
-    if (c.a < 0.004) discard;
-    gl_FragColor = vec4(c.rgb, c.a * uOpacity);
+    vec2 e = min(vG, 1.0 - vG);
+    float inside = step(0.0, min(e.x, e.y));
+    float a = c.a * uOpacity * mix(inside, 1.0, uOverscan);
+    if (a < 0.004) discard;
+    gl_FragColor = vec4(c.rgb, a);
   }`;
 
 export class DepthScene {
-  readonly renderer: THREE.WebGLRenderer;
   readonly scene = new THREE.Scene();
   readonly camera = new THREE.PerspectiveCamera(HOME_FOV, 1, 0.05, 100);
   readonly aspect: number;
   private depthGlobal: { data: Uint8ClampedArray; w: number; h: number } | null = null;
   private materials: THREE.ShaderMaterial[] = [];
+  loaded = false;
 
-  constructor(private canvas: HTMLCanvasElement, private meta: PieceMeta) {
+  /** The renderer is shared with the corridor. Shaders here output raw texture values, so the painting is shown exactly as stored. */
+  constructor(private renderer: THREE.WebGLRenderer, private meta: PieceMeta) {
     this.aspect = meta.width / meta.height;
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
-    this.renderer.setClearColor(0x0e0d0c, 1);
-    // Textures and output both stay in raw sRGB values: the painting is shown exactly as stored.
-    this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
+    this.scene.background = new THREE.Color(0x0e0d0c);
   }
 
   /** Disparity (1/z) is linear in depth, so near objects separate more than far ones. */
@@ -79,7 +84,7 @@ export class DepthScene {
       const mat = new THREE.ShaderMaterial({
         vertexShader: vert, fragmentShader: frag, transparent: true, depthTest: false, depthWrite: false,
         uniforms: {
-          uColor: { value: color }, uDepth: { value: depth }, uOpacity: { value: 1 },
+          uColor: { value: color }, uDepth: { value: depth }, uOpacity: { value: 1 }, uOverscan: { value: 0 },
           uRect: { value: new THREE.Vector4(...L.rect) }, uRange: { value: new THREE.Vector2(L.dmin, L.dmax) },
           uDisp: { value: new THREE.Vector2(disp0, disp1) }, uAspect: { value: this.aspect }, uK: { value: K0 },
         },
@@ -98,6 +103,7 @@ export class DepthScene {
     const ctx = c.getContext('2d', { willReadFrequently: true })!;
     ctx.drawImage(depthImg, 0, 0);
     this.depthGlobal = { data: ctx.getImageData(0, 0, c.width, c.height).data, w: c.width, h: c.height };
+    this.loaded = true;
   }
 
   /** Depth (0 far … 1 near) of the painting at image coordinates u, v. */
@@ -117,12 +123,13 @@ export class DepthScene {
   /** Image-height units that span the screen when looking at a point at distance z from home. */
   static readonly K0 = K0;
 
-  resize(w: number, h: number, dpr: number) {
-    this.renderer.setPixelRatio(dpr);
-    this.renderer.setSize(w, h, false);
+  resize(w: number, h: number) {
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
   }
+
+  /** The reflected margin is only needed when close-up parallax could reveal past the edge. */
+  setOverscan(k: number) { for (const m of this.materials) m.uniforms.uOverscan.value = k; }
 
   render() { this.renderer.render(this.scene, this.camera); }
 }

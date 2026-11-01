@@ -1,27 +1,26 @@
 ---
 import Base from '../layouts/Base.astro';
-import { keptLetter as piece } from '../pieces/kept-letter';
+import { room1 } from '../pieces/room-1';
 
 // The Tubo mark: a picture frame whose edge opens into a lens.
 const mark = 'M37 17.5V2.5H3v43h34V30.5A6.5 6.5 0 0 1 37 17.5Z';
 ---
-<Base title={`Tubo · ${piece.title}`} description="Tubo is a wordless museum: a camera searches through each painting and lets it tell its own story.">
+<Base title="Tubo" description="Tubo is a wordless museum: a camera searches through each painting and lets it tell its own story.">
   <div class="stage">
-    <div class="wall" aria-hidden="true"></div>
-    <div class="hang" aria-hidden="true">
-      <div class="frame"></div>
-      <img src={`${piece.base}/wall.webp`} alt="" decoding="async" />
-    </div>
-    <canvas class="depth" role="img" aria-label={`${piece.title}. ${piece.alt}`}></canvas>
+    <canvas class="depth" role="img" aria-label="A gallery wall with paintings, each under its own lamp."></canvas>
     <div class="vignette" aria-hidden="true"></div>
     <div class="lens" aria-hidden="true"></div>
-    <div class="plaque">{piece.title}</div>
+    <div class="plaque"></div>
 
     <div class="ui">
       <a class="brand" href="./" aria-label="Tubo">
         <svg viewBox="0 0 40 48" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d={mark} /></svg>
         <span aria-hidden="true">TUBO</span>
       </a>
+
+      <nav class="wall-nav" aria-label="Paintings on the wall">
+        {room1.map((e, i) => <button type="button" data-index={i}>{e.title}</button>)}
+      </nav>
 
       <button class="icon-btn back-btn" type="button" aria-label="Back to the wall">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true">
@@ -44,6 +43,8 @@ const mark = 'M37 17.5V2.5H3v43h34V30.5A6.5 6.5 0 0 1 37 17.5Z';
       </button>
     </div>
 
+    <div class="cursor" aria-hidden="true"><i></i></div>
+    <div class="blackout" aria-hidden="true"></div>
     <div class="grain" aria-hidden="true"></div>
     <div class="loading" aria-hidden="true">
       <svg viewBox="0 0 40 48" fill="none" stroke="currentColor" stroke-width="2.4"><path d={mark} /></svg>
@@ -54,9 +55,9 @@ const mark = 'M37 17.5V2.5H3v43h34V30.5A6.5 6.5 0 0 1 37 17.5Z';
   <div class="spacer" aria-hidden="true"></div>
 
   <script>
-    import { startPiece } from '../scripts/piece';
-    import { keptLetter } from '../pieces/kept-letter';
-    startPiece(keptLetter).catch((e) => {
+    import { startMuseum } from '../scripts/museum';
+    import { room1 } from '../pieces/room-1';
+    startMuseum(room1).catch((e) => {
       console.error(e);
       document.documentElement.classList.add('no-webgl');
     });

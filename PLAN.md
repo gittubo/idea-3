@@ -193,8 +193,8 @@ Each piece has a hidden detail the camera finds. The story is never written on t
 | Phase | What gets built | Done when |
 |---|---|---|
 | **0. Finish planning** | ✅ Done | |
-| **1. One piece, end to end** | Piece 1 ("The Kept Letter"): generate, split into layers, depth camera, scroll journey, free-look. Computer and phone. | You watch it and say "yes, this is it" |
-| **2. Corridor** | The 3D wall walk, light pools, approach and return transitions, Room I with placeholders | Walking and entering a piece feel continuous |
+| **1. One piece, end to end** | ✅ Done: "The Kept Letter" with the depth camera, plaque and lens | Approved |
+| **2. Corridor** | ✅ Done: 3D wall walk with Room I ("The Apprentice" and "The Wings" hang on the wall; their camera journeys come in Phase 5), lamp pools, snapping, enter and leave transitions, an address per piece (`#the-kept-letter`) | Walking and entering a piece feel continuous |
 | **3. Threshold and rooms** | Iris entrance, archways, room light shifts, wordless navigation | A first-time visitor finds their way without help |
 | **4. Sound and atmosphere** | Soundscapes, the on/off toggle, grain, lens cursor, loading state (a lens slowly coming into focus) | |
 | **5. Remaining pieces** | Pieces 2–6 through the production steps in Section 5 | All pass the quality check |
