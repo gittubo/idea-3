@@ -2,96 +2,48 @@
 import Base from '../layouts/Base.astro';
 import ProductCard from '../components/ProductCard.astro';
 import Icon from '../components/Icon.astro';
-import { departments, products, inDept, newIn, bestsellers, money } from '../data/catalog';
-import { heroSlides, testimonials, community } from '../data/site';
-import { garmentSvg } from '../data/garments';
+import { departments, products, inDept, newIn, onSale, collections, inCollection, money } from '../data/catalog';
+import { hero, testimonials, community } from '../data/site';
 
-// Spotlight: one standout piece per department, outerwear and sets first
-const spotPicks = ['men', 'women', 'sports', 'curve', 'kids', 'men']
-  .map((d, k) => inDept(d).filter((p) => ['jacket', 'set', 'hoodie', 'dress'].includes(p.garment))[k] ?? inDept(d)[0]);
-const spotData = spotPicks.map((p) => ({
-  slug: p.slug, name: p.name, garment: p.garment, colors: p.colors, sizes: p.sizes, img: p.images[0] ?? '',
+const hasProducts = products.length > 0;
+
+// Spotlight: up to six pieces that have photos
+const spotData = products.filter((p) => p.images.length).slice(0, 6).map((p) => ({
+  slug: p.slug, name: p.name, garment: p.garment, colors: p.colors, sizes: p.sizes, img: p.images[0],
   price: money(p.salePrice ?? p.price), was: p.salePrice ? money(p.price) : '',
   cat: departments.find((d) => d.slug === p.dept)!.title,
 }));
 
-const deptArt: Record<string, { g: string; hex: string; bg: string }> = {
-  women: { g: 'dress', hex: '#15171a', bg: 'linear-gradient(170deg,#e4eef7 0%,#b7cde0 100%)' },
-  curve: { g: 'set', hex: '#b9a8d6', bg: 'linear-gradient(170deg,#f1e9f6 0%,#cdb9de 100%)' },
-  men: { g: 'hoodie', hex: '#1d2b44', bg: 'linear-gradient(170deg,#e9edf1 0%,#aab6c2 100%)' },
-  kids: { g: 'jacket', hex: '#3fb49a', bg: 'linear-gradient(170deg,#e6f4f0 0%,#a9d6cb 100%)' },
-  sports: { g: 'leggings', hex: '#15171a', bg: 'linear-gradient(170deg,#dceefa 0%,#8ec3e6 100%)' },
-  beauty: { g: 'bottle', hex: '#e7b9b8', bg: 'linear-gradient(170deg,#fbf0ec 0%,#e3c3ba 100%)' },
-};
-
-const circles: [string, string, string, string][] = [
-  ['Dresses', '/women/dresses', 'dress', '#15171a'],
-  ['Jeans', '/women/jeans', 'pants', '#4b6a8f'],
-  ['Matching Sets', '/women/matching-sets', 'set', '#e7b9b8'],
-  ['Hoodies', '/men/hoodies', 'hoodie', '#5d6873'],
-  ['Outerwear', '/men/outerwear', 'jacket', '#1d2b44'],
-  ['Swim', '/women/swim', 'swim', '#8ec3e6'],
-  ['Activewear', '/sports', 'bra', '#3fb49a'],
-  ['Shoes', '/men/shoes', 'shoe', '#f1f2f0'],
-  ['Kids', '/kids', 'tee', '#d8c6a8'],
-  ['Beauty', '/beauty', 'bottle', '#e7b9b8'],
-];
-
-const popularTabs = ['women', 'men', 'kids', 'sports'].map((d) => ({
-  d, name: departments.find((x) => x.slug === d)!.name,
-  items: inDept(d).filter((p) => p.bestseller || p.reviews > 500).slice(0, 10),
-}));
-
-const fresh = newIn().filter((_, k) => k % 3 === 0).slice(0, 8);
-const editorial = [
-  { t: 'Polar Night', s: 'All black everything', href: '/collections/polar-night', bg: 'linear-gradient(170deg,#3a4552,#07090c)', g: 'jacket', hex: '#15171a', light: true },
-  { t: 'Whiteout', s: 'Tonal ice', href: '/collections/whiteout', bg: 'linear-gradient(170deg,#ffffff,#c8d3dc)', g: 'set', hex: '#f1f2f0', light: false },
-  { t: 'Expedition', s: 'Built for weather', href: '/collections/expedition', bg: 'linear-gradient(170deg,#4b6a8f,#13253a)', g: 'jacket', hex: '#8ec3e6', light: true },
-  { t: 'Essentials', s: 'Everyday heavyweights', href: '/collections/arctic-essentials', bg: 'linear-gradient(170deg,#e8e1d6,#a8977d)', g: 'hoodie', hex: '#d8c6a8', light: false },
-  { t: 'Arctic Sports', s: 'Move in the cold', href: '/sports', bg: 'linear-gradient(170deg,#3fb49a,#0d3a3f)', g: 'bra', hex: '#15171a', light: true },
-];
-const driftPick = bestsellers().find((p) => p.garment === 'shoe') ?? products[0];
+const popularTabs = departments
+  .map((d) => ({ d: d.slug, name: d.name, items: [...inDept(d.slug)].sort((a, b) => +b.bestseller - +a.bestseller).slice(0, 10) }))
+  .filter((t) => t.items.length);
+const fresh = newIn().slice(0, 8);
+const saleCount = onSale().length;
+const liveCollections = collections.map((c) => ({ ...c, count: inCollection(c.slug).length })).filter((c) => c.count);
+const categoryLinks = departments.flatMap((d) => d.categories.slice(0, 2).map((c) => ({ label: `${d.name} · ${c.name}`, href: `/${d.slug}/${c.slug}` })));
 ---
 <Base preloader>
-  <!-- HERO -->
-  <section class="hero" data-hero aria-roledescription="carousel" aria-label="Featured">
-    {heroSlides.map((s, k) => (
-      <div class={`slide ${s.tone} ${k === 0 ? 'on' : ''}`} style={`background:${s.gradient}`} aria-roledescription="slide" aria-label={`${k + 1} of ${heroSlides.length}`}>
-        {s.video && <video src={s.video} poster={s.image} muted loop playsinline autoplay={k === 0} preload="metadata"></video>}
-        {!s.video && s.image && <img src={s.image} alt="" class="bg" />}
-        <div class="wrap slide-inner">
-          <div class="copy">
-            <p class="eyebrow">{s.eyebrow}</p>
-            <h1 class="display" set:html={s.title.replace('\n', '<br/>')} />
-            <p class="lede">{s.text}</p>
-            <div class="ctas">
-              <a class={`btn ${s.tone === 'light' ? 'light' : ''}`} href={s.href}>{s.cta}</a>
-              <a class="btn ghost" href="/lookbook">View lookbook</a>
-            </div>
-          </div>
-        </div>
+  <!-- HERO: brand landing film -->
+  <section class="hero" data-hero aria-label="THEE ARCTIC Season 01">
+    <video
+      class="hero-video"
+      data-wide={hero.wide.video} data-wide-poster={hero.wide.poster}
+      data-tall={hero.tall.video} data-tall-poster={hero.tall.poster}
+      src={hero.wide.video} poster={hero.wide.poster}
+      muted loop playsinline autoplay preload="auto"
+      aria-label="THEE ARCTIC Season 01 campaign film"
+    ></video>
+    <div class="hero-shade" aria-hidden="true"></div>
+    <div class="wrap hero-ui">
+      <div>
+        <p class="eyebrow hero-label">{hero.label}</p>
+        <a class="btn light" href={hero.cta.href}>{hero.cta.text}</a>
       </div>
-    ))}
-    <canvas class="snow" data-snow aria-hidden="true"></canvas>
-    <div class="hero-ui wrap">
-      <div class="bars">
-        {heroSlides.map((s, k) => <button class="bar-btn" data-bar type="button" aria-label={`Go to slide ${k + 1}: ${s.eyebrow}`}><span></span></button>)}
-      </div>
-      <button class="icon-btn hero-toggle" type="button" data-hero-toggle aria-pressed="false" aria-label="Pause slideshow">
+      <button class="icon-btn hero-toggle" type="button" data-hero-toggle aria-pressed="false" aria-label="Pause video">
         <Icon name="pause" class="i-pause" /><Icon name="play" class="i-play" />
       </button>
     </div>
   </section>
-
-  <!-- USP strip -->
-  <div class="usp">
-    <div class="wrap usp-inner">
-      <span><Icon name="truck" /> Free shipping over $75</span>
-      <span><Icon name="return" /> Free 30-day returns</span>
-      <span><Icon name="gift" /> Earn points with Arctic Rewards</span>
-      <span><Icon name="lock" /> Secure checkout · Pay in 4</span>
-    </div>
-  </div>
 
   <!-- DEPARTMENTS -->
   <section class="section wrap">
@@ -99,12 +51,12 @@ const driftPick = bestsellers().find((p) => p.garment === 'shoe') ?? products[0]
       <div><p class="eyebrow">Shop by department</p><h2 class="h2">The Arctic family</h2></div>
     </div>
     <div class="depts">
-      {departments.map((d) => (
-        <a class="dept reveal" href={`/${d.slug}`} style={`background:${deptArt[d.slug].bg}`}>
-          <div class="dept-art" set:html={garmentSvg(deptArt[d.slug].g as any, deptArt[d.slug].hex)} />
+      {departments.map((d, k) => (
+        <a class="dept reveal" href={`/${d.slug}`}>
+          <span class="dept-no">{String(k + 1).padStart(2, '0')}</span>
           <div class="dept-copy">
-            <span class="eyebrow" style="color:var(--ink-2)">{d.tagline}</span>
             <strong>{d.title}</strong>
+            <span>{d.tagline}</span>
           </div>
           <span class="dept-go" aria-hidden="true"><Icon name="arrow" /></span>
         </a>
@@ -112,180 +64,151 @@ const driftPick = bestsellers().find((p) => p.garment === 'shoe') ?? products[0]
     </div>
   </section>
 
-  <!-- SPOTLIGHT (streetwear redefined) -->
-  <section class="spot" data-spot={JSON.stringify(spotData)} tabindex="0" aria-label="Spotlight">
-    <div class="wrap spot-grid">
-      <div class="spot-intro">
-        <p class="eyebrow">New season · Spotlight</p>
-        <h2 class="display spot-title">Streetwear.<br /><span>Redefined.</span></h2>
-        <p class="spot-lede">Clean cuts, heavy fabrics, built to be worn anywhere. Swipe through this week's standouts.</p>
-        <div class="spot-stats">
-          <div><strong>40+</strong><span>Drops a year</span></div>
-          <div><strong>6</strong><span>Departments</span></div>
-          <div><strong>4.8★</strong><span>Avg. rating</span></div>
+  {spotData.length > 0 && (
+    <section class="spot" data-spot={JSON.stringify(spotData)} tabindex="0" aria-label="Spotlight">
+      <div class="wrap spot-grid">
+        <div class="spot-intro">
+          <p class="eyebrow">Season 01 · Spotlight</p>
+          <h2 class="display spot-title">Streetwear.<br /><span>Redefined.</span></h2>
+          <p class="spot-lede">Swipe through this season's standouts.</p>
         </div>
-      </div>
-      <div class="spot-stage">
-        {spotData.map((s) => (
-          <div class="spot-item" data-pos="far-next">
-            {s.img ? <img src={s.img} alt={s.name} class="spot-art" /> : <div class="spot-art" set:html={garmentSvg(s.garment, s.colors[0].hex)} />}
-          </div>
-        ))}
-        <div class="spot-nav">
-          <button class="nav-btn" type="button" data-spot-prev aria-label="Previous"><Icon name="left" /></button>
-          <span class="spot-count" data-spot-count>01 / 06</span>
-          <button class="nav-btn" type="button" data-spot-next aria-label="Next"><Icon name="right" /></button>
-        </div>
-      </div>
-      <div class="spot-panel" data-spot-panel aria-live="polite">
-        <p class="eyebrow" data-f="cat"></p>
-        <h3 class="spot-name" data-f="name"></h3>
-        <div class="price spot-price" data-f="price"></div>
-        <p class="lbl">Colour</p>
-        <div class="spot-sw" data-f="swatches"></div>
-        <p class="lbl">Add to bag · pick a size</p>
-        <div class="spot-sz" data-f="sizes"></div>
-        <a class="link-arrow" data-f="link" href="#">View details</a>
-      </div>
-    </div>
-  </section>
-
-  <!-- CATEGORY CIRCLES -->
-  <section class="section wrap" style="padding-bottom:0">
-    <div class="section-head reveal"><h2 class="h2">Shop by category</h2></div>
-    <div class="circles reveal">
-      {circles.map(([label, href, g, hex]) => (
-        <a class="circle" href={href}>
-          <span class="ring" set:html={garmentSvg(g as any, hex)} />
-          <span>{label}</span>
-        </a>
-      ))}
-    </div>
-  </section>
-
-  <!-- POPULAR PICKS -->
-  <section class="section wrap" data-tabs>
-    <div class="section-head reveal">
-      <div><p class="eyebrow">Trending right now</p><h2 class="h2">Popular picks</h2></div>
-      <div class="chips" role="tablist" aria-label="Department">
-        {popularTabs.map((t, k) => <button class={`chip ${k === 0 ? 'on' : ''}`} role="tab" type="button" aria-selected={k === 0 ? 'true' : 'false'} aria-controls={`pop-${t.d}`}>{t.name}</button>)}
-      </div>
-    </div>
-    {popularTabs.map((t, k) => (
-      <div role="tabpanel" id={`pop-${t.d}`} hidden={k !== 0}>
-        <div class="rail" id={`rail-${t.d}`}>{t.items.map((p, i) => <ProductCard product={p} idx={i} />)}</div>
-        <div class="rail-foot">
-          <a class="link-arrow" href={`/${t.d}?sort=best`}>Shop all {t.name} bestsellers</a>
-          <div class="rail-nav">
-            <button type="button" data-rail-btn={`rail-${t.d}`} data-dir="prev" aria-label="Scroll left"><Icon name="left" /></button>
-            <button type="button" data-rail-btn={`rail-${t.d}`} data-dir="next" aria-label="Scroll right"><Icon name="right" /></button>
+        <div class="spot-stage">
+          {spotData.map((s) => (
+            <div class="spot-item" data-pos="far-next"><img src={s.img} alt={s.name} class="spot-art" /></div>
+          ))}
+          <div class="spot-nav">
+            <button class="nav-btn" type="button" data-spot-prev aria-label="Previous"><Icon name="left" /></button>
+            <span class="spot-count" data-spot-count></span>
+            <button class="nav-btn" type="button" data-spot-next aria-label="Next"><Icon name="right" /></button>
           </div>
         </div>
+        <div class="spot-panel" data-spot-panel aria-live="polite">
+          <p class="eyebrow" data-f="cat"></p>
+          <h3 class="spot-name" data-f="name"></h3>
+          <div class="price spot-price" data-f="price"></div>
+          <p class="lbl">Colour</p>
+          <div class="spot-sw" data-f="swatches"></div>
+          <p class="lbl">Add to bag · pick a size</p>
+          <div class="spot-sz" data-f="sizes"></div>
+          <a class="link-arrow" data-f="link" href="#">View details</a>
+        </div>
       </div>
-    ))}
-  </section>
+    </section>
+  )}
 
-  <!-- SALE BANNER + COUNTDOWN -->
-  <section class="wrap">
-    <a href="/sale" class="sale-banner reveal">
-      <div>
-        <p class="eyebrow" style="color:#ffd3d6">Arctic Sale · Ends soon</p>
-        <h2 class="display">Up to 60% off</h2>
-        <p style="margin:0;opacity:.85">Hundreds of styles. Every department. While stock lasts.</p>
-      </div>
-      <div class="cd" data-countdown aria-label="Time left in the sale">
-        <div><b data-cd="d">00</b><span>Days</span></div>
-        <div><b data-cd="h">00</b><span>Hrs</span></div>
-        <div><b data-cd="m">00</b><span>Min</span></div>
-        <div><b data-cd="s">00</b><span>Sec</span></div>
-      </div>
-      <span class="btn light">Shop sale</span>
-    </a>
-  </section>
-
-  <!-- EDITORIAL ACCORDION -->
-  <section class="section wrap">
-    <div class="section-head reveal">
-      <h2 class="h2">Express your identity<br />with our unique style</h2>
-      <a class="link-arrow" href="/collections">All collections</a>
-    </div>
-    <div class="editorial reveal">
-      {editorial.map((e) => (
-        <a class={`ed ${e.light ? 'light' : ''}`} href={e.href} style={`background:${e.bg}`}>
-          <div class="ed-art" set:html={garmentSvg(e.g as any, e.hex)} />
-          <div class="ed-copy"><strong>{e.t}</strong><span>{e.s}</span></div>
-        </a>
-      ))}
-    </div>
-  </section>
-
-  <!-- NEW ARRIVALS -->
+  <!-- CATEGORIES -->
   <section class="section wrap" style="padding-top:0">
-    <div class="section-head reveal">
-      <div><p class="eyebrow">Just landed</p><h2 class="h2">New arrivals</h2></div>
-      <a class="link-arrow" href="/new-in">Shop all new</a>
-    </div>
-    <div class="grid">{fresh.map((p, i) => <ProductCard product={p} idx={i} />)}</div>
+    <div class="section-head reveal"><h2 class="h2">Shop by category</h2></div>
+    <nav class="chips cat-links reveal" aria-label="Categories">
+      {categoryLinks.map((c) => <a class="chip" href={c.href}>{c.label}</a>)}
+    </nav>
   </section>
 
-  <!-- DRIFT: giant word + card -->
+  {popularTabs.length > 0 && (
+    <section class="section wrap" data-tabs style="padding-top:0">
+      <div class="section-head reveal">
+        <div><p class="eyebrow">Trending right now</p><h2 class="h2">Popular picks</h2></div>
+        <div class="chips" role="tablist" aria-label="Department">
+          {popularTabs.map((t, k) => <button class={`chip ${k === 0 ? 'on' : ''}`} role="tab" type="button" aria-selected={k === 0 ? 'true' : 'false'} aria-controls={`pop-${t.d}`}>{t.name}</button>)}
+        </div>
+      </div>
+      {popularTabs.map((t, k) => (
+        <div role="tabpanel" id={`pop-${t.d}`} hidden={k !== 0}>
+          <div class="rail" id={`rail-${t.d}`}>{t.items.map((p, i) => <ProductCard product={p} idx={i} />)}</div>
+          <div class="rail-foot">
+            <a class="link-arrow" href={`/${t.d}?sort=best`}>Shop all {t.name}</a>
+            <div class="rail-nav">
+              <button type="button" data-rail-btn={`rail-${t.d}`} data-dir="prev" aria-label="Scroll left"><Icon name="left" /></button>
+              <button type="button" data-rail-btn={`rail-${t.d}`} data-dir="next" aria-label="Scroll right"><Icon name="right" /></button>
+            </div>
+          </div>
+        </div>
+      ))}
+    </section>
+  )}
+
+  {saleCount > 0 && (
+    <section class="wrap">
+      <a href="/sale" class="sale-banner reveal">
+        <div>
+          <p class="eyebrow" style="color:#ffd3d6">Sale</p>
+          <h2 class="display">{saleCount} styles marked down</h2>
+        </div>
+        <span class="btn light">Shop sale</span>
+      </a>
+    </section>
+  )}
+
+  {liveCollections.length > 0 && (
+    <section class="section wrap">
+      <div class="section-head reveal"><h2 class="h2">Collections</h2><a class="link-arrow" href="/collections">All collections</a></div>
+      <div class="chips">{liveCollections.map((c) => <a class="chip" href={`/collections/${c.slug}`}>{c.name} · {c.count}</a>)}</div>
+    </section>
+  )}
+
+  {fresh.length > 0 && (
+    <section class="section wrap" style="padding-top:0">
+      <div class="section-head reveal">
+        <div><p class="eyebrow">Just landed</p><h2 class="h2">New arrivals</h2></div>
+        <a class="link-arrow" href="/new-in">Shop all new</a>
+      </div>
+      <div class="grid">{fresh.map((p, i) => <ProductCard product={p} idx={i} />)}</div>
+    </section>
+  )}
+
+  <!-- SEASON 01: giant word + card with the campaign still -->
   <section class="drift">
     <div class="drift-word display" data-drift aria-hidden="true">ARCTIC</div>
     <div class="wrap drift-inner">
       <div class="drift-card reveal">
-        <div class="drift-art" set:html={garmentSvg(driftPick.garment, driftPick.colors[0].hex)} />
+        <img class="drift-img" src="/media/season01-group.jpg" alt="Three models in THEE ARCTIC Season 01" loading="lazy" />
         <div>
-          <p class="eyebrow">The vibe</p>
+          <p class="eyebrow">Season 01</p>
           <h2 class="display">Step into<br />your best style</h2>
-          <p style="color:var(--muted);max-width:40ch">Pieces made to layer, last and look sharp from the first cold morning to the last night out.</p>
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px">
-            <a class="btn" href="/new-in">Shop new in</a>
-            <a class="btn ghost" href={`/products/${driftPick.slug}`}>{driftPick.name}</a>
+            {hasProducts
+              ? <a class="btn" href={hero.cta.href}>Shop Season 01</a>
+              : <a class="btn" href="#nl-email">Get early access</a>}
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- TESTIMONIALS -->
-  <section class="section wrap">
-    <div class="section-head reveal">
-      <h2 class="h2">Every fit tells a story.<br />Here's theirs.</h2>
-      <div class="rail-nav">
-        <button type="button" data-rail-btn="reviews" data-dir="prev" aria-label="Previous reviews"><Icon name="left" /></button>
-        <button type="button" data-rail-btn="reviews" data-dir="next" aria-label="Next reviews"><Icon name="right" /></button>
+  {testimonials.length > 0 && (
+    <section class="section wrap">
+      <div class="section-head reveal">
+        <h2 class="h2">Every fit tells a story.<br />Here's theirs.</h2>
+        <div class="rail-nav">
+          <button type="button" data-rail-btn="reviews" data-dir="prev" aria-label="Previous reviews"><Icon name="left" /></button>
+          <button type="button" data-rail-btn="reviews" data-dir="next" aria-label="Next reviews"><Icon name="right" /></button>
+        </div>
       </div>
-    </div>
-    <div class="rail reviews" id="reviews">
-      {testimonials.map((t) => (
-        <figure class="review">
-          <div class="stars"><b>{'★'.repeat(t.rating)}{'☆'.repeat(5 - t.rating)}</b></div>
-          <blockquote>“{t.quote}”</blockquote>
-          <figcaption>
-            <span class="avatar">{t.name[0]}</span>
-            <span><strong>{t.name}</strong><small>Verified buyer · {t.item}</small></span>
-          </figcaption>
-        </figure>
-      ))}
-    </div>
-  </section>
+      <div class="rail reviews" id="reviews">
+        {testimonials.map((t) => (
+          <figure class="review">
+            <div class="stars"><b>{'★'.repeat(t.rating)}{'☆'.repeat(5 - t.rating)}</b></div>
+            <blockquote>“{t.quote}”</blockquote>
+            <figcaption><span class="avatar">{t.name[0]}</span><span><strong>{t.name}</strong><small>{t.item}</small></span></figcaption>
+          </figure>
+        ))}
+      </div>
+    </section>
+  )}
 
-  <!-- COMMUNITY -->
-  <section class="section wrap" style="padding-top:0">
-    <div class="section-head reveal">
-      <div><p class="eyebrow">@THEEARCTIC</p><h2 class="h2">Worn by you</h2></div>
-      <a class="link-arrow" href="/lookbook">See the lookbook</a>
-    </div>
-    <div class="community">
-      {community.map((c) => (
-        <a class="post reveal" href="https://instagram.com/" target="_blank" rel="noopener" style={`background:${c.gradient}`}>
-          {c.image && <img src={c.image} alt={`Styled by ${c.handle}`} loading="lazy" />}
-          <span class="handle"><Icon name="instagram" /> {c.handle}</span>
-        </a>
-      ))}
-    </div>
-    <p style="text-align:center;color:var(--muted);margin-top:20px">Tag <strong style="color:var(--ink)">#THEEARCTIC</strong> for a chance to be featured.</p>
-  </section>
+  {community.length > 0 && (
+    <section class="section wrap">
+      <div class="section-head reveal"><div><p class="eyebrow">@THEEARCTIC</p><h2 class="h2">Worn by you</h2></div></div>
+      <div class="community">
+        {community.map((c) => (
+          <a class="post reveal" href={c.href ?? '#'} target="_blank" rel="noopener">
+            <img src={c.image} alt={`Styled by ${c.handle}`} loading="lazy" />
+            <span class="handle"><Icon name="instagram" /> {c.handle}</span>
+          </a>
+        ))}
+      </div>
+    </section>
+  )}
 </Base>
 
 <script>
@@ -294,73 +217,50 @@ const driftPick = bestsellers().find((p) => p.garment === 'shoe') ?? products[0]
 
 <style>
   /* Hero */
-  .hero { position: relative; height: min(88svh, 860px); min-height: 560px; overflow: hidden; background: var(--deep); }
-  .slide { position: absolute; inset: 0; opacity: 0; visibility: hidden; transition: opacity 1s var(--ease), visibility 0s 1s; }
-  .slide.on { opacity: 1; visibility: visible; transition: opacity 1s var(--ease); }
-  .slide video, .slide .bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-  .slide.light { color: #fff; }
-  .slide.light .eyebrow { color: #b9d7ec; }
-  .slide-inner { position: relative; height: 100%; display: flex; align-items: flex-end; padding-bottom: clamp(80px, 12vh, 140px); }
-  .copy { max-width: 760px; }
-  .slide h1 { font-size: clamp(64px, 13vw, 200px); margin: 8px 0 18px; transform: translateY(40px); opacity: 0; transition: transform 1.2s var(--ease) .15s, opacity 1s .15s; }
-  .slide.on h1 { transform: none; opacity: 1; }
-  .lede { font-size: clamp(15px, 1.4vw, 18px); max-width: 46ch; margin: 0 0 26px; opacity: .88; }
-  .ctas { display: flex; gap: 10px; flex-wrap: wrap; }
-  .snow { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-  .hero-ui { position: absolute; left: 0; right: 0; bottom: 28px; display: flex; align-items: center; gap: 16px; }
-  .bars { display: flex; gap: 8px; flex: 1; max-width: 420px; }
-  .bar-btn { flex: 1; height: 20px; display: flex; align-items: center; }
-  .bar-btn span { display: block; width: 100%; height: 3px; border-radius: 3px; background: rgba(255,255,255,.3); position: relative; overflow: hidden; }
-  .bar-btn span::after { content: ''; position: absolute; inset: 0; background: #fff; transform-origin: left; transform: scaleX(var(--p, 0)); }
-  .bar-btn.done span::after { transform: scaleX(1); }
-  .hero-toggle { color: #fff; background: rgba(255,255,255,.12); }
-  .hero-toggle:hover { background: rgba(255,255,255,.22); }
+  .hero { position: relative; height: calc(100svh - var(--header-h) - 36px); min-height: 520px; overflow: hidden; background: #0b0b0b; }
+  .hero-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .hero-shade { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 60%, rgba(0,0,0,.45)); pointer-events: none; }
+  .hero-ui { position: absolute; left: 0; right: 0; bottom: clamp(24px, 5vh, 48px); display: flex; justify-content: space-between; align-items: end; gap: 16px; }
+  .hero-label { color: rgba(255,255,255,.75); margin: 0 0 12px; }
+  .hero-toggle { color: #fff; background: rgba(255,255,255,.14); }
+  .hero-toggle:hover { background: rgba(255,255,255,.26); }
   .hero-toggle :global(.i-play), .hero-toggle[aria-pressed="true"] :global(.i-pause) { display: none; }
   .hero-toggle[aria-pressed="true"] :global(.i-play) { display: block; }
-  .bars { background: rgba(12,14,17,.28); backdrop-filter: blur(8px); border-radius: 999px; padding-inline: 14px; }
-
-  .usp { border-bottom: 1px solid var(--line); background: var(--snow); }
-  .usp-inner { display: flex; justify-content: space-between; gap: 24px; padding-block: 14px; overflow-x: auto; scrollbar-width: none; }
-  .usp span { display: inline-flex; gap: 8px; align-items: center; font-size: 13px; font-weight: 600; white-space: nowrap; }
-  .usp :global(svg) { width: 18px; height: 18px; }
 
   /* Departments */
-  .depts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-  .dept { position: relative; aspect-ratio: 5/4; border-radius: 20px; overflow: hidden; display: flex; align-items: flex-end; padding: 22px; isolation: isolate; }
-  .dept-art { position: absolute; right: -4%; top: 6%; width: 58%; z-index: -1; transition: transform .8s var(--ease); }
-  .dept:hover .dept-art { transform: translateY(-8px) rotate(-3deg) scale(1.04); }
-  .dept-copy { display: grid; gap: 4px; }
-  .dept-copy strong { font-family: var(--display); font-weight: 900; font-stretch: 118%; font-size: clamp(20px, 2.3vw, 32px); line-height: .95; text-transform: uppercase; max-width: 9ch; }
-  .dept-go { position: absolute; top: 18px; left: 18px; width: 44px; height: 44px; border-radius: 50%; background: #fff; display: grid; place-items: center; transition: transform .3s var(--ease); }
+  .depts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 20px; overflow: hidden; }
+  .dept { position: relative; background: #fff; min-height: 220px; padding: 24px; display: flex; flex-direction: column; justify-content: space-between; transition: background .35s var(--ease), color .35s; }
+  .dept:hover { background: var(--ink); color: #fff; }
+  .dept-no { font-family: var(--display); font-weight: 700; font-size: 13px; letter-spacing: .1em; opacity: .55; }
+  .dept-copy { display: grid; gap: 6px; }
+  .dept-copy strong { font-family: var(--display); font-weight: 900; font-stretch: 118%; font-size: clamp(22px, 2.6vw, 36px); line-height: .95; text-transform: uppercase; max-width: 10ch; }
+  .dept-copy span { font-size: 13px; opacity: .7; }
+  .dept-go { position: absolute; top: 20px; right: 20px; width: 44px; height: 44px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px currentColor; display: grid; place-items: center; transition: transform .3s var(--ease); }
   .dept-go :global(svg) { width: 20px; height: 20px; }
   .dept:hover .dept-go { transform: rotate(-45deg); }
-  @media (max-width: 900px) { .depts { grid-template-columns: repeat(2, 1fr); gap: 10px; } .dept { aspect-ratio: 4/5; padding: 16px; } }
+  @media (max-width: 900px) { .depts { grid-template-columns: repeat(2, 1fr); } .dept { min-height: 170px; padding: 18px; } .dept-go { width: 36px; height: 36px; top: 14px; right: 14px; } }
 
-  /* Spotlight */
-  .spot { background: linear-gradient(180deg, #f6f8fa, #e9eff4); padding-block: clamp(48px, 7vw, 96px); overflow: hidden; outline: none; }
+  .cat-links { flex-wrap: wrap; overflow: visible; }
+
+  /* Spotlight (appears once products with photos exist) */
+  .spot { background: var(--snow); padding-block: clamp(48px, 7vw, 96px); overflow: hidden; outline: none; }
   .spot-grid { display: grid; grid-template-columns: 1fr 1.2fr .9fr; gap: 32px; align-items: center; }
   .spot-title { font-size: clamp(44px, 6vw, 92px); margin: 10px 0 16px; }
-  .spot-title span { color: #9aa6b2; }
-  .spot-lede { color: var(--muted); max-width: 36ch; margin: 0 0 28px; }
-  .spot-stats { display: flex; gap: 28px; }
-  .spot-stats div { display: grid; }
-  .spot-stats strong { font-family: var(--display); font-size: 26px; font-weight: 800; }
-  .spot-stats span { font-size: 12px; color: var(--muted); }
+  .spot-title span { color: #9a9a96; }
+  .spot-lede { color: var(--muted); max-width: 36ch; margin: 0; }
   .spot-stage { position: relative; height: clamp(380px, 46vw, 600px); }
-  .spot-item { position: absolute; top: 0; left: 50%; width: 70%; height: calc(100% - 60px); margin-left: -35%; display: grid; place-items: center; transition: transform .9s var(--ease), opacity .7s, filter .7s; cursor: pointer; }
-  .spot-art { width: 100%; height: 100%; display: grid; place-items: center; object-fit: contain; }
-  .spot-art :global(svg) { width: 100%; height: 100%; filter: drop-shadow(0 30px 40px rgba(13,34,54,.18)); }
+  .spot-item { position: absolute; top: 0; left: 50%; width: 70%; height: calc(100% - 60px); margin-left: -35%; transition: transform .9s var(--ease), opacity .7s, filter .7s; cursor: pointer; }
+  .spot-art { width: 100%; height: 100%; object-fit: contain; }
   .spot-item[data-pos="active"] { transform: none; opacity: 1; filter: none; z-index: 3; cursor: default; }
   .spot-item[data-pos="prev"] { transform: translateX(-62%) scale(.62); opacity: .28; filter: blur(3px) grayscale(.4); z-index: 2; }
   .spot-item[data-pos="next"] { transform: translateX(62%) scale(.62); opacity: .28; filter: blur(3px) grayscale(.4); z-index: 2; }
   .spot-item[data-pos="far-prev"] { transform: translateX(-110%) scale(.4); opacity: 0; pointer-events: none; }
   .spot-item[data-pos="far-next"] { transform: translateX(110%) scale(.4); opacity: 0; pointer-events: none; }
   .spot-nav { position: absolute; bottom: 0; left: 0; right: 0; display: flex; justify-content: center; align-items: center; gap: 18px; z-index: 4; }
-  .nav-btn { width: 46px; height: 46px; border-radius: 50%; background: #fff; display: grid; place-items: center; box-shadow: 0 6px 20px rgba(13,34,54,.1); transition: transform .2s; }
-  .nav-btn:hover { transform: scale(1.08); }
+  .nav-btn { width: 46px; height: 46px; border-radius: 50%; background: #fff; display: grid; place-items: center; box-shadow: 0 6px 20px rgba(0,0,0,.1); }
   .nav-btn :global(svg) { width: 20px; height: 20px; }
   .spot-count { font-family: var(--display); font-weight: 700; font-size: 14px; letter-spacing: .1em; min-width: 70px; text-align: center; }
-  .spot-panel { background: rgba(255,255,255,.75); backdrop-filter: blur(12px); border-radius: 20px; padding: 26px; box-shadow: 0 20px 50px -30px rgba(13,34,54,.35); transition: opacity .22s, filter .22s, transform .22s; }
+  .spot-panel { background: #fff; border-radius: 20px; padding: 26px; box-shadow: 0 20px 50px -30px rgba(0,0,0,.35); transition: opacity .22s, filter .22s, transform .22s; }
   .spot-panel.swap { opacity: 0; filter: blur(6px); transform: translateY(8px); }
   .spot-name { font-family: var(--display); font-weight: 800; font-stretch: 110%; text-transform: uppercase; font-size: clamp(22px, 2.2vw, 32px); line-height: 1; margin: 8px 0 10px; }
   .spot-price { font-size: 18px; margin-bottom: 18px; }
@@ -369,75 +269,35 @@ const driftPick = bestsellers().find((p) => p.garment === 'shoe') ?? products[0]
   .spot-panel :global(.sw) { width: 26px; height: 26px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0,0,0,.15); }
   .spot-panel :global(.sw[aria-pressed="true"]) { box-shadow: 0 0 0 2px #fff, 0 0 0 3.5px var(--ink); }
   .spot-sz { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
-  .spot-panel :global(.sz) { min-width: 42px; height: 38px; padding-inline: 8px; border-radius: 10px; border: 1px solid var(--line); background: #fff; font-size: 13px; font-weight: 600; transition: all .2s; }
+  .spot-panel :global(.sz) { min-width: 42px; height: 38px; padding-inline: 8px; border-radius: 10px; border: 1px solid var(--line); background: #fff; font-size: 13px; font-weight: 600; }
   .spot-panel :global(.sz:hover) { background: var(--ink); color: #fff; border-color: var(--ink); }
-  @media (max-width: 1080px) {
-    .spot-grid { grid-template-columns: 1fr; }
-    .spot-stats { display: none; }
-    .spot-stage { height: 440px; }
-  }
-
-  /* Category circles */
-  .circles { display: flex; gap: 18px; overflow-x: auto; scrollbar-width: none; padding-bottom: 6px; }
-  .circles::-webkit-scrollbar { display: none; }
-  .circle { flex: none; display: grid; justify-items: center; gap: 10px; font-size: 13px; font-weight: 600; width: 110px; text-align: center; }
-  .ring { width: 104px; height: 104px; border-radius: 50%; background: var(--ice); display: grid; place-items: center; transition: transform .35s var(--ease), box-shadow .3s; }
-  .ring :global(svg) { width: 62%; }
-  .circle:hover .ring { transform: translateY(-4px); box-shadow: 0 0 0 2px var(--ink); }
+  @media (max-width: 1080px) { .spot-grid { grid-template-columns: 1fr; } .spot-stage { height: 440px; } }
 
   .rail-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+  .sale-banner { display: flex; justify-content: space-between; align-items: center; gap: 24px; flex-wrap: wrap; background: var(--sale); color: #fff; border-radius: 24px; padding: clamp(24px, 4vw, 48px); }
+  .sale-banner h2 { font-size: clamp(32px, 5vw, 64px); margin: 6px 0 0; }
 
-  /* Sale */
-  .sale-banner { display: grid; grid-template-columns: 1.3fr auto auto; align-items: center; gap: 32px; background: linear-gradient(120deg, #b8141e, #e3343d 60%, #ff6b6b); color: #fff; border-radius: 24px; padding: clamp(24px, 4vw, 48px); }
-  .sale-banner h2 { font-size: clamp(40px, 6vw, 84px); margin: 6px 0 10px; }
-  .cd { display: flex; gap: 10px; }
-  .cd div { background: rgba(255,255,255,.14); border-radius: 14px; padding: 12px 10px; min-width: 64px; text-align: center; display: grid; }
-  .cd b { font-family: var(--display); font-size: 30px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
-  .cd span { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; opacity: .8; margin-top: 4px; }
-  @media (max-width: 900px) { .sale-banner { grid-template-columns: 1fr; gap: 20px; } }
-
-  /* Editorial accordion */
-  .editorial { display: flex; gap: 10px; height: clamp(360px, 42vw, 560px); }
-  .ed { position: relative; flex: 1; border-radius: 20px; overflow: hidden; transition: flex 0.7s var(--ease); display: flex; align-items: flex-end; padding: 20px; min-width: 0; }
-  .ed:hover, .ed:focus-visible { flex: 2.6; }
-  .ed-art { position: absolute; inset: 8% 10% 22%; display: grid; place-items: center; transition: transform .8s var(--ease); }
-  .ed-art :global(svg) { height: 100%; width: auto; }
-  .ed:hover .ed-art { transform: scale(1.06); }
-  .ed-copy { position: relative; display: grid; gap: 2px; }
-  .ed-copy strong { font-family: var(--display); font-weight: 900; font-stretch: 115%; text-transform: uppercase; font-size: clamp(16px, 1.8vw, 26px); line-height: 1; }
-  .ed-copy span { font-size: 13px; opacity: .8; white-space: nowrap; }
-  .ed.light { color: #fff; }
-  @media (max-width: 760px) {
-    .editorial { height: auto; display: grid; grid-auto-flow: column; grid-auto-columns: 70%; overflow-x: auto; scroll-snap-type: x mandatory; }
-    .ed { aspect-ratio: 3/4; scroll-snap-align: start; }
-  }
-
-  /* Drift */
-  .drift { position: relative; background: var(--ink); color: #fff; padding-block: clamp(80px, 12vw, 180px); overflow: hidden; }
-  .drift-word { position: absolute; top: 50%; left: 0; right: 0; margin-top: -0.45em; font-size: clamp(140px, 30vw, 520px); font-weight: 900; font-stretch: 125%; color: transparent; -webkit-text-stroke: 1.5px rgba(255,255,255,.18); white-space: nowrap; text-align: center; line-height: .9; will-change: transform; }
+  /* Season 01 */
+  .drift { position: relative; background: #0b0b0b; color: #fff; padding-block: clamp(80px, 12vw, 180px); overflow: hidden; margin-top: clamp(24px, 4vw, 64px); }
+  .drift-word { position: absolute; top: 50%; left: 0; right: 0; margin-top: -0.45em; font-size: clamp(140px, 30vw, 520px); font-weight: 900; font-stretch: 125%; color: transparent; -webkit-text-stroke: 1.5px rgba(255,255,255,.16); white-space: nowrap; text-align: center; line-height: .9; will-change: transform; }
   .drift-inner { position: relative; display: flex; justify-content: center; }
-  .drift-card { display: grid; grid-template-columns: 220px 1fr; gap: 28px; align-items: center; background: #fff; color: var(--ink); border-radius: 24px; padding: 28px; max-width: 760px; box-shadow: 0 40px 80px -30px rgba(0,0,0,.5); }
-  .drift-card h2 { font-size: clamp(32px, 4.4vw, 60px); margin: 6px 0 12px; }
-  .drift-art { background: var(--ice); border-radius: 16px; aspect-ratio: 3/4; display: grid; place-items: center; padding: 16px; }
-  @media (max-width: 640px) { .drift-card { grid-template-columns: 1fr; } .drift-art { aspect-ratio: 16/10; } .drift-art :global(svg) { height: 100%; width: auto; } }
+  .drift-card { display: grid; grid-template-columns: 240px 1fr; gap: 32px; align-items: center; background: #fff; color: var(--ink); border-radius: 24px; padding: 24px; max-width: 760px; box-shadow: 0 40px 80px -30px rgba(0,0,0,.6); }
+  .drift-card h2 { font-size: clamp(32px, 4.4vw, 60px); margin: 6px 0 0; }
+  .drift-img { width: 100%; aspect-ratio: 9/14; object-fit: cover; border-radius: 16px; }
+  @media (max-width: 640px) { .drift-card { grid-template-columns: 1fr; } .drift-img { aspect-ratio: 4/5; } }
 
-  /* Reviews */
   .reviews { grid-auto-columns: calc((100% - 16px * 2) / 3); }
   @media (max-width: 900px) { .reviews { grid-auto-columns: 85%; } }
   .review { margin: 0; background: var(--snow); border-radius: 20px; padding: 26px; display: flex; flex-direction: column; gap: 16px; }
-  .review .stars b { font-size: 15px; color: var(--ink); }
   .review blockquote { margin: 0; font-size: 17px; line-height: 1.45; font-weight: 500; flex: 1; }
   .review figcaption { display: flex; gap: 12px; align-items: center; }
   .review figcaption > span:last-child { display: grid; }
   .review small { color: var(--muted); font-size: 12px; }
-  .avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--deep); color: #fff; display: grid; place-items: center; font-weight: 700; }
-
-  /* Community */
+  .avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--ink); color: #fff; display: grid; place-items: center; font-weight: 700; }
   .community { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
-  .post { position: relative; aspect-ratio: 4/5; border-radius: 16px; overflow: hidden; display: block; }
-  .post img { width: 100%; height: 100%; object-fit: cover; transition: transform .8s var(--ease); }
-  .post:hover img { transform: scale(1.05); }
-  .handle { position: absolute; left: 10px; bottom: 10px; display: inline-flex; gap: 6px; align-items: center; font-size: 12px; font-weight: 600; color: #fff; background: rgba(0,0,0,.35); backdrop-filter: blur(6px); padding: 5px 9px; border-radius: 999px; }
+  .post { position: relative; aspect-ratio: 4/5; border-radius: 16px; overflow: hidden; display: block; background: var(--snow); }
+  .post img { width: 100%; height: 100%; object-fit: cover; }
+  .handle { position: absolute; left: 10px; bottom: 10px; display: inline-flex; gap: 6px; align-items: center; font-size: 12px; font-weight: 600; color: #fff; background: rgba(0,0,0,.35); padding: 5px 9px; border-radius: 999px; }
   .handle :global(svg) { width: 14px; height: 14px; }
   @media (max-width: 900px) { .community { grid-template-columns: repeat(3, 1fr); } }
 </style>

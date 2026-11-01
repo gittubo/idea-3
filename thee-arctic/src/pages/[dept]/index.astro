@@ -1,8 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import Listing from '../../components/Listing.astro';
-import { departments, inDept, inCategory } from '../../data/catalog';
-import { garmentSvg } from '../../data/garments';
+import { departments, inDept } from '../../data/catalog';
 
 export function getStaticPaths() {
   return departments.map((d) => ({ params: { dept: d.slug }, props: { dept: d } }));
@@ -19,15 +18,9 @@ const items = inDept(dept.slug);
         <p>{dept.tagline} {dept.blurb}</p>
       </div>
       <div class="cat-tiles">
-        {dept.categories.slice(0, 6).map((c) => {
-          const p = inCategory(dept.slug, c.slug)[0];
-          return (
-            <a class="tile" href={`/${dept.slug}/${c.slug}`}>
-              <span class="art" set:html={garmentSvg(c.garment[0], p.colors[0].hex)} />
-              <span>{c.name}</span>
-            </a>
-          );
-        })}
+        {dept.categories.slice(0, 6).map((c) => (
+          <a class="tile" href={`/${dept.slug}/${c.slug}`}><span>{c.name}</span><span aria-hidden="true">→</span></a>
+        ))}
       </div>
     </div>
   </section>
@@ -43,8 +36,7 @@ const items = inDept(dept.slug);
   h1 { white-space: pre-line; font-size: clamp(44px, 7.4vw, 116px); margin: 10px 0 14px; }
   .dh-inner p { color: var(--ink-2); max-width: 46ch; margin: 0; }
   .cat-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-  .tile { background: rgba(255,255,255,.7); border-radius: 16px; padding: 12px; display: grid; gap: 6px; justify-items: center; font-size: 13px; font-weight: 600; text-align: center; transition: transform .3s var(--ease), background .3s; }
-  .tile:hover { transform: translateY(-3px); background: #fff; }
-  .art { width: 64%; aspect-ratio: 4/5; display: grid; place-items: center; }
+  .tile { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 16px; min-height: 84px; display: flex; justify-content: space-between; align-items: flex-end; gap: 8px; font-size: 14px; font-weight: 600; transition: background .3s, color .3s; }
+  .tile:hover { background: var(--ink); color: #fff; }
   @media (max-width: 900px) { .dh-inner { grid-template-columns: 1fr; } .cat-tiles { grid-template-columns: repeat(3, 1fr); } }
 </style>

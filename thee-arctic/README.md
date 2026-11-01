@@ -2,7 +2,7 @@
 
 A full fashion storefront for THEE ARCTIC: Women, Curve, Men, Kids, Sports and Beauty, plus New In, Sale, Collections, Rewards, Gift Cards, Lookbook and a Help Centre.
 
-Built with Astro as a static site (about 400 pages). The bag, wishlist and recently viewed items are kept in the shopper's browser until a commerce backend is connected.
+Built with Astro as a static site. The bag, wishlist and recently viewed items are kept in the shopper's browser until a commerce backend is connected.
 
 ## Run it
 
@@ -19,7 +19,7 @@ Node 20 or newer.
 
 | Area | Where |
 | --- | --- |
-| Home: logo intro, hero slider with snowfall, departments, spotlight carousel, category circles, popular picks, sale countdown, editorial strip, new arrivals, "Step into your best style", reviews, #THEEARCTIC grid | `src/pages/index.astro`, `src/scripts/home.ts` |
+| Home: logo intro, Season 01 film (16:9 on desktop, 9:16 on phones), departments, categories, "Step into your best style". Spotlight carousel, popular picks, sale banner, collections, new arrivals, reviews and #THEEARCTIC grid appear automatically once products / content exist | `src/pages/index.astro`, `src/scripts/home.ts` |
 | Department pages (`/women`, `/curve`, `/men`, `/kids`, `/sports`, `/beauty`) | `src/pages/[dept]/index.astro` |
 | Category pages (`/men/hoodies`, `/women/dresses` …) | `src/pages/[dept]/[category].astro` |
 | Filters (size, colour, price, sale, new), sort, load more | `src/components/Listing.astro` + `src/scripts/store.ts` |
@@ -29,12 +29,12 @@ Node 20 or newer.
 
 ## Adding your own content
 
-- **Products:** `src/data/catalog.ts`. The catalog is generated placeholder data. Replace `products` with your real line sheet (same fields), or connect Shopify and map its products to the same shape.
-- **Product photos:** put them in `public/products/<product-slug>/1.jpg, 2.jpg …` and list them in the product's `images` array. Cards and product pages switch from the placeholder art to the photos automatically.
-- **Landing page / hero:** `src/data/site.ts`. Each hero slide takes a `video` or `image` path (files go in `public/media/`), a headline, text and button.
+- **Products:** `src/data/catalog.ts`. The catalog is empty; the comment above `products` shows the format of one entry. Until products are added, listing pages show a "coming soon" notice.
+- **Product photos:** put them in `public/products/<product-slug>/1.jpg, 2.jpg …` and list them in the product's `images` array. No artwork is drawn in their place: images come only from your photos.
+- **Landing page / hero:** `src/data/site.ts` points at `public/media/landing-16x9.mp4` and `landing-9x16.mp4` (compressed, no audio).
 - **Logo:** `src/components/Logo.astro` (instructions inside). The favicon is `public/favicon.svg`.
 - **Customer photos (#THEEARCTIC grid):** `community` in `src/data/site.ts`.
-- **Testimonials:** `testimonials` in `src/data/site.ts`. These are placeholders; replace them with real customer quotes before launch.
+- **Testimonials:** `testimonials` in `src/data/site.ts`. Empty, so the section is hidden until real reviews are added.
 
 ## Not connected yet
 
@@ -42,6 +42,6 @@ These parts have their UI in place but need a service behind them before the sto
 
 - **Checkout and payments**: Shopify (Storefront API / Buy Button) or Stripe.
 - **Customer accounts, order tracking**: Shopify customer accounts.
-- **Product reviews**: the product page shows sample reviews and generated ratings. Connect Judge.me, Okendo or Yotpo.
+- **Product reviews**: the product page shows a reviews block with sample text. Connect Judge.me, Okendo or Yotpo before launch.
 - **Newsletter and contact form**: Klaviyo, Mailchimp or Shopify Email.
 - **Search** runs in the browser over `/search-index.json`, which is fine for a few thousand products.

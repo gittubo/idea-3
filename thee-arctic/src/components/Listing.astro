@@ -18,6 +18,21 @@ const colorNames = new Set(products.flatMap((p) => p.colors.map((c) => c.name)))
 const colors = palette.filter((c) => colorNames.has(c.name));
 const prices: [string, string][] = [['', 'Any price'], ['0-25', 'Under $25'], ['25-50', '$25 – $50'], ['50-100', '$50 – $100'], ['100-1000', '$100+']];
 ---
+{products.length === 0 ? (
+<section class="wrap">
+  {links.length > 0 && (
+    <nav class="chips" aria-label="Categories" style="margin-bottom:18px">
+      {links.map((l) => <a class={`chip ${l.on ? 'on' : ''}`} href={l.href}>{l.label}</a>)}
+    </nav>
+  )}
+  <div class="soon">
+    <p class="eyebrow">Coming soon</p>
+    <h2 class="h2">Pieces drop here soon.</h2>
+    <p>Join the list for early access when this drop goes live.</p>
+    <a class="btn" href="#nl-email">Get early access</a>
+  </div>
+</section>
+) : (
 <section class="wrap listing" data-listing>
   {links.length > 0 && (
     <nav class="chips" aria-label="Categories" style="margin-bottom:18px">
@@ -96,8 +111,11 @@ const prices: [string, string][] = [['', 'Any price'], ['0-25', 'Under $25'], ['
     </aside>
   </div>
 </section>
+)}
 
 <style>
+  .soon { border: 1px solid var(--line); border-radius: 20px; padding: clamp(32px, 6vw, 72px); text-align: center; display: grid; gap: 12px; justify-items: center; margin-bottom: 24px; }
+  .soon p { margin: 0; color: var(--muted); }
   .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 22px; position: sticky; top: var(--header-h); z-index: 5; background: rgba(255,255,255,.94); backdrop-filter: blur(10px); padding-block: 10px; flex-wrap: wrap; }
   .toolbar .left, .toolbar .right { display: flex; gap: 8px; align-items: center; }
   .count-label { font-size: 13px; color: var(--muted); }

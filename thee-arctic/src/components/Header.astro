@@ -4,19 +4,12 @@ import Icon from './Icon.astro';
 import Logo from './Logo.astro';
 
 const announcements = [
-  'Free shipping on orders over $75',
-  'Arctic Sale: up to 60% off. <a href="/sale">Shop now</a>',
-  'New drops every Friday. <a href="/new-in">See what just landed</a>',
-  'Join Arctic Rewards and get 15% off your first order',
+  'THEE ARCTIC · Season 01',
+  'Join the list for early access. <a href="#nl-email">Sign up</a>',
 ];
-const deptGradient: Record<string, string> = {
-  women: 'linear-gradient(160deg,#cfe2f1,#7c9bbd)',
-  curve: 'linear-gradient(160deg,#e6d6ef,#9a7db8)',
-  men: 'linear-gradient(160deg,#d3dbe2,#4c5b6a)',
-  kids: 'linear-gradient(160deg,#d4efe8,#5fa79a)',
-  sports: 'linear-gradient(160deg,#cde7f7,#2f6c9c)',
-  beauty: 'linear-gradient(160deg,#f6e2dc,#c48f86)',
-};
+const deptGradient: Record<string, string> = Object.fromEntries(
+  ['women', 'curve', 'men', 'kids', 'sports', 'beauty'].map((d, i) => [d, `linear-gradient(160deg, ${['#3a3a38', '#4a4a47', '#2b2b2b', '#55524d', '#333331', '#5e5a55'][i]}, #0b0b0b)`]),
+);
 ---
 <div class="announce" data-announce>
   <ul>{announcements.map((a, i) => <li class={i === 0 ? 'on' : ''} set:html={a} />)}</ul>
@@ -50,7 +43,7 @@ const deptGradient: Record<string, string> = {
                 </div>
                 <div class="feature">
                   <a href={`/${d.slug}`} style={`background:${deptGradient[d.slug]}`}><span>{d.tagline}</span></a>
-                  <a href="/collections/arctic-essentials" style="background:linear-gradient(160deg,#eef3f7,#9fb6c8)"><span>Arctic Essentials</span></a>
+                  <a href="/collections/arctic-essentials" style="background:linear-gradient(160deg,#d9d7d2,#8f8c86)"><span>Arctic Essentials</span></a>
                 </div>
               </div>
             </div>
@@ -74,8 +67,8 @@ const deptGradient: Record<string, string> = {
                 </ul>
               </div>
               <div class="feature">
-                <a href="/collections/polar-night" style="background:linear-gradient(160deg,#3a4552,#0b0f14)"><span>Polar Night</span></a>
-                <a href="/collections/whiteout" style="background:linear-gradient(160deg,#ffffff,#c8d3dc)"><span style="color:var(--ink);text-shadow:none">Whiteout</span></a>
+                <a href="/collections/polar-night" style="background:linear-gradient(160deg,#2b2b2b,#0b0b0b)"><span>Polar Night</span></a>
+                <a href="/collections/whiteout" style="background:linear-gradient(160deg,#ffffff,#d9d7d2)"><span style="color:var(--ink);text-shadow:none">Whiteout</span></a>
               </div>
             </div>
           </div>

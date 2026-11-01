@@ -1,32 +1,23 @@
 ---
 import Base from '../layouts/Base.astro';
-import { bestsellers, money } from '../data/catalog';
-import { garmentSvg } from '../data/garments';
-const looks = bestsellers().filter((_, k) => k % 2 === 0).slice(0, 9);
-const bgs = ['#0d2236', '#e9eef5', '#15171a', '#dceefa', '#efe9f3', '#1d2b44', '#e8f2f0', '#f3ecea', '#2a2f36'];
+// Campaign imagery: add more files to /public/media and list them here.
+const looks = [
+  { src: '/media/season01-group.jpg', alt: 'THEE ARCTIC Season 01 group look' },
+];
 ---
 <Base title="Lookbook">
   <section class="wrap page-hero">
     <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a><span>/</span><span>Lookbook</span></nav>
-    <p class="eyebrow">Drop 01</p>
+    <p class="eyebrow">Season 01</p>
     <h1 class="display">Lookbook</h1>
-    <p>Campaign imagery goes here. Every look links to the pieces in it.</p>
   </section>
   <section class="wrap looks">
-    {looks.map((p, k) => (
-      <a class={`look reveal ${k % 3 === 0 ? 'tall' : ''}`} href={`/products/${p.slug}`} style={`background:${bgs[k % bgs.length]}`}>
-        <span class="art" set:html={garmentSvg(p.garment, p.colors[0].hex)} />
-        <span class="tag"><strong>{p.name}</strong> {money(p.salePrice ?? p.price)}</span>
-      </a>
-    ))}
+    <video class="look wide" src="/media/landing-16x9.mp4" poster="/media/landing-16x9.jpg" muted loop playsinline autoplay aria-label="Season 01 campaign film"></video>
+    {looks.map((l) => <img class="look" src={l.src} alt={l.alt} loading="lazy" />)}
   </section>
 </Base>
 <style>
-  .looks { display: grid; grid-template-columns: repeat(3, 1fr); grid-auto-rows: 280px; gap: 12px; }
-  .look { position: relative; border-radius: 18px; overflow: hidden; display: grid; place-items: center; }
-  .look.tall { grid-row: span 2; }
-  .art { height: 80%; aspect-ratio: 4/5; display: grid; place-items: center; transition: transform .8s var(--ease); }
-  .look:hover .art { transform: scale(1.06); }
-  .tag { position: absolute; left: 12px; bottom: 12px; background: #fff; border-radius: 999px; padding: 6px 12px; font-size: 12px; display: flex; gap: 8px; }
-  @media (max-width: 760px) { .looks { grid-template-columns: 1fr 1fr; grid-auto-rows: 220px; } }
+  .looks { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; align-items: stretch; }
+  .look { width: 100%; height: 100%; object-fit: cover; border-radius: 18px; background: #0b0b0b; }
+  @media (max-width: 760px) { .looks { grid-template-columns: 1fr; } }
 </style>

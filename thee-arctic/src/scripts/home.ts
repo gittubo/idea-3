@@ -1,87 +1,45 @@
-// Home page interactions: hero slider + snowfall, spotlight carousel, tabs, countdown, parallax wordmark.
+// Home page interactions: hero film, spotlight carousel, tabs, countdown, parallax wordmark.
 import { garmentSvg, type Garment } from '../data/garments';
 
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const $ = <T extends HTMLElement = HTMLElement>(s: string, r: ParentNode = document) => r.querySelector<T>(s);
 const $$ = <T extends HTMLElement = HTMLElement>(s: string, r: ParentNode = document) => Array.from(r.querySelectorAll<T>(s));
 
-/* Hero slider */
+/* Hero film: landscape video on wide screens, portrait video on tall ones */
 function hero() {
   const root = $('[data-hero]');
-  if (!root) return;
-  const slides = $$('.slide', root);
-  const bars = $$('[data-bar]', root);
+  const video = root?.querySelector<HTMLVideoElement>('video');
+  if (!root || !video) return;
+  const tall = matchMedia('(max-aspect-ratio: 1/1)');
+  const pick = () => {
+    const key = tall.matches ? 'tall' : 'wide';
+    const src = video.dataset[key]!;
+    if (video.getAttribute('src') === src) return;
+    video.poster = video.dataset[`${key}Poster`] ?? '';
+    video.src = src;
+    if (!reduce && !paused) video.play().catch(() => {});
+  };
+  let paused = reduce;
+  if (reduce) video.removeAttribute('autoplay');
+  pick();
+  tall.addEventListener('change', pick);
+  if (reduce) video.pause();
   const toggle = $<HTMLButtonElement>('[data-hero-toggle]', root);
-  const DURATION = 6500;
-  let i = 0, playing = !reduce, start = performance.now(), elapsed = 0;
-
-  const go = (n: number) => {
-    slides[i].classList.remove('on');
-    bars[i].style.setProperty('--p', '0');
-    i = (n + slides.length) % slides.length;
-    slides[i].classList.add('on');
-    bars.forEach((b, j) => b.classList.toggle('done', j < i));
-    start = performance.now(); elapsed = 0;
-    slides.forEach((s) => s.querySelector('video')?.pause());
-    slides[i].querySelector('video')?.play().catch(() => {});
+  const sync = () => {
+    toggle?.setAttribute('aria-pressed', String(paused));
+    toggle?.setAttribute('aria-label', paused ? 'Play video' : 'Pause video');
   };
-  bars.forEach((b, j) => b.addEventListener('click', () => go(j)));
+  sync();
   toggle?.addEventListener('click', () => {
-    playing = !playing;
-    if (playing) start = performance.now() - elapsed;
-    toggle.setAttribute('aria-pressed', String(!playing));
-    toggle.setAttribute('aria-label', playing ? 'Pause slideshow' : 'Play slideshow');
+    paused = !paused;
+    if (paused) video.pause(); else video.play().catch(() => {});
+    sync();
   });
-  const tick = (now: number) => {
-    if (playing) {
-      elapsed = now - start;
-      bars[i].style.setProperty('--p', String(Math.min(1, elapsed / DURATION)));
-      if (elapsed >= DURATION) go(i + 1);
-    }
-    requestAnimationFrame(tick);
-  };
-  requestAnimationFrame(tick);
-
-  // swipe
-  let x0 = 0;
-  root.addEventListener('touchstart', (e) => (x0 = e.touches[0].clientX), { passive: true });
-  root.addEventListener('touchend', (e) => {
-    const dx = e.changedTouches[0].clientX - x0;
-    if (Math.abs(dx) > 50) go(i + (dx < 0 ? 1 : -1));
-  });
-}
-
-/* Snowfall on the hero canvas */
-function snow() {
-  const canvas = $<HTMLCanvasElement>('[data-snow]');
-  if (!canvas || reduce) return;
-  const ctx = canvas.getContext('2d')!;
-  let w = 0, h = 0;
-  const dpr = Math.min(2, devicePixelRatio || 1);
-  const resize = () => {
-    w = canvas.clientWidth; h = canvas.clientHeight;
-    canvas.width = w * dpr; canvas.height = h * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  };
-  resize();
-  addEventListener('resize', resize);
-  const flakes = Array.from({ length: Math.round(Math.min(140, w / 10)) }, () => ({
-    x: Math.random() * w, y: Math.random() * h, r: Math.random() * 2.2 + .4, s: Math.random() * .6 + .25, d: Math.random() * Math.PI * 2,
-  }));
-  let visible = true;
-  new IntersectionObserver(([e]) => (visible = e.isIntersecting)).observe(canvas);
-  const draw = () => {
-    if (visible) {
-      ctx.clearRect(0, 0, w, h);
-      ctx.fillStyle = 'rgba(255,255,255,.75)';
-      for (const f of flakes) {
-        f.y += f.s; f.d += .01; f.x += Math.sin(f.d) * .35;
-        if (f.y > h + 4) { f.y = -4; f.x = Math.random() * w; }
-        ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2); ctx.fill();
-      }
-    }
-    requestAnimationFrame(draw);
-  };
-  draw();
+  // Pause while scrolled out of view to save battery
+  new IntersectionObserver(([e]) => {
+    if (paused) return;
+    if (e.isIntersecting) video.play().catch(() => {}); else video.pause();
+  }).observe(root);
 }
 
 /* Spotlight carousel: centred piece, ghosted neighbours, details panel swaps with a blur transition */
@@ -199,4 +157,4 @@ function drift() {
   update();
 }
 
-hero(); snow(); spotlight(); tabs(); countdown(); drift();
+hero(); spotlight(); tabs(); countdown(); drift();

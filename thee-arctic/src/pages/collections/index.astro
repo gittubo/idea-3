@@ -1,12 +1,11 @@
 ---
 import Base from '../../layouts/Base.astro';
 import { collections, inCollection } from '../../data/catalog';
-import { garmentSvg } from '../../data/garments';
 const looks: Record<string, string> = {
-  'arctic-essentials': 'linear-gradient(160deg,#eee8de,#a8977d)',
-  'polar-night': 'linear-gradient(160deg,#3a4552,#07090c)',
-  whiteout: 'linear-gradient(160deg,#ffffff,#c8d3dc)',
-  expedition: 'linear-gradient(160deg,#4b6a8f,#13253a)',
+  'arctic-essentials': 'linear-gradient(160deg,#efeeeb,#cfccc6)',
+  'polar-night': 'linear-gradient(160deg,#2b2b2b,#0b0b0b)',
+  whiteout: 'linear-gradient(160deg,#ffffff,#dedcd8)',
+  expedition: 'linear-gradient(160deg,#4a4a48,#1a1a1a)',
 };
 ---
 <Base title="Collections">
@@ -21,8 +20,7 @@ const looks: Record<string, string> = {
       const dark = c.slug === 'polar-night' || c.slug === 'expedition';
       return (
         <a class={`coll reveal ${dark ? 'dark' : ''}`} href={`/collections/${c.slug}`} style={`background:${looks[c.slug]}`}>
-          <div class="arts">{items.slice(0, 3).map((p) => <span set:html={garmentSvg(p.garment, p.colors[0].hex)} />)}</div>
-          <div><strong>{c.name}</strong><span>{c.blurb} · {items.length} styles</span></div>
+          <div><strong>{c.name}</strong><span>{c.blurb}{items.length > 0 && ` · ${items.length} styles`}</span></div>
         </a>
       );
     })}
@@ -30,7 +28,7 @@ const looks: Record<string, string> = {
 </Base>
 <style>
   .colls { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
-  .coll { border-radius: 22px; padding: 26px; aspect-ratio: 16/11; display: flex; flex-direction: column; justify-content: space-between; }
+  .coll { border-radius: 22px; padding: 26px; aspect-ratio: 16/9; display: flex; flex-direction: column; justify-content: flex-end; }
   .coll.dark { color: #fff; }
   .arts { display: flex; gap: 4%; height: 64%; justify-content: center; }
   .arts span { height: 100%; aspect-ratio: 4/5; display: grid; place-items: center; transition: transform .6s var(--ease); }
