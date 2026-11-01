@@ -11,6 +11,7 @@ import * as THREE from 'three';
 import { Hall, EYE, copyPose, newPose, type Pose } from './hall';
 import { DepthScene, type PieceMeta } from './depth-scene';
 import { Explorer } from './explorer';
+import { Soundscape } from './sound';
 import type { Painting as RoomEntry } from '../pieces/collection';
 
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
@@ -26,6 +27,7 @@ interface Journey { scene: DepthScene; explorer: Explorer }
 interface Move {
   from: Pose; to: Pose; ctrl: THREE.Vector3 | null;
   start: number; dur: number; walk: number; // walk: metres walked on the floor (for the step rhythm)
+  stepIdx: number;
   painting: number;                          // painting being approached, or -1
   done: () => void;
 }
@@ -55,6 +57,30 @@ export async function startMuseum(entries: RoomEntry[]) {
 
   const hall = new Hall(renderer, entries);
   await hall.load();
+
+  // ---- sound: off by default, the visitor's choice is remembered ---------------------------
+  const sound = new Soundscape();
+  const soundBtn = $<HTMLButtonElement>('.sound-btn');
+  const store = { get: () => { try { return localStorage.getItem('tubo-sound'); } catch { return null; } },
+    set: (v: string) => { try { localStorage.setItem('tubo-sound', v); } catch { /* storage unavailable */ } } };
+  const showSound = (on: boolean) => {
+    root.classList.toggle('sound-on', on);
+    soundBtn.setAttribute('aria-pressed', String(on));
+    soundBtn.setAttribute('aria-label', on ? 'Turn sound off' : 'Turn sound on');
+  };
+  soundBtn.addEventListener('click', () => {
+    const on = !sound.on;
+    sound.setOn(on);
+    showSound(on);
+    store.set(on ? 'on' : 'off');
+  });
+  if (store.get() === 'on') {
+    // browsers only allow sound after the visitor's first touch or click
+    showSound(true);
+    const wake = () => { if (!sound.started && root.classList.contains('sound-on')) sound.setOn(true); };
+    addEventListener('pointerdown', wake, { once: true, capture: true });
+    addEventListener('keydown', wake, { once: true, capture: true });
+  }
 
   // ---- paintings' depth layers load in the background ----------------------------------
   const journeys = new Map<number, Promise<Journey>>();
@@ -124,7 +150,7 @@ export async function startMuseum(entries: RoomEntry[]) {
     const dist = from.pos.distanceTo(opts.ctrl ?? to.pos) + (opts.ctrl ? opts.ctrl.distanceTo(to.pos) : 0);
     const flat = Math.hypot(to.pos.x - from.pos.x, to.pos.z - from.pos.z);
     const dur = reduced ? 0.6 : THREE.MathUtils.clamp(dist / (opts.speed ?? 2.1) + 0.7, 1.4, 5.2);
-    move = { from, to: copyPose(to, newPose()), ctrl: opts.ctrl ?? null, start: performance.now(), dur: dur * 1000, walk: flat, painting: opts.painting ?? -1, done: opts.done };
+    move = { from, to: copyPose(to, newPose()), ctrl: opts.ctrl ?? null, start: performance.now(), dur: dur * 1000, walk: flat, stepIdx: 0, painting: opts.painting ?? -1, done: opts.done };
     mode = 'moving';
   }
   function stepMove(now: number) {
@@ -137,7 +163,12 @@ export async function startMuseum(entries: RoomEntry[]) {
       pose.pos.set(0, 0, 0).addScaledVector(m.from.pos, a * a).addScaledVector(m.ctrl, 2 * a * e).addScaledVector(m.to.pos, e * e);
     } else pose.pos.lerpVectors(m.from.pos, m.to.pos, e);
     // footsteps: a slight rise and fall while walking on the floor
-    if (!reduced && m.walk > 0.5) pose.pos.y += Math.sin(e * Math.PI * Math.max(2, Math.round(m.walk / 0.75))) * 0.014 * Math.sin(Math.PI * e);
+    if (m.walk > 0.5) {
+      const steps = Math.max(2, Math.round(m.walk / 0.75));
+      if (!reduced) pose.pos.y += Math.sin(e * Math.PI * steps) * 0.014 * Math.sin(Math.PI * e);
+      const n = Math.floor(e * steps + 0.5);
+      if (n !== m.stepIdx && n > 0 && n <= steps) { m.stepIdx = n; sound.step(); }
+    }
     // gaze: turn toward where we are going a little ahead of the body
     const g = ease(clamp01(t * 1.5));
     tmpA.subVectors(m.from.target, m.from.pos); const la = tmpA.length(); tmpA.normalize();
@@ -388,7 +419,7 @@ export async function startMuseum(entries: RoomEntry[]) {
     if (ex.guiding) { ex.stopGuide(); return; }
     root.classList.add('guiding');
     guideBtn.setAttribute('aria-pressed', 'true');
-    ex.playGuide(entries[active].guide, () => { root.classList.remove('guiding'); guideBtn.setAttribute('aria-pressed', 'false'); });
+    ex.playGuide(entries[active].guide, () => { root.classList.remove('guiding'); guideBtn.setAttribute('aria-pressed', 'false'); }, (_i, hidden) => sound.chime(hidden));
   }
   const guideBtn = $<HTMLButtonElement>('.guide-btn');
   guideBtn.addEventListener('click', toggleGuide);
@@ -454,6 +485,8 @@ export async function startMuseum(entries: RoomEntry[]) {
       hall.render(true);
     }
     hint.style.opacity = root.classList.contains('walked') || mode !== 'hall' ? '0' : '';
+    sound.setPosition(pose.pos.x);
+    sound.setFocus(mode === 'exploring' ? 1 : mode === 'leaving' ? 0.6 : mode === 'moving' && move && move.painting >= 0 ? clamp01(((now - move.start) / move.dur) * 1.6 - 0.6) : 0);
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);

@@ -25,7 +25,7 @@ export class Explorer {
   homeVisible = 1.18;
   aspect = 1;
   private target = new THREE.Vector3();
-  private guide: { stops: (View & { hold: number; travel: number })[]; from: View; t: number; onEnd: () => void } | null = null;
+  private guide: { stops: (View & { hold: number; travel: number })[]; from: View; t: number; onEnd: () => void; onArrive?: (i: number, hidden: boolean) => void; arrived: number } | null = null;
 
   constructor(readonly scene: DepthScene, private firstH = 1.18, private firstW = 1.12) {
     // reference depth: the median of the painting, so panning feels anchored to its middle ground
@@ -55,7 +55,7 @@ export class Explorer {
   get guiding() { return this.guide !== null; }
 
   /** Play the guided view: the camera travels from stop to stop, then back to the whole painting. */
-  playGuide(stops: GuideStop[], onEnd: () => void) {
+  playGuide(stops: GuideStop[], onEnd: () => void, onArrive?: (i: number, hidden: boolean) => void) {
     this.vel.set(0, 0);
     let prev: View = { ...this.view };
     const list = [...stops.map((s) => ({ u: s.u, v: s.v, zoom: THREE.MathUtils.clamp(this.homeVisible / s.h, 1, this.maxZoom), hold: s.hold })),
@@ -64,7 +64,7 @@ export class Explorer {
       prev = s;
       return { ...s, travel };
     });
-    this.guide = { stops: list, from: { ...this.view }, t: 0, onEnd };
+    this.guide = { stops: list, from: { ...this.view }, t: 0, onEnd, onArrive, arrived: -1 };
   }
 
   /** Any input of the visitor's own ends the guided view. */
@@ -79,7 +79,8 @@ export class Explorer {
     const g = this.guide!;
     g.t += dt;
     let t = g.t, prev: View = g.from;
-    for (const s of g.stops) {
+    for (let i = 0; i < g.stops.length; i++) {
+      const s = g.stops[i];
       if (t < s.travel) {
         const k = smoother(t / s.travel);
         // pull back while crossing the painting, then lean in again
@@ -92,7 +93,10 @@ export class Explorer {
         return;
       }
       t -= s.travel;
-      if (t < s.hold) { this.goal.zoom = s.zoom; this.goal.u = s.u; this.goal.v = s.v; this.clampGoal(); return; }
+      if (t < s.hold) {
+        // the last stop before the way home is the hidden detail
+        if (g.arrived !== i) { g.arrived = i; g.onArrive?.(i, i === g.stops.length - 2); }
+        this.goal.zoom = s.zoom; this.goal.u = s.u; this.goal.v = s.v; this.clampGoal(); return; }
       t -= s.hold;
       prev = s;
     }

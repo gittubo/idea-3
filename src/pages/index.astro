@@ -21,6 +21,12 @@ const mark = 'M37 17.5V2.5H3v43h34V30.5A6.5 6.5 0 0 1 37 17.5Z';
         {collection.map((e, i) => <button type="button" data-index={i}>{e.title}</button>)}
       </nav>
 
+      <button class="icon-btn sound-btn" type="button" aria-label="Turn sound on" aria-pressed="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" aria-hidden="true">
+          <path class="bar b1" d="M5 10v4" /><path class="bar b2" d="M9.5 7v10" /><path class="bar b3" d="M14 9v6" /><path class="bar b4" d="M18.5 6v12" />
+        </svg>
+      </button>
+
       <button class="icon-btn back-btn" type="button" aria-label="Step back into the hall">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true">
           <path d="M3 9V3h6M21 15v6h-6" /><path d="M15 9 9 15M9 15V10.5M9 15h4.5" />
