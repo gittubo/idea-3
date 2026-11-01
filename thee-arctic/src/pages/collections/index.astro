@@ -1,0 +1,41 @@
+---
+import Base from '../../layouts/Base.astro';
+import { collections, inCollection } from '../../data/catalog';
+import { garmentSvg } from '../../data/garments';
+const looks: Record<string, string> = {
+  'arctic-essentials': 'linear-gradient(160deg,#eee8de,#a8977d)',
+  'polar-night': 'linear-gradient(160deg,#3a4552,#07090c)',
+  whiteout: 'linear-gradient(160deg,#ffffff,#c8d3dc)',
+  expedition: 'linear-gradient(160deg,#4b6a8f,#13253a)',
+};
+---
+<Base title="Collections">
+  <section class="wrap page-hero">
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a><span>/</span><span>Collections</span></nav>
+    <h1 class="display">Collections</h1>
+    <p>Curated edits across every department.</p>
+  </section>
+  <section class="wrap colls">
+    {collections.map((c) => {
+      const items = inCollection(c.slug);
+      const dark = c.slug === 'polar-night' || c.slug === 'expedition';
+      return (
+        <a class={`coll reveal ${dark ? 'dark' : ''}`} href={`/collections/${c.slug}`} style={`background:${looks[c.slug]}`}>
+          <div class="arts">{items.slice(0, 3).map((p) => <span set:html={garmentSvg(p.garment, p.colors[0].hex)} />)}</div>
+          <div><strong>{c.name}</strong><span>{c.blurb} · {items.length} styles</span></div>
+        </a>
+      );
+    })}
+  </section>
+</Base>
+<style>
+  .colls { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  .coll { border-radius: 22px; padding: 26px; aspect-ratio: 16/11; display: flex; flex-direction: column; justify-content: space-between; }
+  .coll.dark { color: #fff; }
+  .arts { display: flex; gap: 4%; height: 64%; justify-content: center; }
+  .arts span { height: 100%; aspect-ratio: 4/5; display: grid; place-items: center; transition: transform .6s var(--ease); }
+  .coll:hover .arts span:nth-child(2) { transform: translateY(-10px); }
+  strong { display: block; font-family: var(--display); font-weight: 900; font-stretch: 118%; text-transform: uppercase; font-size: clamp(26px, 3.4vw, 46px); line-height: 1; }
+  .coll div:last-child span { font-size: 14px; opacity: .8; }
+  @media (max-width: 760px) { .colls { grid-template-columns: 1fr; } }
+</style>

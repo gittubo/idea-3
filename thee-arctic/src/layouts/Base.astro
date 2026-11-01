@@ -1,0 +1,123 @@
+---
+import '@fontsource-variable/archivo/wdth.css';
+import '@fontsource-variable/inter';
+import '../styles/global.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import Icon from '../components/Icon.astro';
+
+interface Props { title?: string; description?: string; preloader?: boolean }
+const {
+  title,
+  description = 'THEE ARCTIC: women, curve, men, kids, sports and beauty. New drops every week.',
+  preloader = false,
+} = Astro.props;
+const fullTitle = title ? `${title} | THEE ARCTIC` : 'THEE ARCTIC | Stay Cold';
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#0c0e11" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <script is:inline>document.documentElement.classList.add('js');</script>
+  </head>
+  <body>
+    {preloader && (
+      <div class="preloader" id="preloader" aria-hidden="true">
+        <svg viewBox="0 0 900 140" class="sig">
+          <text x="50%" y="62%" text-anchor="middle">THEE ARCTIC</text>
+        </svg>
+        <p class="eyebrow" style="color:#9fb3c4">Stay cold</p>
+      </div>
+      <script is:inline>
+        try { if (sessionStorage.getItem('ta-intro')) document.getElementById('preloader').remove(); } catch (e) {}
+      </script>
+    )}
+    <a class="sr-only" href="#main">Skip to content</a>
+    <Header />
+    <main id="main"><slot /></main>
+    <Footer />
+
+    <!-- Bag drawer -->
+    <div class="drawer right" id="cart" aria-hidden="true">
+      <div class="scrim" data-close></div>
+      <aside class="panel" aria-label="Shopping bag">
+        <div class="panel-head">
+          <h3>Your bag <span data-cart-count-text></span></h3>
+          <button class="icon-btn" type="button" data-close aria-label="Close bag"><Icon name="close" /></button>
+        </div>
+        <div class="ship-meter" data-ship-meter></div>
+        <div class="panel-body"><div class="cart-lines" data-cart-lines></div></div>
+        <div class="cart-foot" data-cart-foot>
+          <div class="row"><span>Subtotal</span><strong data-cart-subtotal>$0.00</strong></div>
+          <small style="color:var(--muted)">Taxes and shipping calculated at checkout.</small>
+          <a class="btn block" href="/cart"><Icon name="lock" /> Checkout</a>
+          <button class="btn ghost block" type="button" data-close>Continue shopping</button>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Search -->
+    <div class="modal search-overlay" id="search" aria-hidden="true">
+      <div class="scrim" data-close></div>
+      <div class="box" role="dialog" aria-label="Search">
+        <button class="icon-btn close" type="button" data-close aria-label="Close search"><Icon name="close" /></button>
+        <div class="search-field">
+          <Icon name="search" />
+          <input type="search" placeholder="Search hoodies, dresses, jeans…" aria-label="Search products" data-search-input autocomplete="off" />
+        </div>
+        <div class="chips" style="margin-top:16px" data-search-suggest>
+          {['Hoodies', 'Jeans', 'Dresses', 'Puffer', 'Leggings', 'Matching set', 'Sneakers', 'Mini Me'].map((s) => <button class="chip" type="button" data-q={s}>{s}</button>)}
+        </div>
+        <div class="search-results" data-search-results></div>
+      </div>
+    </div>
+
+    <!-- Size guide -->
+    <div class="modal" id="sizeguide" aria-hidden="true">
+      <div class="scrim" data-close></div>
+      <div class="box" role="dialog" aria-label="Size guide">
+        <button class="icon-btn close" type="button" data-close aria-label="Close size guide"><Icon name="close" /></button>
+        <h3 class="h2" style="font-size:28px">Size guide</h3>
+        <p style="color:var(--muted);margin:8px 0 0">Measurements are body measurements in inches. Between sizes? Size up for a relaxed fit.</p>
+        <table class="sizes">
+          <thead><tr><th>Size</th><th>Bust / Chest</th><th>Waist</th><th>Hips</th></tr></thead>
+          <tbody>
+            <tr><td>XS</td><td>31–32</td><td>24–25</td><td>34–35</td></tr>
+            <tr><td>S</td><td>33–34</td><td>26–27</td><td>36–37</td></tr>
+            <tr><td>M</td><td>35–36</td><td>28–29</td><td>38–39</td></tr>
+            <tr><td>L</td><td>37–39</td><td>30–32</td><td>40–42</td></tr>
+            <tr><td>XL</td><td>40–42</td><td>33–35</td><td>43–45</td></tr>
+            <tr><td>1X</td><td>43–45</td><td>36–38</td><td>46–48</td></tr>
+            <tr><td>2X</td><td>46–48</td><td>39–41</td><td>49–51</td></tr>
+            <tr><td>3X</td><td>49–51</td><td>42–44</td><td>52–54</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="toast" role="status" aria-live="polite" data-toast></div>
+
+    <script>
+      import '../scripts/store';
+    </script>
+    <style is:global>
+      .preloader { position: fixed; inset: 0; z-index: 200; background: var(--deep); display: grid; place-items: center; align-content: center; gap: 8px; transition: transform 1s var(--ease) .2s; }
+      .preloader.done { transform: translateY(-100%); }
+      .preloader .sig { width: min(820px, 88vw); overflow: visible; }
+      .preloader text {
+        font-family: var(--display); font-weight: 900; font-stretch: 125%; font-size: 120px; letter-spacing: -2px;
+        fill: transparent; stroke: #e6f1f9; stroke-width: 1.4px; stroke-dasharray: 900; stroke-dashoffset: 900;
+        animation: sig-draw 1.8s var(--ease) forwards, sig-fill .6s ease 1.5s forwards;
+      }
+      @keyframes sig-draw { to { stroke-dashoffset: 0; } }
+      @keyframes sig-fill { to { fill: #e6f1f9; } }
+    </style>
+  </body>
+</html>

@@ -1,0 +1,51 @@
+---
+import type { Product } from '../data/catalog';
+import { money, discount, productUrl } from '../data/catalog';
+import ProductImage from './ProductImage.astro';
+import Icon from './Icon.astro';
+interface Props { product: Product; idx?: number; eager?: boolean }
+const { product: p, idx = 0, eager = false } = Astro.props;
+const url = productUrl(p);
+const item = {
+  slug: p.slug, name: p.name, price: p.salePrice ?? p.price, garment: p.garment,
+  color: p.colors[0].name, hex: p.colors[0].hex, img: p.images[0] ?? '',
+};
+---
+<article
+  class="card"
+  data-idx={idx}
+  data-price={p.salePrice ?? p.price}
+  data-sale={p.salePrice ? '1' : '0'}
+  data-new={p.isNew ? '1' : '0'}
+  data-rating={p.rating}
+  data-reviews={p.reviews}
+  data-cat={p.category}
+  data-sizes={p.sizes.join('|')}
+  data-colors={p.colors.map((c) => c.name).join('|')}
+>
+  <div class="media">
+    <a class="hit" href={url} aria-label={p.name}></a>
+    <ProductImage product={p} class="main" eager={eager} />
+    <div class="badges">
+      {p.salePrice && <span class="badge sale">-{discount(p)}%</span>}
+      {p.isNew && <span class="badge new">New</span>}
+      {p.bestseller && <span class="badge">Bestseller</span>}
+    </div>
+    <button class="wish" type="button" data-wish={JSON.stringify(item)} aria-pressed="false" aria-label={`Save ${p.name} to wishlist`}>
+      <Icon name="heart" />
+    </button>
+    <div class="quick" data-quick={JSON.stringify(item)}>
+      <p>Quick add</p>
+      <div class="sizes">
+        {p.sizes.map((s) => <button type="button" data-size={s}>{s === 'One Size' ? 'Add' : s}</button>)}
+      </div>
+    </div>
+  </div>
+  <div class="info">
+    <a class="name" href={url}>{p.name}</a>
+    <div class="price">
+      {p.salePrice ? <><span class="now">{money(p.salePrice)}</span><s>{money(p.price)}</s></> : <span>{money(p.price)}</span>}
+    </div>
+    <div class="swatches">{p.colors.map((c) => <i style={`background:${c.hex}`} title={c.name}></i>)}</div>
+  </div>
+</article>

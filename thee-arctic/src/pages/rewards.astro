@@ -1,0 +1,59 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+const tiers = [
+  { name: 'Frost', pts: '0 – 499 pts', perks: ['1 point per $1', 'Birthday gift', 'Members-only sales'] },
+  { name: 'Glacier', pts: '500 – 1,499 pts', perks: ['1.25 points per $1', 'Free standard shipping', 'Early drop access'] },
+  { name: 'Polar', pts: '1,500+ pts', perks: ['1.5 points per $1', 'Free express shipping', 'Exclusive Polar drops', 'Priority support'] },
+];
+---
+<Base title="Arctic Rewards" description="Earn points on every order and unlock perks with Arctic Rewards.">
+  <section class="rw-hero">
+    <div class="wrap">
+      <p class="eyebrow" style="color:#9fc9e6">Arctic Rewards</p>
+      <h1 class="display">Shop.<br />Earn.<br />Stay cold.</h1>
+      <p>Earn points on every order and turn them into money off. Free to join.</p>
+      <a class="btn light" href="/account">Join now</a>
+    </div>
+  </section>
+  <section class="section wrap">
+    <h2 class="h2" style="margin-bottom:24px">How it works</h2>
+    <div class="steps">
+      <div><Icon name="user" /><strong>Join</strong><p>Create a free account and get 15% off your first order.</p></div>
+      <div><Icon name="bag" /><strong>Earn</strong><p>Get points for every dollar, reviews, referrals and your birthday.</p></div>
+      <div><Icon name="gift" /><strong>Redeem</strong><p>100 points = $5 off. Use them at checkout any time.</p></div>
+    </div>
+  </section>
+  <section class="section wrap" style="padding-top:0">
+    <h2 class="h2" style="margin-bottom:24px">Tiers</h2>
+    <div class="tiers">
+      {tiers.map((t, k) => (
+        <div class={`tier t${k}`}>
+          <strong>{t.name}</strong><span>{t.pts}</span>
+          <ul>{t.perks.map((x) => <li><Icon name="check" /> {x}</li>)}</ul>
+        </div>
+      ))}
+    </div>
+  </section>
+</Base>
+<style>
+  .rw-hero { background: radial-gradient(120% 100% at 80% 0%, #2c5c86, #0d2236 60%, #050b12); color: #fff; padding-block: clamp(60px, 9vw, 130px); }
+  .rw-hero h1 { font-size: clamp(56px, 10vw, 150px); margin: 10px 0 18px; }
+  .rw-hero p { max-width: 40ch; opacity: .85; margin: 0 0 24px; }
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .steps div { background: var(--snow); border-radius: 18px; padding: 24px; display: grid; gap: 8px; }
+  .steps :global(svg) { width: 28px; height: 28px; }
+  .steps strong { font-family: var(--display); font-size: 22px; text-transform: uppercase; }
+  .steps p { margin: 0; color: var(--muted); }
+  .tiers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .tier { border-radius: 20px; padding: 28px; display: grid; gap: 4px; align-content: start; }
+  .tier strong { font-family: var(--display); font-weight: 900; font-stretch: 118%; font-size: 34px; text-transform: uppercase; }
+  .tier span { font-size: 13px; opacity: .75; }
+  .tier ul { list-style: none; padding: 0; margin: 16px 0 0; display: grid; gap: 8px; font-size: 14px; }
+  .tier li { display: flex; gap: 8px; align-items: center; }
+  .tier :global(svg) { width: 18px; height: 18px; }
+  .t0 { background: var(--ice); }
+  .t1 { background: linear-gradient(160deg, #8ec3e6, #4b86b4); color: #fff; }
+  .t2 { background: linear-gradient(160deg, #1d2b44, #050b12); color: #fff; }
+  @media (max-width: 800px) { .steps, .tiers { grid-template-columns: 1fr; } }
+</style>

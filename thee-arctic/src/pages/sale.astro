@@ -1,0 +1,21 @@
+---
+import Base from '../layouts/Base.astro';
+import Listing from '../components/Listing.astro';
+import { departments, onSale } from '../data/catalog';
+const items = onSale().sort((a, b) => (b.price - b.salePrice!) / b.price - (a.price - a.salePrice!) / a.price);
+---
+<Base title="Sale" description="THEE ARCTIC sale: up to 60% off across every department.">
+  <section class="sale-hero">
+    <div class="wrap">
+      <nav class="crumbs" aria-label="Breadcrumb" style="color:#ffd3d6"><a href="/">Home</a><span>/</span><span>Sale</span></nav>
+      <h1 class="display">Arctic Sale</h1>
+      <p>Up to 60% off. Every department. When it's gone, it's gone.</p>
+    </div>
+  </section>
+  <Listing products={items} catChips={departments.map((d) => [d.slug, d.name] as [string, string])} />
+</Base>
+<style>
+  .sale-hero { background: linear-gradient(120deg, #b8141e, #e3343d 60%, #ff6b6b); color: #fff; padding-bottom: 40px; margin-bottom: 24px; }
+  h1 { font-size: clamp(56px, 11vw, 170px); margin: 8px 0 10px; }
+  p { margin: 0; opacity: .9; }
+</style>

@@ -1,0 +1,248 @@
+---
+import Base from '../../layouts/Base.astro';
+import ProductCard from '../../components/ProductCard.astro';
+import ProductImage from '../../components/ProductImage.astro';
+import Icon from '../../components/Icon.astro';
+import { products, getDept, inCategory, inDept, money, discount } from '../../data/catalog';
+import type { Product } from '../../data/catalog';
+import { garmentSvg } from '../../data/garments';
+
+export function getStaticPaths() {
+  return products.map((p) => ({ params: { slug: p.slug }, props: { p } }));
+}
+const { p } = Astro.props as { p: Product };
+const dept = getDept(p.dept)!;
+const cat = dept.categories.find((c) => c.slug === p.category)!;
+const price = p.salePrice ?? p.price;
+const pdpItem = { slug: p.slug, name: p.name, price, garment: p.garment, color: p.colors[0].name, hex: p.colors[0].hex, img: p.images[0] ?? '', images: p.images };
+
+const similar = inCategory(p.dept, p.category).filter((x) => x.slug !== p.slug).slice(0, 8);
+const completeLook = inDept(p.dept).filter((x) => x.category !== p.category && x.garment !== p.garment).filter((_, k) => k % 7 === 0).slice(0, 4);
+const views = p.images.length ? p.images.length : 4;
+const bgs = ['var(--snow)', 'var(--ice)', '#eef0f2', '#f3f1ee'];
+
+// Rating breakdown derived from the average (placeholder until a reviews app is connected)
+const dist = [5, 4, 3, 2, 1].map((s) => {
+  const w = Math.max(0.02, 1 - Math.abs(p.rating - s) / 2.2);
+  return [s, w] as const;
+});
+const total = dist.reduce((a, [, w]) => a + w, 0);
+const sampleReviews = [
+  { name: 'Sam T.', stars: 5, title: 'Better than expected', body: `Quality is way better than the price suggests. The ${p.colors[0].name.toLowerCase()} colour is exactly like the photos.`, size: p.sizes[Math.min(1, p.sizes.length - 1)] },
+  { name: 'Nia W.', stars: 5, title: 'Fits perfectly', body: 'True to size and so comfortable. Already planning to grab another colour.', size: p.sizes[Math.min(2, p.sizes.length - 1)] },
+  { name: 'Leo P.', stars: 4, title: 'Great, runs slightly big', body: 'Love the look. I would size down if you are between sizes.', size: p.sizes[0] },
+];
+---
+<Base title={p.name} description={p.description}>
+  <div class="wrap">
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <a href="/">Home</a><span>/</span><a href={`/${dept.slug}`}>{dept.name}</a><span>/</span><a href={`/${dept.slug}/${cat.slug}`}>{cat.name}</a><span>/</span><span>{p.name}</span>
+    </nav>
+
+    <div class="pdp" data-pdp={JSON.stringify(pdpItem)}>
+      <div class="gallery-wrap">
+        <div class="gallery" data-gallery>
+          {Array.from({ length: views }, (_, k) => (
+            <div class="shot" style={`background:${bgs[k % bgs.length]}`}>
+              {p.images.length
+                ? <ProductImage product={p} index={k} eager={k < 2} />
+                : <div class="pimg" data-gallery-art style={k === 1 ? 'transform:scale(1.5) translateY(10%)' : k === 2 ? 'transform:scaleX(-1)' : k === 3 ? 'transform:scale(2.2) translate(-8%,8%)' : ''} set:html={garmentSvg(p.garment, p.colors[0].hex)} />}
+              {k === 0 && (
+                <div class="badges">
+                  {p.salePrice && <span class="badge sale">-{discount(p)}%</span>}
+                  {p.isNew && <span class="badge new">New</span>}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+        <div class="dots">{Array.from({ length: views }, (_, k) => <span data-dot class={k === 0 ? 'on' : ''}></span>)}</div>
+      </div>
+
+      <div class="buy">
+        <div class="buy-inner">
+          <p class="eyebrow">{dept.title}</p>
+          <h1 class="pname">{p.name}</h1>
+          <a class="stars" href="#reviews"><b>{'★'.repeat(Math.round(p.rating))}{'☆'.repeat(5 - Math.round(p.rating))}</b> {p.rating} ({p.reviews} reviews)</a>
+          <div class="price big">
+            {p.salePrice ? <><span class="now">{money(p.salePrice)}</span><s>{money(p.price)}</s><span class="badge sale">Save {discount(p)}%</span></> : <span>{money(p.price)}</span>}
+          </div>
+          <p class="klarna">or 4 interest-free payments of <strong>{money(price / 4)}</strong> with Klarna / Afterpay</p>
+
+          <div class="opt-head"><span>Colour: <strong data-color-label>{p.colors[0].name}</strong></span></div>
+          <div class="colors">
+            {p.colors.map((c, k) => <button type="button" class="csw" data-color={c.name} data-hex={c.hex} aria-pressed={k === 0 ? 'true' : 'false'} aria-label={c.name} style={`background:${c.hex}`}></button>)}
+          </div>
+
+          <div class="opt-head">
+            <span>Size: <strong data-size-label>{p.sizes.length === 1 ? p.sizes[0] : 'Select'}</strong></span>
+            {p.sizes.length > 1 && <button type="button" class="sg" data-open="sizeguide"><Icon name="ruler" /> Size guide</button>}
+          </div>
+          <div class="sizes-pick" data-size-box>
+            {p.sizes.map((s) => <button type="button" data-pick-size={s} aria-pressed="false">{s}</button>)}
+          </div>
+          <p class="size-msg" data-size-msg hidden>Please select a size</p>
+
+          <div class="actions">
+            <button class="btn block" type="button" data-add>Add to bag · {money(price)}</button>
+            <button class="wish-big" type="button" data-wish={JSON.stringify({ slug: p.slug, name: p.name, price, garment: p.garment, color: p.colors[0].name, hex: p.colors[0].hex, img: p.images[0] ?? '' })} aria-pressed="false" aria-label="Save to wishlist"><Icon name="heart" /></button>
+          </div>
+
+          <ul class="perks">
+            <li><Icon name="truck" /> <span><strong>Free shipping</strong> on orders over $75. Arrives in 3–7 business days.</span></li>
+            <li><Icon name="return" /> <span><strong>Free 30-day returns</strong> and exchanges.</span></li>
+            <li><Icon name="gift" /> <span>Earn <strong>{Math.round(price)} Arctic points</strong> with this order.</span></li>
+          </ul>
+
+          <details class="acc" open>
+            <summary>Description</summary>
+            <p>{p.description}</p>
+          </details>
+          <details class="acc">
+            <summary>Details &amp; care</summary>
+            <ul>{p.details.map((d) => <li>{d}</li>)}</ul>
+          </details>
+          <details class="acc">
+            <summary>Shipping &amp; returns</summary>
+            <p>Standard shipping is free on orders over $75, otherwise $7.95. Express shipping available at checkout. Return unworn items within 30 days for a full refund or exchange. <a href="/help#returns" style="text-decoration:underline">Full policy</a></p>
+          </details>
+        </div>
+      </div>
+    </div>
+
+    {completeLook.length > 0 && (
+      <section class="section" style="padding-bottom:0">
+        <div class="section-head"><h2 class="h2">Complete the look</h2></div>
+        <div class="grid">{completeLook.map((x, i) => <ProductCard product={x} idx={i} />)}</div>
+      </section>
+    )}
+
+    <section class="section reviews-sec" id="reviews">
+      <div class="section-head"><h2 class="h2">Reviews</h2><button class="btn ghost" type="button" disabled title="Connect a reviews app to enable">Write a review</button></div>
+      <div class="rev-grid">
+        <div class="summary">
+          <strong class="avg">{p.rating}</strong>
+          <div class="stars"><b>{'★'.repeat(Math.round(p.rating))}{'☆'.repeat(5 - Math.round(p.rating))}</b></div>
+          <span style="color:var(--muted);font-size:13px">Based on {p.reviews} reviews</span>
+          <div class="dist">
+            {dist.map(([s, w]) => <div class="drow"><span>{s}★</span><i><em style={`width:${(w / total) * 100}%`}></em></i></div>)}
+          </div>
+          <div class="fit"><span>Runs small</span><i><em></em></i><span>Runs big</span></div>
+          <p class="fit-label">Most say: <strong>True to size</strong></p>
+        </div>
+        <div class="rev-list">
+          <p class="note">Sample reviews shown until your reviews app (e.g. Judge.me, Okendo or Yotpo) is connected.</p>
+          {sampleReviews.map((r) => (
+            <article class="rev">
+              <div class="row"><div class="stars"><b>{'★'.repeat(r.stars)}{'☆'.repeat(5 - r.stars)}</b></div><small>Size purchased: {r.size}</small></div>
+              <h4>{r.title}</h4>
+              <p>{r.body}</p>
+              <small><strong>{r.name}</strong> · Verified buyer</small>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    {similar.length > 0 && (
+      <section class="section" style="padding-top:0">
+        <div class="section-head">
+          <h2 class="h2">You may also like</h2>
+          <div class="rail-nav">
+            <button type="button" data-rail-btn="similar" data-dir="prev" aria-label="Scroll left"><Icon name="left" /></button>
+            <button type="button" data-rail-btn="similar" data-dir="next" aria-label="Scroll right"><Icon name="right" /></button>
+          </div>
+        </div>
+        <div class="rail" id="similar">{similar.map((x, i) => <ProductCard product={x} idx={i} />)}</div>
+      </section>
+    )}
+
+    <section class="section" style="padding-top:0" data-recent={p.slug} hidden>
+      <div class="section-head"><h2 class="h2">Recently viewed</h2></div>
+      <div class="rail" data-recent-rail></div>
+    </section>
+  </div>
+
+  <div class="sticky-bar" data-sticky-bar>
+    <div class="wrap sb-inner">
+      <div class="sb-name"><strong>{p.name}</strong><span>{money(price)}</span></div>
+      <button class="btn" type="button" data-add-sticky>Add to bag</button>
+    </div>
+  </div>
+</Base>
+
+<style>
+  .pdp { display: grid; grid-template-columns: 1.35fr 1fr; gap: clamp(24px, 4vw, 64px); align-items: start; }
+  .gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .shot { position: relative; aspect-ratio: 3/4; border-radius: 16px; overflow: hidden; }
+  .shot .pimg { position: absolute; inset: 0; }
+  .shot :global(.pimg svg) { width: 70%; }
+  .dots { display: none; }
+  .buy { position: sticky; top: calc(var(--header-h) + 16px); }
+  .pname { font-family: var(--display); font-weight: 800; font-stretch: 108%; text-transform: uppercase; font-size: clamp(26px, 2.8vw, 40px); line-height: 1; margin: 8px 0 10px; }
+  .price.big { font-size: 22px; margin: 14px 0 4px; align-items: center; }
+  .klarna { font-size: 13px; color: var(--muted); margin: 0 0 22px; }
+  .opt-head { display: flex; justify-content: space-between; align-items: center; font-size: 14px; margin: 18px 0 10px; }
+  .sg { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; }
+  .sg :global(svg) { width: 18px; height: 18px; }
+  .colors { display: flex; gap: 10px; flex-wrap: wrap; }
+  .csw { width: 34px; height: 34px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0,0,0,.15); transition: box-shadow .2s; }
+  .csw[aria-pressed="true"] { box-shadow: 0 0 0 2px #fff, 0 0 0 3.5px var(--ink); }
+  .sizes-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(62px, 1fr)); gap: 8px; }
+  .sizes-pick button { height: 48px; border: 1px solid var(--line); border-radius: 12px; font-weight: 600; font-size: 14px; transition: all .2s; }
+  .sizes-pick button:hover { border-color: var(--ink); }
+  .sizes-pick button[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .sizes-pick:global(.shake) { animation: shake .4s; }
+  @keyframes shake { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+  .size-msg { color: var(--sale); font-size: 13px; font-weight: 600; margin: 8px 0 0; }
+  .actions { display: grid; grid-template-columns: 1fr 50px; gap: 10px; margin-top: 22px; }
+  .wish-big { width: 50px; height: 50px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--line); display: grid; place-items: center; }
+  .wish-big :global(svg) { width: 22px; height: 22px; }
+  .wish-big[aria-pressed="true"] :global(svg path) { fill: var(--sale); stroke: var(--sale); }
+  .perks { list-style: none; padding: 18px; margin: 22px 0; background: var(--snow); border-radius: 14px; display: grid; gap: 12px; font-size: 13px; }
+  .perks li { display: flex; gap: 12px; align-items: flex-start; }
+  .perks :global(svg) { width: 20px; height: 20px; flex: none; }
+  .acc { border-top: 1px solid var(--line); }
+  .acc:last-child { border-bottom: 1px solid var(--line); }
+  .acc summary { list-style: none; cursor: pointer; padding: 16px 0; font-weight: 700; font-size: 13px; letter-spacing: .1em; text-transform: uppercase; display: flex; justify-content: space-between; }
+  .acc summary::-webkit-details-marker { display: none; }
+  .acc summary::after { content: '+'; font-size: 18px; font-weight: 400; }
+  .acc[open] summary::after { content: '–'; }
+  .acc p, .acc ul { margin: 0 0 18px; color: var(--ink-2); font-size: 14px; }
+  .acc ul { padding-left: 18px; display: grid; gap: 4px; }
+
+  .rev-grid { display: grid; grid-template-columns: 300px 1fr; gap: 40px; }
+  .summary { display: grid; gap: 6px; align-content: start; background: var(--snow); padding: 24px; border-radius: 18px; }
+  .avg { font-family: var(--display); font-size: 56px; font-weight: 800; line-height: 1; }
+  .dist { display: grid; gap: 6px; margin-top: 12px; }
+  .drow, .fit { display: grid; grid-template-columns: 28px 1fr; gap: 8px; align-items: center; font-size: 12px; }
+  .drow i, .fit i { height: 6px; background: #e3e8ec; border-radius: 6px; overflow: hidden; display: block; }
+  .drow em { display: block; height: 100%; background: var(--ink); }
+  .fit { grid-template-columns: auto 1fr auto; margin-top: 18px; color: var(--muted); }
+  .fit i { position: relative; overflow: visible; }
+  .fit em { position: absolute; left: 50%; top: -3px; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; background: var(--ink); }
+  .fit-label { font-size: 13px; margin: 6px 0 0; }
+  .note { font-size: 12px; color: var(--muted); margin: 0 0 8px; }
+  .rev { border-bottom: 1px solid var(--line); padding-block: 18px; }
+  .rev h4 { margin: 8px 0 4px; }
+  .rev p { margin: 0 0 8px; color: var(--ink-2); }
+  .rev small { color: var(--muted); }
+
+  .sticky-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: rgba(255,255,255,.96); backdrop-filter: blur(10px); border-top: 1px solid var(--line); transform: translateY(100%); transition: transform .4s var(--ease); }
+  .sticky-bar:global(.show) { transform: none; }
+  .sb-inner { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-block: 10px; }
+  .sb-name { display: grid; font-size: 14px; min-width: 0; }
+  .sb-name strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  @media (max-width: 900px) {
+    .pdp { grid-template-columns: 1fr; }
+    .gallery { display: grid; grid-auto-flow: column; grid-auto-columns: 100%; grid-template-columns: none; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; margin-inline: calc(var(--gutter) * -1); gap: 0; }
+    .gallery::-webkit-scrollbar { display: none; }
+    .shot { scroll-snap-align: start; border-radius: 0; }
+    .dots { display: flex; justify-content: center; gap: 6px; margin-top: 12px; }
+    .dots span { width: 6px; height: 6px; border-radius: 50%; background: #cfd5db; transition: all .3s; }
+    .dots span:global(.on) { background: var(--ink); width: 18px; border-radius: 6px; }
+    .buy { position: static; }
+    .rev-grid { grid-template-columns: 1fr; }
+  }
+</style>

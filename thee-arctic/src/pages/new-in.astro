@@ -1,0 +1,15 @@
+---
+import Base from '../layouts/Base.astro';
+import Listing from '../components/Listing.astro';
+import { departments, newIn } from '../data/catalog';
+const items = newIn();
+---
+<Base title="New In" description="Just landed at THEE ARCTIC. New drops every Friday.">
+  <section class="wrap page-hero">
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a><span>/</span><span>New In</span></nav>
+    <p class="eyebrow">New drops every Friday</p>
+    <h1 class="display">Just landed</h1>
+    <p>The latest from every Arctic department, fresh off the truck.</p>
+  </section>
+  <Listing products={items} catChips={departments.map((d) => [d.slug, d.name] as [string, string])} />
+</Base>

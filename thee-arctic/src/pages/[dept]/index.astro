@@ -1,0 +1,50 @@
+---
+import Base from '../../layouts/Base.astro';
+import Listing from '../../components/Listing.astro';
+import { departments, inDept, inCategory } from '../../data/catalog';
+import { garmentSvg } from '../../data/garments';
+
+export function getStaticPaths() {
+  return departments.map((d) => ({ params: { dept: d.slug }, props: { dept: d } }));
+}
+const { dept } = Astro.props;
+const items = inDept(dept.slug);
+---
+<Base title={dept.title} description={`${dept.title}: ${dept.blurb}`}>
+  <section class="dept-hero" style={`--tint:${dept.tint}`}>
+    <div class="wrap dh-inner">
+      <div>
+        <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a><span>/</span><span>{dept.name}</span></nav>
+        <h1 class="display">{dept.title.replace('THEE ARCTIC ', 'THEE ARCTIC\n')}</h1>
+        <p>{dept.tagline} {dept.blurb}</p>
+      </div>
+      <div class="cat-tiles">
+        {dept.categories.slice(0, 6).map((c) => {
+          const p = inCategory(dept.slug, c.slug)[0];
+          return (
+            <a class="tile" href={`/${dept.slug}/${c.slug}`}>
+              <span class="art" set:html={garmentSvg(c.garment[0], p.colors[0].hex)} />
+              <span>{c.name}</span>
+            </a>
+          );
+        })}
+      </div>
+    </div>
+  </section>
+  <Listing
+    products={items}
+    links={[{ label: `All ${dept.name}`, href: `/${dept.slug}`, on: true }, ...dept.categories.map((c) => ({ label: c.name, href: `/${dept.slug}/${c.slug}` }))]}
+  />
+</Base>
+
+<style>
+  .dept-hero { background: linear-gradient(180deg, var(--tint), #fff); margin-bottom: 18px; }
+  .dh-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: end; padding-block: 8px 36px; }
+  h1 { white-space: pre-line; font-size: clamp(44px, 7.4vw, 116px); margin: 10px 0 14px; }
+  .dh-inner p { color: var(--ink-2); max-width: 46ch; margin: 0; }
+  .cat-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .tile { background: rgba(255,255,255,.7); border-radius: 16px; padding: 12px; display: grid; gap: 6px; justify-items: center; font-size: 13px; font-weight: 600; text-align: center; transition: transform .3s var(--ease), background .3s; }
+  .tile:hover { transform: translateY(-3px); background: #fff; }
+  .art { width: 64%; aspect-ratio: 4/5; display: grid; place-items: center; }
+  @media (max-width: 900px) { .dh-inner { grid-template-columns: 1fr; } .cat-tiles { grid-template-columns: repeat(3, 1fr); } }
+</style>

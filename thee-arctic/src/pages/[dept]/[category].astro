@@ -1,0 +1,22 @@
+---
+import Base from '../../layouts/Base.astro';
+import Listing from '../../components/Listing.astro';
+import { departments, inCategory } from '../../data/catalog';
+
+export function getStaticPaths() {
+  return departments.flatMap((d) => d.categories.map((c) => ({ params: { dept: d.slug, category: c.slug }, props: { dept: d, cat: c } })));
+}
+const { dept, cat } = Astro.props;
+const items = inCategory(dept.slug, cat.slug);
+---
+<Base title={`${cat.name} | ${dept.title}`} description={`Shop ${cat.name.toLowerCase()} from ${dept.title}.`}>
+  <section class="wrap page-hero">
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a><span>/</span><a href={`/${dept.slug}`}>{dept.name}</a><span>/</span><span>{cat.name}</span></nav>
+    <p class="eyebrow">{dept.title}</p>
+    <h1 class="display">{cat.name}</h1>
+  </section>
+  <Listing
+    products={items}
+    links={[{ label: `All ${dept.name}`, href: `/${dept.slug}` }, ...dept.categories.map((c) => ({ label: c.name, href: `/${dept.slug}/${c.slug}`, on: c.slug === cat.slug }))]}
+  />
+</Base>

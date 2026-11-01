@@ -1,0 +1,125 @@
+---
+import { departments, collections } from '../data/catalog';
+import Icon from './Icon.astro';
+import Logo from './Logo.astro';
+
+const announcements = [
+  'Free shipping on orders over $75',
+  'Arctic Sale: up to 60% off. <a href="/sale">Shop now</a>',
+  'New drops every Friday. <a href="/new-in">See what just landed</a>',
+  'Join Arctic Rewards and get 15% off your first order',
+];
+const deptGradient: Record<string, string> = {
+  women: 'linear-gradient(160deg,#cfe2f1,#7c9bbd)',
+  curve: 'linear-gradient(160deg,#e6d6ef,#9a7db8)',
+  men: 'linear-gradient(160deg,#d3dbe2,#4c5b6a)',
+  kids: 'linear-gradient(160deg,#d4efe8,#5fa79a)',
+  sports: 'linear-gradient(160deg,#cde7f7,#2f6c9c)',
+  beauty: 'linear-gradient(160deg,#f6e2dc,#c48f86)',
+};
+---
+<div class="announce" data-announce>
+  <ul>{announcements.map((a, i) => <li class={i === 0 ? 'on' : ''} set:html={a} />)}</ul>
+</div>
+<header class="header">
+  <div class="wrap bar">
+    <div style="display:flex;align-items:center;gap:4px">
+      <button class="icon-btn menu-btn" type="button" data-open="menu" aria-label="Open menu"><Icon name="menu" /></button>
+      <a href="/" class="logo" aria-label="THEE ARCTIC home"><Logo /></a>
+    </div>
+    <nav class="nav" aria-label="Main">
+      <ul>
+        <li><a href="/new-in">New In</a></li>
+        {departments.map((d) => (
+          <li>
+            <a href={`/${d.slug}`}>{d.name}</a>
+            <div class="mega">
+              <div class="wrap mega-inner">
+                <div>
+                  <h4>{d.title}</h4>
+                  <ul>
+                    <li><a href={`/${d.slug}`}><strong>Shop all {d.name}</strong></a></li>
+                    <li><a href={`/${d.slug}?filter=new`}>New arrivals</a></li>
+                    <li><a href={`/${d.slug}?sort=best`}>Bestsellers</a></li>
+                    <li><a href={`/${d.slug}?filter=sale`} style="color:var(--sale)">Sale</a></li>
+                  </ul>
+                </div>
+                <div>
+                  <h4>Categories</h4>
+                  <ul class="cols">{d.categories.map((c) => <li><a href={`/${d.slug}/${c.slug}`}>{c.name}</a></li>)}</ul>
+                </div>
+                <div class="feature">
+                  <a href={`/${d.slug}`} style={`background:${deptGradient[d.slug]}`}><span>{d.tagline}</span></a>
+                  <a href="/collections/arctic-essentials" style="background:linear-gradient(160deg,#eef3f7,#9fb6c8)"><span>Arctic Essentials</span></a>
+                </div>
+              </div>
+            </div>
+          </li>
+        ))}
+        <li>
+          <a href="/collections">Collections</a>
+          <div class="mega">
+            <div class="wrap mega-inner">
+              <div>
+                <h4>Shop by edit</h4>
+                <ul>{collections.map((c) => <li><a href={`/collections/${c.slug}`}>{c.name}</a></li>)}</ul>
+              </div>
+              <div>
+                <h4>More</h4>
+                <ul>
+                  <li><a href="/rewards">Arctic Rewards</a></li>
+                  <li><a href="/gift-cards">Gift Cards</a></li>
+                  <li><a href="/lookbook">Lookbook</a></li>
+                  <li><a href="/about">Our Story</a></li>
+                </ul>
+              </div>
+              <div class="feature">
+                <a href="/collections/polar-night" style="background:linear-gradient(160deg,#3a4552,#0b0f14)"><span>Polar Night</span></a>
+                <a href="/collections/whiteout" style="background:linear-gradient(160deg,#ffffff,#c8d3dc)"><span style="color:var(--ink);text-shadow:none">Whiteout</span></a>
+              </div>
+            </div>
+          </div>
+        </li>
+        <li><a href="/sale" class="sale">Sale</a></li>
+      </ul>
+    </nav>
+    <div class="tools">
+      <button class="icon-btn" type="button" data-open="search" aria-label="Search"><Icon name="search" /></button>
+      <a class="icon-btn hide-sm" href="/account" aria-label="Account"><Icon name="user" /></a>
+      <a class="icon-btn hide-sm" href="/wishlist" aria-label="Wishlist"><Icon name="heart" /><span class="count" data-wish-count></span></a>
+      <button class="icon-btn" type="button" data-open="cart" aria-label="Shopping bag"><Icon name="bag" /><span class="count" data-cart-count></span></button>
+    </div>
+  </div>
+</header>
+
+<!-- Mobile menu -->
+<div class="drawer left" id="menu" aria-hidden="true">
+  <div class="scrim" data-close></div>
+  <aside class="panel" aria-label="Menu">
+    <div class="panel-head">
+      <a href="/" class="logo"><Logo /></a>
+      <button class="icon-btn" type="button" data-close aria-label="Close menu"><Icon name="close" /></button>
+    </div>
+    <div class="panel-body m-nav">
+      <a href="/new-in">New In</a>
+      {departments.map((d) => (
+        <details>
+          <summary>{d.name}</summary>
+          <ul>
+            <li><a href={`/${d.slug}`}><strong>Shop all {d.name}</strong></a></li>
+            {d.categories.map((c) => <li><a href={`/${d.slug}/${c.slug}`}>{c.name}</a></li>)}
+          </ul>
+        </details>
+      ))}
+      <details>
+        <summary>Collections</summary>
+        <ul>{collections.map((c) => <li><a href={`/collections/${c.slug}`}>{c.name}</a></li>)}</ul>
+      </details>
+      <a href="/sale" class="sale">Sale</a>
+      <a href="/wishlist">Wishlist</a>
+      <a href="/account">Sign in / Join</a>
+      <a href="/rewards">Arctic Rewards</a>
+      <a href="/help">Help</a>
+    </div>
+  </aside>
+</div>

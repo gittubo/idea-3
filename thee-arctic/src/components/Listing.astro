@@ -1,0 +1,119 @@
+---
+import type { Product } from '../data/catalog';
+import { palette } from '../data/catalog';
+import ProductCard from './ProductCard.astro';
+import Icon from './Icon.astro';
+
+interface Chip { label: string; href: string; on?: boolean }
+interface Props {
+  products: Product[];
+  /** Link chips (e.g. sub-categories that navigate) */
+  links?: Chip[];
+  /** In-page category filter chips: [slug, label] */
+  catChips?: [string, string][];
+}
+const { products, links = [], catChips = [] } = Astro.props;
+const sizes = [...new Set(products.flatMap((p) => p.sizes))];
+const colorNames = new Set(products.flatMap((p) => p.colors.map((c) => c.name)));
+const colors = palette.filter((c) => colorNames.has(c.name));
+const prices: [string, string][] = [['', 'Any price'], ['0-25', 'Under $25'], ['25-50', '$25 – $50'], ['50-100', '$50 – $100'], ['100-1000', '$100+']];
+---
+<section class="wrap listing" data-listing>
+  {links.length > 0 && (
+    <nav class="chips" aria-label="Categories" style="margin-bottom:18px">
+      {links.map((l) => <a class={`chip ${l.on ? 'on' : ''}`} href={l.href}>{l.label}</a>)}
+    </nav>
+  )}
+  {catChips.length > 0 && (
+    <div class="chips" style="margin-bottom:18px">
+      {catChips.map(([slug, label]) => <button class="chip" type="button" data-cat-chip={slug} aria-pressed="false">{label}</button>)}
+    </div>
+  )}
+  <div class="toolbar">
+    <div class="left">
+      <button class="chip" type="button" data-open="filters"><Icon name="filter" class="i16" /> Filter <span data-filter-count></span></button>
+      <button class="chip" type="button" data-toggle="sale" aria-pressed="false">On sale</button>
+      <button class="chip" type="button" data-toggle="isNew" aria-pressed="false">New in</button>
+    </div>
+    <div class="right">
+      <span class="count-label" data-count>{products.length} items</span>
+      <label class="sort">
+        <span class="sr-only">Sort by</span>
+        <select data-sort>
+          <option value="featured">Featured</option>
+          <option value="new">Newest</option>
+          <option value="best">Bestselling</option>
+          <option value="rating">Top rated</option>
+          <option value="price-asc">Price: low to high</option>
+          <option value="price-desc">Price: high to low</option>
+        </select>
+      </label>
+    </div>
+  </div>
+
+  <div class="grid" data-grid>
+    {products.map((p, i) => <ProductCard product={p} idx={i} eager={i < 4} />)}
+  </div>
+  <div class="empty" data-no-results hidden>
+    <p style="margin:0;font-weight:600;color:var(--ink)">No styles match those filters</p>
+    <p style="margin:0">Try removing a size or colour.</p>
+  </div>
+  <div style="display:flex;justify-content:center;margin-top:40px">
+    <button class="btn ghost" type="button" data-more>Load more</button>
+  </div>
+
+  <div class="drawer right" id="filters" aria-hidden="true">
+    <div class="scrim" data-close></div>
+    <aside class="panel" aria-label="Filters">
+      <div class="panel-head">
+        <h3>Filter</h3>
+        <button class="icon-btn" type="button" data-close aria-label="Close filters"><Icon name="close" /></button>
+      </div>
+      <div class="panel-body filters">
+        <fieldset>
+          <legend>Size</legend>
+          <div class="opts">
+            {sizes.map((s) => <label class="opt"><input type="checkbox" name="size" value={s} /><span>{s}</span></label>)}
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Colour</legend>
+          <div class="opts">
+            {colors.map((c) => <label class="opt colour"><input type="checkbox" name="color" value={c.name} /><span><i style={`background:${c.hex}`}></i>{c.name}</span></label>)}
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Price</legend>
+          <div class="opts col">
+            {prices.map(([v, l]) => <label class="radio"><input type="radio" name="price" value={v} checked={v === ''} /> {l}</label>)}
+          </div>
+        </fieldset>
+      </div>
+      <div class="cart-foot" style="grid-template-columns:1fr 1fr">
+        <button class="btn ghost" type="button" data-clear>Clear all</button>
+        <button class="btn" type="button" data-close>View results</button>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<style>
+  .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 22px; position: sticky; top: var(--header-h); z-index: 5; background: rgba(255,255,255,.94); backdrop-filter: blur(10px); padding-block: 10px; flex-wrap: wrap; }
+  .toolbar .left, .toolbar .right { display: flex; gap: 8px; align-items: center; }
+  .count-label { font-size: 13px; color: var(--muted); }
+  .sort select { height: 38px; border-radius: 999px; border: 1px solid var(--line); padding-inline: 14px 30px; font-size: 13px; font-weight: 600; background: #fff; appearance: none; background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%); background-position: calc(100% - 16px) 16px, calc(100% - 11px) 16px; background-size: 5px 5px; background-repeat: no-repeat; cursor: pointer; }
+  :global(.i16) { width: 16px; height: 16px; }
+  .filters { padding: 8px 20px 20px; }
+  fieldset { border: 0; border-bottom: 1px solid var(--line); padding: 18px 0; margin: 0; }
+  legend { font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; padding: 0; margin-bottom: 12px; float: left; width: 100%; }
+  .opts { display: flex; flex-wrap: wrap; gap: 8px; clear: both; }
+  .opts.col { flex-direction: column; gap: 12px; }
+  .opt input { position: absolute; opacity: 0; pointer-events: none; }
+  .opt span { display: inline-flex; align-items: center; gap: 8px; min-width: 46px; justify-content: center; height: 38px; padding-inline: 12px; border: 1px solid var(--line); border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .opt input:checked + span { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .opt input:focus-visible + span { outline: 2px solid var(--glacier); }
+  .opt.colour i { width: 14px; height: 14px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0,0,0,.15); }
+  .radio { display: flex; gap: 10px; align-items: center; font-size: 14px; cursor: pointer; }
+  .radio input { accent-color: var(--ink); width: 18px; height: 18px; }
+  @media (max-width: 600px) { .count-label { display: none; } }
+</style>

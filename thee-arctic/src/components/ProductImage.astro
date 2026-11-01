@@ -1,0 +1,12 @@
+---
+// Real photo when the product has one, otherwise the placeholder silhouette in the product's first colour.
+import type { Product } from '../data/catalog';
+import { garmentSvg } from '../data/garments';
+interface Props { product: Product; index?: number; hex?: string; class?: string; eager?: boolean }
+const { product, index = 0, hex, class: cls = '', eager = false } = Astro.props;
+const src = product.images[index];
+const colour = hex ?? product.colors[index % product.colors.length]?.hex ?? '#c9cfd4';
+---
+{src
+  ? <div class={`pimg ${cls}`}><img src={src} alt={product.name} loading={eager ? 'eager' : 'lazy'} decoding="async" /></div>
+  : <div class={`pimg ${cls}`} role="img" aria-label={product.name} set:html={garmentSvg(product.garment, colour)} />}

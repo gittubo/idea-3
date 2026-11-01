@@ -1,0 +1,75 @@
+---
+import { departments } from '../data/catalog';
+import Icon from './Icon.astro';
+const year = new Date().getFullYear();
+---
+<footer class="footer">
+  <div class="wrap">
+    <div class="newsletter">
+      <h2 class="display">Get on the list.<br />Stay cold.</h2>
+      <div>
+        <p style="margin:0 0 14px">Early access to drops, members-only sales and 15% off your first order.</p>
+        <form data-newsletter>
+          <label class="sr-only" for="nl-email">Email address</label>
+          <input id="nl-email" type="email" required placeholder="Your email address" autocomplete="email" />
+          <button class="btn light" type="submit">Join</button>
+        </form>
+        <small data-newsletter-msg>By signing up you agree to receive marketing emails. Unsubscribe any time.</small>
+      </div>
+    </div>
+    <div class="foot-cols">
+      <div>
+        <h4>Shop</h4>
+        <ul>
+          <li><a href="/new-in">New In</a></li>
+          {departments.map((d) => <li><a href={`/${d.slug}`}>{d.title}</a></li>)}
+          <li><a href="/sale">Sale</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Help</h4>
+        <ul>
+          <li><a href="/help#orders">Track my order</a></li>
+          <li><a href="/help#shipping">Shipping</a></li>
+          <li><a href="/help#returns">Returns &amp; exchanges</a></li>
+          <li><a href="/help#sizing">Size guide</a></li>
+          <li><a href="/help#faq">FAQ</a></li>
+          <li><a href="/help#contact">Contact us</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Members</h4>
+        <ul>
+          <li><a href="/account">Sign in / Join</a></li>
+          <li><a href="/rewards">Arctic Rewards</a></li>
+          <li><a href="/wishlist">Wishlist</a></li>
+          <li><a href="/gift-cards">Gift Cards</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>About</h4>
+        <ul>
+          <li><a href="/about">Our story</a></li>
+          <li><a href="/lookbook">Lookbook</a></li>
+          <li><a href="/collections">Collections</a></li>
+          <li><a href="/about#careers">Careers</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Follow</h4>
+        <div class="socials">
+          <a href="https://instagram.com/" aria-label="Instagram" rel="noopener" target="_blank"><Icon name="instagram" /></a>
+          <a href="https://tiktok.com/" aria-label="TikTok" rel="noopener" target="_blank"><Icon name="tiktok" /></a>
+          <a href="https://youtube.com/" aria-label="YouTube" rel="noopener" target="_blank"><Icon name="youtube" /></a>
+          <a href="https://x.com/" aria-label="X" rel="noopener" target="_blank"><Icon name="x" /></a>
+        </div>
+        <p style="font-size:13px;margin-top:16px">Tag <strong style="color:#fff">#THEEARCTIC</strong> to be featured.</p>
+      </div>
+    </div>
+    <div class="foot-base">
+      <span>© {year} THEE ARCTIC. All rights reserved. · <a href="/help#privacy">Privacy</a> · <a href="/help#terms">Terms</a></span>
+      <div class="pay"><span>VISA</span><span>MASTERCARD</span><span>AMEX</span><span>PAYPAL</span><span>APPLE PAY</span><span>KLARNA</span></div>
+    </div>
+  </div>
+  <div class="wordmark" aria-hidden="true">THEE ARCTIC</div>
+</footer>

@@ -1,0 +1,50 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+---
+<Base title="Sign in">
+  <section class="wrap acct">
+    <div class="panel-card">
+      <h1 class="display" style="font-size:clamp(36px,5vw,64px)">Sign in</h1>
+      <form class="form" data-auth>
+        <div class="field"><label for="si-email">Email</label><input id="si-email" type="email" autocomplete="email" required /></div>
+        <div class="field"><label for="si-pass">Password</label><input id="si-pass" type="password" autocomplete="current-password" required /></div>
+        <button class="btn block" type="submit">Sign in</button>
+        <a href="#" style="font-size:13px;text-decoration:underline">Forgot your password?</a>
+      </form>
+    </div>
+    <div class="panel-card join">
+      <h2 class="display" style="font-size:clamp(30px,4vw,52px)">New here?<br />Join the cold.</h2>
+      <ul>
+        <li><Icon name="gift" /> 15% off your first order</li>
+        <li><Icon name="snow" /> Early access to every drop</li>
+        <li><Icon name="star" /> Earn points on every purchase</li>
+        <li><Icon name="truck" /> Track orders and returns in one place</li>
+      </ul>
+      <form class="form" data-auth>
+        <div class="field"><label for="su-name">First name</label><input id="su-name" autocomplete="given-name" required /></div>
+        <div class="field"><label for="su-email">Email</label><input id="su-email" type="email" autocomplete="email" required /></div>
+        <div class="field"><label for="su-pass">Password</label><input id="su-pass" type="password" autocomplete="new-password" required minlength="8" /></div>
+        <button class="btn light block" type="submit">Create account</button>
+      </form>
+    </div>
+  </section>
+  <p class="wrap" data-auth-msg hidden style="text-align:center;color:var(--muted)">Accounts aren't connected yet. Sign-in goes live once the store is linked to Shopify customer accounts.</p>
+</Base>
+<script>
+  document.querySelectorAll<HTMLFormElement>('[data-auth]').forEach((f) => f.addEventListener('submit', (e) => {
+    e.preventDefault();
+    document.querySelector('[data-auth-msg]')?.removeAttribute('hidden');
+  }));
+</script>
+<style>
+  .acct { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding-block: 40px; }
+  .panel-card { border: 1px solid var(--line); border-radius: 22px; padding: clamp(24px, 4vw, 44px); }
+  .join { background: var(--deep); color: #fff; border: 0; }
+  .join ul { list-style: none; padding: 0; margin: 18px 0 24px; display: grid; gap: 10px; }
+  .join li { display: flex; gap: 10px; align-items: center; }
+  .join li :global(svg) { width: 20px; height: 20px; }
+  .join .field input { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.18); color: #fff; }
+  .form { display: grid; gap: 14px; margin-top: 18px; }
+  @media (max-width: 800px) { .acct { grid-template-columns: 1fr; } }
+</style>

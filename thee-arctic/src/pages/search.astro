@@ -1,0 +1,15 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+---
+<Base title="Search">
+  <section class="wrap page-hero" data-search-page>
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a><span>/</span><span>Search</span></nav>
+    <form action="/search" class="search-field" style="margin:12px 0 24px;max-width:720px">
+      <Icon name="search" />
+      <input type="search" name="q" placeholder="Search THEE ARCTIC" aria-label="Search products" />
+    </form>
+    <h1 class="h2" data-search-page-head style="margin-bottom:24px">Searching…</h1>
+    <div data-search-page-results></div>
+  </section>
+</Base>

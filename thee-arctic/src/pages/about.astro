@@ -1,0 +1,32 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="Our Story">
+  <section class="story-hero">
+    <div class="wrap">
+      <p class="eyebrow" style="color:#9fc9e6">Our story</p>
+      <h1 class="display">Cut once.<br />Worn for years.</h1>
+    </div>
+  </section>
+  <section class="section wrap story">
+    <p class="big">THEE ARCTIC started with one idea: clothes that feel as sharp as the first cold morning of winter. Clean lines, heavy fabrics and fits that work on every body.</p>
+    <div class="cols">
+      <div><h2 class="h2">For everyone</h2><p>Women, Curve, Men, Kids, Sports and Beauty. One family, one standard.</p></div>
+      <div><h2 class="h2">Built to last</h2><p>Heavyweight fleece, rigid denim and technical shells, tested wash after wash.</p></div>
+      <div><h2 class="h2">Always new</h2><p>Fresh drops every Friday, so there is always something new to wear.</p></div>
+    </div>
+  </section>
+  <section class="section wrap" id="careers" style="padding-top:0">
+    <h2 class="h2">Careers</h2>
+    <p style="color:var(--muted)">We're growing. Send your portfolio or CV to the team via the <a href="/help#contact" style="text-decoration:underline">contact form</a>.</p>
+  </section>
+</Base>
+<style>
+  .story-hero { background: var(--ink); color: #fff; padding-block: clamp(80px, 12vw, 180px); }
+  h1 { font-size: clamp(56px, 10vw, 160px); margin: 10px 0 0; }
+  .big { font-size: clamp(22px, 2.6vw, 36px); line-height: 1.25; font-weight: 500; max-width: 30ch; margin: 0 0 56px; }
+  .cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+  .cols .h2 { font-size: 24px; margin-bottom: 8px; }
+  .cols p { color: var(--muted); margin: 0; }
+  @media (max-width: 800px) { .cols { grid-template-columns: 1fr; } }
+</style>

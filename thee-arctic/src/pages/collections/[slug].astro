@@ -1,0 +1,20 @@
+---
+import Base from '../../layouts/Base.astro';
+import Listing from '../../components/Listing.astro';
+import { collections, departments, inCollection } from '../../data/catalog';
+export function getStaticPaths() {
+  return collections.map((c) => ({ params: { slug: c.slug }, props: { coll: c } }));
+}
+const { coll } = Astro.props;
+const items = inCollection(coll.slug);
+const depts = departments.filter((d) => items.some((p) => p.dept === d.slug)).map((d) => [d.slug, d.name] as [string, string]);
+---
+<Base title={coll.name} description={coll.blurb}>
+  <section class="wrap page-hero">
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a><span>/</span><a href="/collections">Collections</a><span>/</span><span>{coll.name}</span></nav>
+    <p class="eyebrow">Collection</p>
+    <h1 class="display">{coll.name}</h1>
+    <p>{coll.blurb}</p>
+  </section>
+  <Listing products={items} catChips={depts} />
+</Base>

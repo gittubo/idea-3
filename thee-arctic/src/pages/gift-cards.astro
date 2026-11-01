@@ -1,0 +1,45 @@
+---
+import Base from '../layouts/Base.astro';
+const amounts = [25, 50, 100, 150, 200];
+---
+<Base title="Gift Cards">
+  <section class="wrap gc">
+    <div class="card-art">
+      <span class="logo-gc">THEE ARCTIC</span>
+      <span class="amt" data-gc-amount>$50</span>
+      <span class="eyebrow" style="color:#9fc9e6">Digital gift card</span>
+    </div>
+    <div>
+      <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a><span>/</span><span>Gift Cards</span></nav>
+      <h1 class="display" style="font-size:clamp(40px,5vw,72px);margin:6px 0 12px">Gift cards</h1>
+      <p style="color:var(--muted)">Delivered by email instantly. Never expires. Spend on anything across every department.</p>
+      <p style="font-weight:700;font-size:13px;letter-spacing:.1em;text-transform:uppercase;margin-top:24px">Amount</p>
+      <div class="amounts">
+        {amounts.map((a) => <button type="button" class="chip" aria-pressed={a === 50 ? 'true' : 'false'} data-amt={a}>${a}</button>)}
+      </div>
+      <button class="btn block" type="button" style="margin-top:20px" data-add-gc>Add to bag</button>
+    </div>
+  </section>
+</Base>
+<script>
+  let amount = 50;
+  const btns = document.querySelectorAll<HTMLButtonElement>('[data-amt]');
+  btns.forEach((b) => b.addEventListener('click', () => {
+    amount = +b.dataset.amt!;
+    btns.forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    document.querySelector('[data-gc-amount]')!.textContent = `$${amount}`;
+  }));
+  document.querySelector('[data-add-gc]')?.addEventListener('click', (e) => {
+    const b = e.currentTarget as HTMLButtonElement;
+    b.dataset.addItem = JSON.stringify({ slug: 'gift-card', name: `Gift Card $${amount}`, price: amount, garment: 'compact', color: 'Digital', hex: '#0d2236' });
+    b.dataset.size = 'Email';
+  });
+</script>
+<style>
+  .gc { display: grid; grid-template-columns: 1.1fr 1fr; gap: 48px; align-items: center; padding-block: 48px; }
+  .card-art { aspect-ratio: 1.6; border-radius: 24px; background: radial-gradient(120% 100% at 80% 0%, #2c5c86, #0d2236 60%, #050b12); color: #fff; padding: 32px; display: grid; align-content: space-between; box-shadow: 0 40px 80px -30px rgba(13,34,54,.6); }
+  .logo-gc { font-family: var(--display); font-weight: 900; font-stretch: 125%; font-size: 24px; }
+  .amt { font-family: var(--display); font-weight: 800; font-size: clamp(48px, 7vw, 96px); line-height: 1; }
+  .amounts { display: flex; gap: 8px; flex-wrap: wrap; }
+  @media (max-width: 800px) { .gc { grid-template-columns: 1fr; } }
+</style>
