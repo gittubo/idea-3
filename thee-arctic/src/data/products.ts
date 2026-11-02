@@ -159,9 +159,19 @@ function placeholderPrice(slug: string, name: string, category: string): number 
   return Math.round((lo + (h % 1000) / 1000 * (hi - lo)) / 5) * 5;
 }
 
+// TEMPORARY placeholder sale: about 1 in 6 pieces marked down 20–50%. Remove or replace with real markdowns.
+function placeholderSale(slug: string, price: number): number | undefined {
+  let h = 5381;
+  for (const ch of slug) h = (Math.imul(h, 33) ^ ch.charCodeAt(0)) >>> 0;
+  if (h % 6 !== 0) return undefined;
+  const off = [0.2, 0.25, 0.3, 0.4, 0.5][(h >>> 3) % 5];
+  return Math.round((price * (1 - off)) / 5) * 5;
+}
+
 export const lineup: Product[] = rows.map(([slug, name, dept, category, garment, views, collections = []]) => ({
   slug, name, dept, category, garment,
   price: placeholderPrice(slug, name, category),
+  salePrice: placeholderSale(slug, placeholderPrice(slug, name, category)),
   colors: [],
   // Temporary: every piece offers S–XXL until the real size runs are supplied
   sizes: ['S', 'M', 'L', 'XL', 'XXL'],

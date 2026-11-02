@@ -12,7 +12,7 @@ const items = onSale().sort((a, b) => discount(b) - discount(a));
       <p>Marked-down pieces from every department.</p>
     </div>
   </section>
-  <Listing products={items} catChips={departments.map((d) => [d.slug, d.name] as [string, string])} />
+  <Listing products={items} catChips={departments.filter((d) => items.some((p) => p.dept === d.slug || (p.alsoIn ?? []).includes(d.slug))).map((d) => [d.slug, d.name] as [string, string])} />
 </Base>
 <style>
   .sale-hero { background: radial-gradient(120% 160% at 88% 0%, #a3434b, var(--accent) 45%, var(--accent-deep)); color: #fff; padding-bottom: 40px; margin-bottom: 24px; }

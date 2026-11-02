@@ -11,5 +11,5 @@ const items = newIn();
     <h1 class="display">Just landed</h1>
     <p>The latest from every Arctic department, fresh off the truck.</p>
   </section>
-  <Listing products={items} catChips={departments.map((d) => [d.slug, d.name] as [string, string])} />
+  <Listing products={items} catChips={departments.filter((d) => items.some((p) => p.dept === d.slug || (p.alsoIn ?? []).includes(d.slug))).map((d) => [d.slug, d.name] as [string, string])} />
 </Base>
