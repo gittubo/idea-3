@@ -365,8 +365,8 @@ const latestTabs = [
   .spot-item { position: absolute; top: 0; left: 50%; width: 70%; height: calc(100% - 60px); margin-left: -35%; transition: transform 1s var(--ease), opacity .8s var(--ease), filter .8s var(--ease); cursor: pointer; }
   .spot-art { width: 100%; height: 100%; object-fit: contain; }
   .spot-item[data-pos="active"] { transform: none; opacity: 1; filter: none; z-index: 3; cursor: default; }
-  .spot-item[data-pos="prev"] { transform: translateX(-62%) scale(.62); opacity: .28; filter: blur(3px) grayscale(.4); z-index: 2; }
-  .spot-item[data-pos="next"] { transform: translateX(62%) scale(.62); opacity: .28; filter: blur(3px) grayscale(.4); z-index: 2; }
+  .spot-item[data-pos="prev"] { transform: translateX(-62%) scale(.62); opacity: .28; filter: grayscale(.4); z-index: 2; }
+  .spot-item[data-pos="next"] { transform: translateX(62%) scale(.62); opacity: .28; filter: grayscale(.4); z-index: 2; }
   .spot-item[data-pos="far-prev"] { transform: translateX(-110%) scale(.4); opacity: 0; pointer-events: none; }
   .spot-item[data-pos="far-next"] { transform: translateX(110%) scale(.4); opacity: 0; pointer-events: none; }
   .spot-nav { position: absolute; bottom: 0; left: 0; right: 0; display: flex; justify-content: center; align-items: center; gap: 18px; z-index: 4; }

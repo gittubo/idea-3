@@ -27,7 +27,7 @@ const item = {
   <div class="media">
     <a class="hit" href={url} aria-label={p.name}></a>
     {img && <div class="pimg main"><img src={img} alt={p.name} loading={eager ? 'eager' : 'lazy'} decoding="async" /></div>}
-    {p.images[1] && <div class="pimg alt" aria-hidden="true"><img src={p.images[1]} alt="" loading="lazy" decoding="async" /></div>}
+    {p.images[1] && <div class="pimg alt" aria-hidden="true"><img data-src={p.images[1]} alt="" decoding="async" /></div>}
     <div class="badges">
       {p.salePrice && <span class="badge sale">-{discount(p)}%</span>}
       {p.isNew && <span class="badge new">New</span>}

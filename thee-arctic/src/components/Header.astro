@@ -44,8 +44,8 @@ const here = (href: string) => (path === href ? 'page' : undefined);
                     <ul class="cols">{d.categories.map((c) => <li><a href={`/${d.slug}/${c.slug}`}>{c.name}</a></li>)}</ul>
                   </div>
                   <div class="feature">
-                    {deptFeature(d.slug) && <a href={`/${d.slug}`}><img src={deptFeature(d.slug)} alt="" loading="lazy" /><span>Shop {d.name}</span></a>}
-                    {featuredCollection && <a href={`/collections/${featuredCollection.slug}`}><img src={featuredCollection.cover} alt="" loading="lazy" /><span>{featuredCollection.name}</span></a>}
+                    {deptFeature(d.slug) && <a href={`/${d.slug}`}><img data-src={deptFeature(d.slug)} alt="" /><span>Shop {d.name}</span></a>}
+                    {featuredCollection && <a href={`/collections/${featuredCollection.slug}`}><img data-src={featuredCollection.cover} alt="" /><span>{featuredCollection.name}</span></a>}
                   </div>
                 </div>
               </div>

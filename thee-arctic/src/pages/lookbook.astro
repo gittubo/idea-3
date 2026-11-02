@@ -1,7 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import ProductCard from '../components/ProductCard.astro';
-import { looks, lookItems } from '../data/looks';
+import { looks, lookItems, fullImage } from '../data/looks';
 ---
 <Base title="Lookbook" description="Pieces that go together: shop THEE ARCTIC Season 01 looks.">
   <section class="wrap page-hero">
@@ -16,7 +16,7 @@ import { looks, lookItems } from '../data/looks';
     const items = lookItems(l);
     return (
       <section class="wrap look reveal" id={l.id}>
-        <img class="look-img" src={l.image} alt={`Look ${String(k + 1).padStart(2, '0')}`} loading="lazy" />
+        <img class="look-img" src={fullImage(l)} alt={`Look ${String(k + 1).padStart(2, '0')}`} loading="lazy" />
         <div class="look-side">
           <p class="eyebrow">Look {String(k + 1).padStart(2, '0')}</p>
           <h2 class="h2">Shop the look</h2>

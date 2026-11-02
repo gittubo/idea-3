@@ -448,8 +448,16 @@ function finishPreloader() {
   if (!pre) return;
   try { sessionStorage.setItem('ta-intro', '1'); } catch { /* ignore */ }
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  setTimeout(() => { pre.classList.add('done'); setTimeout(() => pre.remove(), 1300); }, reduce ? 0 : 2100);
+  setTimeout(() => { pre.classList.add('done'); setTimeout(() => pre.remove(), 900); }, reduce ? 0 : 1000);
 }
+
+/* ---------- Deferred images (menu features, card hover photos) ---------- */
+const loadDeferred = (e: Event) => {
+  const host = (e.target as HTMLElement).closest?.('.card, .nav > ul > li');
+  host?.querySelectorAll<HTMLImageElement>('img[data-src]').forEach((img) => { img.src = img.dataset.src!; img.removeAttribute('data-src'); });
+};
+document.addEventListener('pointerover', loadDeferred, { passive: true });
+document.addEventListener('focusin', loadDeferred);
 
 /* ---------- Global click delegation ---------- */
 document.addEventListener('click', (e) => {
