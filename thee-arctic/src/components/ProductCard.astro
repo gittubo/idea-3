@@ -50,7 +50,7 @@ const item = {
     <div class="price">
       {price === undefined
         ? <span class="tba">Price coming soon</span>
-        : p.salePrice && p.price ? <><span class="now">{money(p.salePrice)}</span><s>{money(p.price)}</s></> : <span>{money(price)}</span>}
+        : p.salePrice && p.price ? <><span class="now"><span data-usd={p.salePrice}>{money(p.salePrice)}</span></span><s><span data-usd={p.price}>{money(p.price)}</span></s></> : <span><span data-usd={price}>{money(price)}</span></span>}
     </div>
     {p.colors.length > 0 && <div class="swatches">{p.colors.map((c) => <i style={`background:${c.hex}`} title={c.name}></i>)}</div>}
   </div>

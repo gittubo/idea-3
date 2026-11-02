@@ -156,4 +156,6 @@ export const lineup: Product[] = rows.map(([slug, name, dept, category, garment,
   details: [],
   images: Array.from({ length: views }, (_, i) => `/products/${slug}/${i + 1}.webp`),
   card: `/products/${slug}/card.webp`,
+  // Shoes and accessories are unisex: list them under Women as well as Men
+  alsoIn: dept === 'men' && (category === 'shoes' || category === 'accessories') ? ['women'] : [],
 }));

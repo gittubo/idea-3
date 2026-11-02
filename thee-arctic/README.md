@@ -37,6 +37,16 @@ Node 20 or newer.
 - **Customer photos (#THEEARCTIC grid):** `community` in `src/data/site.ts`.
 - **Testimonials:** `testimonials` in `src/data/site.ts`. Empty, so the section is hidden until real reviews are added.
 
+## Currency
+
+Prices are stored in USD (`price` in `src/data/products.ts`). Each shopper sees them in their own currency: it's detected from their time zone or browser region, and they can change it in the header, footer or mobile menu. Rates come from a free public feed (open.er-api.com) and are cached for 12 hours. If the feed can't be reached, prices stay in USD. The logic is in `src/scripts/currency.ts`.
+
+This changes what shoppers **see**. Charging in local currency is done by the payment provider (Shopify Markets or Stripe multi-currency) once checkout is connected.
+
+## Shops and edits
+
+`src/data/shops.ts` defines the category bar (Clothing, Dresses, Shoes, Accessories, Formal Shop…) and the Trend Report edits (Leather, Tailoring, Satin & Silk, Denim) as rules over the catalog. New products appear in them automatically. Shoes and accessories are unisex, so they're listed under both Women and Men (`alsoIn` in `products.ts`).
+
 ## Not connected yet
 
 These parts have their UI in place but need a service behind them before the store can take orders:

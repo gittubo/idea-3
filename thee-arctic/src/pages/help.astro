@@ -56,20 +56,21 @@ const faqs = [
     </section>
     <section id="privacy"><h2 class="h2">Privacy</h2><p>Your privacy policy goes here.</p></section>
     <section id="terms"><h2 class="h2">Terms</h2><p>Your terms of service go here.</p></section>
+    <section id="promo-terms"><h2 class="h2">Promo terms</h2><p>Terms for promotions and discount codes go here.</p></section>
   </div>
 </Base>
 <style>
   .quick-help { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 32px; }
-  .quick-help a { background: var(--snow); border-radius: 16px; padding: 22px; display: grid; gap: 10px; transition: background .2s; }
-  .quick-help a:hover { background: var(--ice); }
+  .quick-help a { background: var(--stone-1); border-radius: 16px; padding: 22px; display: grid; gap: 10px; transition: background .2s; }
+  .quick-help a:hover { background: var(--stone-2); }
   .quick-help :global(svg) { width: 26px; height: 26px; }
   .help { max-width: 860px; display: grid; gap: 48px; padding-bottom: 40px; }
-  .help section { scroll-margin-top: calc(var(--header-h) + 20px); }
+  .help section { scroll-margin-top: calc(var(--header-h) + var(--catbar-h) + 20px); }
   .help .h2 { font-size: 26px; margin-bottom: 12px; }
   .help p { color: var(--ink-2); }
   .track, .contact { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: end; }
   .track .btn, .contact .btn { justify-self: start; }
-  .note { font-size: 13px; background: var(--ice); border-left: 3px solid var(--accent); padding: 10px 12px; border-radius: 10px; }
+  .note { font-size: 13px; background: var(--stone-2); border-left: 3px solid var(--accent); padding: 10px 12px; border-radius: 10px; }
   .faq { border-bottom: 1px solid var(--line); }
   .faq summary { cursor: pointer; padding: 16px 0; font-weight: 600; list-style: none; display: flex; justify-content: space-between; }
   .faq summary::-webkit-details-marker { display: none; }

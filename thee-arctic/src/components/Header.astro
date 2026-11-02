@@ -1,89 +1,78 @@
 ---
 import { departments, collections, inDept } from '../data/catalog';
 import { looks } from '../data/looks';
+import { shops, catbar } from '../data/shops';
 import Icon from './Icon.astro';
 import Logo from './Logo.astro';
 
 const announcements = [
-  'THEE ARCTIC · Season 01',
+  'THEE ARCTIC · Season 01 is here. <a href="/new-in">Shop new in</a>',
   'Join the list for early access. <a href="#nl-email">Sign up</a>',
 ];
 // Feature tiles use the brand's own photos: a look photo when the department has one, else its first product
 const deptFeature = (slug: string) => looks.find((l) => l.dept === slug)?.image ?? inDept(slug)[0]?.card ?? inDept(slug)[0]?.images[0];
 const featuredCollection = collections[0];
+const bar = catbar.map((s) => shops.find((x) => x.slug === s)!);
+const path = Astro.url.pathname.replace(/\/$/, '');
+const here = (href: string) => (path === href ? 'page' : undefined);
 ---
 <div class="announce" data-announce>
   <ul>{announcements.map((a, i) => <li class={i === 0 ? 'on' : ''} set:html={a} />)}</ul>
 </div>
 <header class="header">
   <div class="wrap bar">
-    <div style="display:flex;align-items:center;gap:4px">
+    <div class="left">
       <button class="icon-btn menu-btn" type="button" data-open="menu" aria-label="Open menu"><Icon name="menu" /></button>
-      <a href="/" class="logo" aria-label="THEE ARCTIC home"><Logo /></a>
+      <nav class="nav" aria-label="Departments">
+        <ul>
+          {departments.map((d) => (
+            <li>
+              <a href={`/${d.slug}`} aria-current={here(`/${d.slug}`)}>{d.name}</a>
+              <div class="mega">
+                <div class="wrap mega-inner">
+                  <div>
+                    <h4>{d.title}</h4>
+                    <ul>
+                      <li><a href={`/${d.slug}`}>Shop all {d.name}</a></li>
+                      <li><a href={`/${d.slug}?filter=new`}>New arrivals</a></li>
+                      <li><a href="/lookbook">Shop the look</a></li>
+                      <li><a href={`/${d.slug}?filter=sale`} style="color:var(--sale)">Sale</a></li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h4>Categories</h4>
+                    <ul class="cols">{d.categories.map((c) => <li><a href={`/${d.slug}/${c.slug}`}>{c.name}</a></li>)}</ul>
+                  </div>
+                  <div class="feature">
+                    {deptFeature(d.slug) && <a href={`/${d.slug}`}><img src={deptFeature(d.slug)} alt="" loading="lazy" /><span>Shop {d.name}</span></a>}
+                    {featuredCollection && <a href={`/collections/${featuredCollection.slug}`}><img src={featuredCollection.cover} alt="" loading="lazy" /><span>{featuredCollection.name}</span></a>}
+                  </div>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </nav>
     </div>
-    <nav class="nav" aria-label="Main">
-      <ul>
-        <li><a href="/new-in">New In</a></li>
-        {departments.map((d) => (
-          <li>
-            <a href={`/${d.slug}`}>{d.name}</a>
-            <div class="mega">
-              <div class="wrap mega-inner">
-                <div>
-                  <h4>{d.title}</h4>
-                  <ul>
-                    <li><a href={`/${d.slug}`}><strong>Shop all {d.name}</strong></a></li>
-                    <li><a href={`/${d.slug}?filter=new`}>New arrivals</a></li>
-                    <li><a href={`/${d.slug}?sort=best`}>Bestsellers</a></li>
-                    <li><a href={`/${d.slug}?filter=sale`} style="color:var(--sale)">Sale</a></li>
-                  </ul>
-                </div>
-                <div>
-                  <h4>Categories</h4>
-                  <ul class="cols">{d.categories.map((c) => <li><a href={`/${d.slug}/${c.slug}`}>{c.name}</a></li>)}</ul>
-                </div>
-                <div class="feature">
-                  {deptFeature(d.slug) && <a href={`/${d.slug}`}><img src={deptFeature(d.slug)} alt="" loading="lazy" /><span>Shop {d.name}</span></a>}
-                  {featuredCollection && <a href={`/collections/${featuredCollection.slug}`}><img src={featuredCollection.cover} alt="" loading="lazy" /><span>{featuredCollection.name}</span></a>}
-                </div>
-              </div>
-            </div>
-          </li>
-        ))}
-        <li>
-          <a href="/collections">Collections</a>
-          <div class="mega">
-            <div class="wrap mega-inner">
-              <div>
-                <h4>Shop by edit</h4>
-                <ul>{collections.map((c) => <li><a href={`/collections/${c.slug}`}>{c.name}</a></li>)}</ul>
-              </div>
-              <div>
-                <h4>More</h4>
-                <ul>
-                  <li><a href="/rewards">Arctic Rewards</a></li>
-                  <li><a href="/gift-cards">Gift Cards</a></li>
-                  <li><a href="/lookbook">Lookbook</a></li>
-                  <li><a href="/about">Our Story</a></li>
-                </ul>
-              </div>
-              <div class="feature">
-                {featuredCollection && <a href={`/collections/${featuredCollection.slug}`}><img src={featuredCollection.cover} alt="" loading="lazy" /><span>{featuredCollection.name}</span></a>}
-                {looks[0] && <a href="/lookbook"><img src={looks[0].image} alt="" loading="lazy" /><span>Shop the look</span></a>}
-              </div>
-            </div>
-          </div>
-        </li>
-        <li><a href="/sale" class="sale">Sale</a></li>
-      </ul>
-    </nav>
+    <a href="/" class="logo" aria-label="THEE ARCTIC home"><Logo /></a>
     <div class="tools">
+      <label class="hide-sm"><span class="sr-only">Currency</span><select class="cur-select" data-currency-select data-compact aria-label="Currency"></select></label>
       <button class="icon-btn" type="button" data-open="search" aria-label="Search"><Icon name="search" /></button>
+      <a class="icon-btn hide-sm" href="/recently-viewed" aria-label="Recently viewed"><Icon name="clock" /></a>
       <a class="icon-btn hide-sm" href="/account" aria-label="Account"><Icon name="user" /></a>
       <a class="icon-btn hide-sm" href="/wishlist" aria-label="Wishlist"><Icon name="heart" /><span class="count" data-wish-count></span></a>
       <button class="icon-btn" type="button" data-open="cart" aria-label="Shopping bag"><Icon name="bag" /><span class="count" data-cart-count></span></button>
     </div>
   </div>
+  <nav class="catbar" aria-label="Shop by category">
+    <ul>
+      <li><a href="/new-in" aria-current={here('/new-in')}>New In</a></li>
+      {bar.map((s) => <li><a href={`/shop/${s.slug}`} aria-current={here(`/shop/${s.slug}`)}>{s.name}</a></li>)}
+      <li><a href="/collections/pieces-that-go-together" aria-current={here('/collections/pieces-that-go-together')}>Pieces That Go Together</a></li>
+      <li><a href="/lookbook" aria-current={here('/lookbook')}>Lookbook</a></li>
+      <li><a href="/sale" class="sale" aria-current={here('/sale')}>Sale</a></li>
+    </ul>
+  </nav>
 </header>
 
 <!-- Mobile menu -->
@@ -106,14 +95,30 @@ const featuredCollection = collections[0];
         </details>
       ))}
       <details>
+        <summary>Shop by category</summary>
+        <ul>{bar.map((s) => <li><a href={`/shop/${s.slug}`}>{s.name}</a></li>)}</ul>
+      </details>
+      <details>
         <summary>Collections</summary>
-        <ul>{collections.map((c) => <li><a href={`/collections/${c.slug}`}>{c.name}</a></li>)}</ul>
+        <ul>
+          {collections.map((c) => <li><a href={`/collections/${c.slug}`}>{c.name}</a></li>)}
+          <li><a href="/lookbook">Lookbook</a></li>
+        </ul>
       </details>
       <a href="/sale" class="sale">Sale</a>
       <a href="/wishlist">Wishlist</a>
+      <a href="/recently-viewed">Recently viewed</a>
       <a href="/account">Sign in / Join</a>
       <a href="/rewards">Arctic Rewards</a>
       <a href="/help">Help</a>
+      <div class="m-row"><span>Currency</span><select class="cur-select" data-currency-select aria-label="Currency"></select></div>
     </div>
   </aside>
 </div>
+
+<style>
+  .left { display: flex; align-items: center; height: 100%; min-width: 0; }
+  .left .nav > ul > li > a { padding-inline: 10px; }
+  .left .nav > ul > li:first-child > a { padding-left: 0; }
+  .left .nav > ul > li:first-child > a::after { left: 0; }
+</style>

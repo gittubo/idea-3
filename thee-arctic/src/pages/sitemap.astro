@@ -1,0 +1,35 @@
+---
+import Base from '../layouts/Base.astro';
+import { departments, collections, products } from '../data/catalog';
+import { shops } from '../data/shops';
+const pages: [string, string][] = [
+  ['/new-in', 'New In'], ['/sale', 'Sale'], ['/lookbook', 'Lookbook'], ['/collections', 'Collections'], ['/rewards', 'Arctic Rewards'],
+  ['/gift-cards', 'Gift cards'], ['/help', 'Help centre'], ['/about', 'About'], ['/account', 'Sign in / Join'], ['/wishlist', 'Wishlist'],
+  ['/recently-viewed', 'Recently viewed'],
+];
+---
+<Base title="Sitemap">
+  <section class="wrap page-hero">
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a><span>/</span><span>Sitemap</span></nav>
+    <h1 class="display">Sitemap</h1>
+  </section>
+  <section class="wrap map">
+    <div><h2>Pages</h2><ul>{pages.map(([h, l]) => <li><a href={h}>{l}</a></li>)}</ul></div>
+    {departments.map((d) => (
+      <div><h2><a href={`/${d.slug}`}>{d.name}</a></h2><ul>{d.categories.map((c) => <li><a href={`/${d.slug}/${c.slug}`}>{c.name}</a></li>)}</ul></div>
+    ))}
+    <div><h2>Shop</h2><ul>{shops.map((s) => <li><a href={`/shop/${s.slug}`}>{s.name}</a></li>)}</ul></div>
+    <div><h2>Collections</h2><ul>{collections.map((c) => <li><a href={`/collections/${c.slug}`}>{c.name}</a></li>)}</ul></div>
+    <div class="all"><h2>All products ({products.length})</h2><ul>{products.map((p) => <li><a href={`/products/${p.slug}`}>{p.name}</a></li>)}</ul></div>
+  </section>
+</Base>
+<style>
+  .map { display: grid; grid-template-columns: repeat(4, 1fr); gap: 48px 32px; padding-bottom: 80px; }
+  .map h2 { font-size: 10.5px; font-weight: 550; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); margin: 0 0 16px; }
+  .map ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; font-size: 14px; }
+  .map a:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .all { grid-column: 1 / -1; }
+  .all ul { columns: 4; column-gap: 32px; display: block; }
+  .all li { margin-bottom: 8px; break-inside: avoid; }
+  @media (max-width: 900px) { .map { grid-template-columns: repeat(2, 1fr); } .all ul { columns: 2; } }
+</style>

@@ -1,6 +1,7 @@
 // THEE ARCTIC storefront behaviour: bag, wishlist, drawers, search, listing filters, product page.
 // State lives in localStorage until a commerce backend (e.g. Shopify) is connected.
 import { garmentSvg, type Garment } from '../data/garments';
+import { formatPrice } from './currency';
 
 export interface Item { slug: string; name: string; /** null = not priced yet */ price: number | null; garment: Garment; color: string; hex: string; img?: string }
 interface Line extends Item { size: string; qty: number }
@@ -8,7 +9,8 @@ interface Line extends Item { size: string; qty: number }
 const FREE_SHIP = 75;
 const $ = <T extends Element = HTMLElement>(s: string, r: ParentNode = document) => r.querySelector<T>(s);
 const $$ = <T extends Element = HTMLElement>(s: string, r: ParentNode = document) => Array.from(r.querySelectorAll<T>(s));
-const money = (n: number) => `$${n.toFixed(2)}`;
+// Prices are stored in USD; data-usd lets the currency layer repaint them when the shopper switches currency
+const money = (n: number) => `<span data-usd="${n}">${formatPrice(n)}</span>`;
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
 function load<T>(key: string, fallback: T): T {
@@ -105,14 +107,14 @@ function renderCart() {
   const label = $('[data-cart-count-text]');
   if (label) label.textContent = units() ? `(${units()})` : '';
   if (!cart.length) {
-    lines.innerHTML = `<div class="empty"><p style="margin:0;font-weight:600;color:var(--ink)">Your bag is empty</p><p style="margin:0">Fill it with something cold.</p><a class="btn" href="/new-in">Shop new in</a></div>`;
+    lines.innerHTML = `<div class="empty"><p style="margin:0;font-weight:600;color:var(--ink)">Your bag is empty</p><p style="margin:0">Start with something new.</p><a class="btn" href="/new-in">Shop new in</a></div>`;
     foot.hidden = true; meter.hidden = true;
     return;
   }
   foot.hidden = false; meter.hidden = false;
   meter.innerHTML = shipMeter();
   lines.innerHTML = cart.map(lineHtml).join('');
-  $('[data-cart-subtotal]')!.textContent = money(subtotal());
+  $('[data-cart-subtotal]')!.innerHTML = money(subtotal());
 }
 
 function renderCartPage() {
@@ -129,10 +131,10 @@ function renderCartPage() {
   list.innerHTML = `<div class="ship-meter" style="border-radius:12px">${shipMeter()}</div>` + cart.map(lineHtml).join('');
   const sub = subtotal();
   const ship = sub >= FREE_SHIP ? 0 : 7.95;
-  $('[data-sum-sub]', sum)!.textContent = money(sub);
-  $('[data-sum-ship]', sum)!.textContent = ship ? money(ship) : 'Free';
-  $('[data-sum-total]', sum)!.textContent = money(sub + ship);
-  $('[data-sum-klarna]', sum)!.textContent = money((sub + ship) / 4);
+  $('[data-sum-sub]', sum)!.innerHTML = money(sub);
+  $('[data-sum-ship]', sum)!.innerHTML = ship ? money(ship) : 'Free';
+  $('[data-sum-total]', sum)!.innerHTML = money(sub + ship);
+  $('[data-sum-klarna]', sum)!.innerHTML = money((sub + ship) / 4);
 }
 
 /* ---------- Wishlist ---------- */
@@ -242,13 +244,14 @@ async function renderRecent() {
   const host = $('[data-recent]');
   if (!host) return;
   const current = host.dataset.recent;
-  const slugs = load<string[]>('ta-recent', []).filter((s) => s !== current).slice(0, 8);
+  const slugs = load<string[]>('ta-recent', []).filter((s) => s !== current).slice(0, host.dataset.recentPage !== undefined ? 24 : 8);
   if (!slugs.length) return;
   const all = await getIndex();
   const items = slugs.map((s) => all.find((p) => p.s === s)).filter(Boolean) as Indexed[];
   if (!items.length) return;
   host.hidden = false;
   $('[data-recent-rail]', host)!.innerHTML = items.map((p) => miniCard(toItem(p))).join('');
+  $('[data-recent-empty]', host)?.setAttribute('hidden', '');
 }
 
 /* ---------- Listing filters ---------- */

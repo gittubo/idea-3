@@ -2,18 +2,30 @@
 import { departments } from '../data/catalog';
 import Icon from './Icon.astro';
 const year = new Date().getFullYear();
+// Social profiles: replace each href with the brand's own profile URL
+const socials: [string, string, string][] = [
+  ['instagram', 'Instagram', 'https://instagram.com/'],
+  ['tiktok', 'TikTok', 'https://tiktok.com/'],
+  ['snapchat', 'Snapchat', 'https://snapchat.com/'],
+  ['youtube', 'YouTube', 'https://youtube.com/'],
+  ['facebook', 'Facebook', 'https://facebook.com/'],
+  ['pinterest', 'Pinterest', 'https://pinterest.com/'],
+  ['x', 'X', 'https://x.com/'],
+];
 ---
-<footer class="footer grain">
+<footer class="footer">
   <div class="wrap">
     <div class="newsletter">
-      <h2 class="display">Get on the list.<br />Stay cold.</h2>
+      <h2 class="display">Get on the list. <span class="serif">Hear it first.</span></h2>
       <div>
-        <p style="margin:0 0 14px">Early access to drops, members-only sales and 15% off your first order.</p>
-        <form data-newsletter>
-          <label class="sr-only" for="nl-email">Email address</label>
-          <input id="nl-email" type="email" required placeholder="Your email address" autocomplete="email" />
-          <button class="btn light" type="submit">Join</button>
-        </form>
+        <p style="margin:0 0 16px">Early access to drops, members-only sales and 15% off your first order.</p>
+        <div class="bezel dark" style="border-radius:999px">
+          <form data-newsletter class="core" style="border-radius:999px">
+            <label class="sr-only" for="nl-email">Email address</label>
+            <input id="nl-email" type="email" required placeholder="Your email address" autocomplete="email" />
+            <button class="btn light" type="submit">Join <span class="ico"><Icon name="arrow-ur" /></span></button>
+          </form>
+        </div>
         <small data-newsletter-msg>By signing up you agree to receive marketing emails. Unsubscribe any time.</small>
       </div>
     </div>
@@ -22,53 +34,60 @@ const year = new Date().getFullYear();
         <h4>Shop</h4>
         <ul>
           <li><a href="/new-in">New In</a></li>
-          {departments.map((d) => <li><a href={`/${d.slug}`}>{d.title}</a></li>)}
+          {departments.map((d) => <li><a href={`/${d.slug}`}>{d.name}</a></li>)}
           <li><a href="/sale">Sale</a></li>
         </ul>
       </div>
       <div>
         <h4>Help</h4>
         <ul>
-          <li><a href="/help#orders">Track my order</a></li>
-          <li><a href="/help#shipping">Shipping</a></li>
-          <li><a href="/help#returns">Returns &amp; exchanges</a></li>
+          <li><a href="/help">Help centre</a></li>
+          <li><a href="/help#orders">Track order</a></li>
+          <li><a href="/help#shipping">Shipping info</a></li>
+          <li><a href="/help#returns">Returns</a></li>
           <li><a href="/help#sizing">Size guide</a></li>
-          <li><a href="/help#faq">FAQ</a></li>
           <li><a href="/help#contact">Contact us</a></li>
         </ul>
       </div>
       <div>
-        <h4>Members</h4>
+        <h4>Company</h4>
         <ul>
-          <li><a href="/account">Sign in / Join</a></li>
-          <li><a href="/rewards">Arctic Rewards</a></li>
-          <li><a href="/wishlist">Wishlist</a></li>
-          <li><a href="/gift-cards">Gift Cards</a></li>
+          <li><a href="/about">About</a></li>
+          <li><a href="/about#careers">Careers</a></li>
+          <li><a href="/lookbook">Lookbook</a></li>
+          <li><a href="/collections">Collections</a></li>
         </ul>
       </div>
       <div>
-        <h4>About</h4>
+        <h4>Quick links</h4>
         <ul>
-          <li><a href="/about">Our story</a></li>
-          <li><a href="/lookbook">Lookbook</a></li>
-          <li><a href="/collections">Collections</a></li>
-          <li><a href="/about#careers">Careers</a></li>
+          <li><a href="/account">Sign in / Join</a></li>
+          <li><a href="/rewards">Arctic Rewards</a></li>
+          <li><a href="/gift-cards">Gift cards</a></li>
+          <li><a href="/wishlist">Wishlist</a></li>
+          <li><a href="/recently-viewed">Recently viewed</a></li>
+          <li><a href="/sitemap">Sitemap</a></li>
         </ul>
       </div>
       <div>
         <h4>Follow</h4>
         <div class="socials">
-          <a href="https://instagram.com/" aria-label="Instagram" rel="noopener" target="_blank"><Icon name="instagram" /></a>
-          <a href="https://tiktok.com/" aria-label="TikTok" rel="noopener" target="_blank"><Icon name="tiktok" /></a>
-          <a href="https://youtube.com/" aria-label="YouTube" rel="noopener" target="_blank"><Icon name="youtube" /></a>
-          <a href="https://x.com/" aria-label="X" rel="noopener" target="_blank"><Icon name="x" /></a>
+          {socials.map(([icon, label, href]) => <a href={href} aria-label={label} rel="noopener" target="_blank"><Icon name={icon} /></a>)}
         </div>
-        <p style="font-size:13px;margin-top:16px">Tag <strong style="color:#fff">#THEEARCTIC</strong> to be featured.</p>
+        <p style="font-size:13px;margin-top:18px">Tag <strong>#THEEARCTIC</strong> to be featured.</p>
       </div>
     </div>
     <div class="foot-base">
-      <span>© {year} THEE ARCTIC. All rights reserved. · <a href="/help#privacy">Privacy</a> · <a href="/help#terms">Terms</a></span>
-      <div class="pay"><span>VISA</span><span>MASTERCARD</span><span>AMEX</span><span>PAYPAL</span><span>APPLE PAY</span><span>KLARNA</span></div>
+      <div class="legal">
+        <span>© {year} THEE ARCTIC. All rights reserved.</span>
+        <a href="/help#privacy">Privacy policy</a>
+        <a href="/help#terms">Terms of service</a>
+        <a href="/help#promo-terms">Promo terms</a>
+      </div>
+      <div class="legal">
+        <label><span class="sr-only">Currency</span><select class="cur-select" data-currency-select aria-label="Currency"></select></label>
+        <div class="pay"><span>VISA</span><span>MASTERCARD</span><span>AMEX</span><span>PAYPAL</span><span>APPLE PAY</span><span>KLARNA</span></div>
+      </div>
     </div>
   </div>
   <div class="wordmark" aria-hidden="true">THEE ARCTIC</div>

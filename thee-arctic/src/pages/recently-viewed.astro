@@ -1,0 +1,18 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="Recently viewed">
+  <section class="wrap page-hero">
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a><span>/</span><span>Recently viewed</span></nav>
+    <h1 class="display">Recently <span class="serif">viewed</span></h1>
+    <p>The pieces you looked at most recently, saved on this device.</p>
+  </section>
+  <section class="wrap" data-recent="" data-recent-page>
+    <div class="grid" data-recent-rail></div>
+    <div class="empty" data-recent-empty>
+      <p style="margin:0;font-weight:550;color:var(--ink)">Nothing here yet</p>
+      <p style="margin:0">Pieces you view will appear here.</p>
+      <a class="btn" href="/new-in">Shop new in</a>
+    </div>
+  </section>
+</Base>

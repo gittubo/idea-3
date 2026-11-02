@@ -43,7 +43,7 @@ function hero() {
 }
 
 /* Spotlight carousel: centred piece, ghosted neighbours, details panel swaps with a blur transition */
-interface SpotItem { slug: string; name: string; price: string; was: string; garment: Garment; colors: { name: string; hex: string }[]; sizes: string[]; img: string; cat: string }
+interface SpotItem { slug: string; name: string; price: number; was: number; garment: Garment; colors: { name: string; hex: string }[]; sizes: string[]; img: string; cat: string }
 function spotlight() {
   const root = $('[data-spot]');
   if (!root) return;
@@ -70,7 +70,7 @@ function spotlight() {
     setTimeout(() => {
       $('[data-f="cat"]', panel)!.textContent = it.cat;
       $('[data-f="name"]', panel)!.textContent = it.name;
-      $('[data-f="price"]', panel)!.innerHTML = it.was ? `<span class="now">${it.price}</span> <s>${it.was}</s>` : it.price;
+      $('[data-f="price"]', panel)!.innerHTML = it.was ? `<span class="now" data-usd="${it.price}"></span> <s data-usd="${it.was}"></s>` : `<span data-usd="${it.price}"></span>`;
       $('[data-f="link"]', panel)!.setAttribute('href', `/products/${it.slug}`);
       $('[data-f="swatches"]', panel)!.innerHTML = it.colors
         .map((c, k) => `<button type="button" class="sw" style="background:${c.hex}" data-hex="${c.hex}" data-name="${c.name}" aria-label="${c.name}" aria-pressed="${k === 0}"></button>`)
@@ -109,7 +109,7 @@ function spotlight() {
       const colour = it.colors.find((c) => c.hex === hex) ?? it.colors[0];
       const btn = document.createElement('button');
       btn.hidden = true;
-      btn.dataset.addItem = JSON.stringify({ slug: it.slug, name: it.name, price: parseFloat(it.price.slice(1)), garment: it.garment, color: colour.name, hex: colour.hex, img: it.img });
+      btn.dataset.addItem = JSON.stringify({ slug: it.slug, name: it.name, price: it.price, garment: it.garment, color: colour.name, hex: colour.hex, img: it.img });
       btn.dataset.size = sz.dataset.sz;
       panel.appendChild(btn); btn.click(); btn.remove();
     }

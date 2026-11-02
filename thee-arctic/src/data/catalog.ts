@@ -34,6 +34,8 @@ export interface Product {
   details: string[];
   /** Real photos, e.g. ['/products/<slug>/1.jpg']. Empty = placeholder art. */
   images: string[];
+  /** Extra departments this piece is also listed in (e.g. unisex shoes and accessories). */
+  alsoIn?: string[];
   /** 3:4 card image for listings; falls back to images[0]. */
   card?: string;
 }
@@ -41,8 +43,8 @@ export interface Product {
 export const departments: Department[] = [
   {
     slug: 'women', name: 'Women', title: 'THEE ARCTIC WOMEN', tint: '#f2efea',
-    tagline: 'Cold looks. Hot fits.',
-    blurb: 'Dresses, sets, denim and outerwear cut sharp for every season.',
+    tagline: 'Sharp cuts. Statement pieces.',
+    blurb: 'Dresses, two-piece sets, tailoring and outerwear.',
     categories: [
       { slug: 'dresses', name: 'Dresses', garment: ['dress'] },
       { slug: 'tops', name: 'Tops', garment: ['top', 'tee', 'shirt'] },
@@ -59,7 +61,7 @@ export const departments: Department[] = [
   {
     slug: 'curve', name: 'Curve', title: 'THEE ARCTIC CURVE', tint: '#f2efea',
     tagline: 'Made for every curve.',
-    blurb: 'The full Arctic line in sizes 1X–4X, fitted on real curves.',
+    blurb: 'The full line in extended sizes, fitted on real curves.',
     categories: [
       { slug: 'dresses', name: 'Dresses', garment: ['dress'] },
       { slug: 'tops', name: 'Tops', garment: ['top', 'tee'] },
@@ -71,8 +73,8 @@ export const departments: Department[] = [
   },
   {
     slug: 'men', name: 'Men', title: 'THEE ARCTIC MEN', tint: '#f2efea',
-    tagline: 'Built for the cold. Worn everywhere.',
-    blurb: 'Heavyweight hoodies, denim, outerwear and essentials.',
+    tagline: 'Tailoring, outerwear and essentials.',
+    blurb: 'Jackets, knitwear, trousers, shoes and accessories.',
     categories: [
       { slug: 'hoodies', name: 'Hoodies & Sweatshirts', garment: ['hoodie'] },
       { slug: 'tees', name: 'T-Shirts', garment: ['tee'] },
@@ -100,8 +102,8 @@ export const departments: Department[] = [
   },
   {
     slug: 'sports', name: 'Sports', title: 'THEE ARCTIC SPORTS', tint: '#f2efea',
-    tagline: 'Train in the cold. Peak in the heat.',
-    blurb: 'Performance sets, leggings and layers that move with you.',
+    tagline: 'Made to move.',
+    blurb: 'Performance sets, leggings and training layers.',
     categories: [
       { slug: 'leggings', name: 'Leggings', garment: ['leggings'] },
       { slug: 'sports-bras', name: 'Sports Bras', garment: ['bra'] },
@@ -114,8 +116,8 @@ export const departments: Department[] = [
   },
   {
     slug: 'beauty', name: 'Beauty', title: 'THEE ARCTIC BEAUTY', tint: '#f2efea',
-    tagline: 'Glow below zero.',
-    blurb: 'Skincare, makeup and fragrance with a frost-clean finish.',
+    tagline: 'Skin, scent and colour.',
+    blurb: 'Skincare, makeup and fragrance.',
     categories: [
       { slug: 'makeup', name: 'Makeup', garment: ['compact', 'bottle'] },
       { slug: 'skincare', name: 'Skincare', garment: ['bottle'] },
@@ -132,9 +134,9 @@ export const collections: Collection[] = [
 
 export const palette: Color[] = [
   { name: 'Black', hex: '#15171a' },
-  { name: 'Snow', hex: '#f1f2f0' },
-  { name: 'Ice Grey', hex: '#c9cfd4' },
-  { name: 'Glacier', hex: '#8ec3e6' },
+  { name: 'Off-White', hex: '#f1f2f0' },
+  { name: 'Light Grey', hex: '#c9cfd4' },
+  { name: 'Pale Blue', hex: '#8ec3e6' },
   { name: 'Navy', hex: '#1d2b44' },
   { name: 'Slate', hex: '#5d6873' },
   { name: 'Sand', hex: '#d8c6a8' },
@@ -152,8 +154,9 @@ export const products: Product[] = lineup;
 
 export const bySlug = new Map(products.map((p) => [p.slug, p]));
 export const getDept = (slug: string) => departments.find((d) => d.slug === slug);
-export const inDept = (d: string) => products.filter((p) => p.dept === d);
-export const inCategory = (d: string, c: string) => products.filter((p) => p.dept === d && p.category === c);
+const listedIn = (p: Product, d: string) => p.dept === d || (p.alsoIn ?? []).includes(d);
+export const inDept = (d: string) => products.filter((p) => listedIn(p, d));
+export const inCategory = (d: string, c: string) => products.filter((p) => listedIn(p, d) && p.category === c);
 export const inCollection = (c: string) => products.filter((p) => p.collections.includes(c));
 export const onSale = () => products.filter((p) => p.salePrice);
 export const newIn = () => products.filter((p) => p.isNew);

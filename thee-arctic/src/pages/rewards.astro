@@ -2,16 +2,16 @@
 import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
 const tiers = [
-  { name: 'Frost', pts: '0 – 499 pts', perks: ['1 point per $1', 'Birthday gift', 'Members-only sales'] },
-  { name: 'Glacier', pts: '500 – 1,499 pts', perks: ['1.25 points per $1', 'Free standard shipping', 'Early drop access'] },
-  { name: 'Polar', pts: '1,500+ pts', perks: ['1.5 points per $1', 'Free express shipping', 'Exclusive Polar drops', 'Priority support'] },
+  { name: 'Member', pts: '0 – 499 pts', perks: ['1 point per $1', 'Birthday gift', 'Members-only sales'] },
+  { name: 'Insider', pts: '500 – 1,499 pts', perks: ['1.25 points per $1', 'Free standard shipping', 'Early drop access'] },
+  { name: 'Icon', pts: '1,500+ pts', perks: ['1.5 points per $1', 'Free express shipping', 'Members-only drops', 'Priority support'] },
 ];
 ---
 <Base title="Arctic Rewards" description="Earn points on every order and unlock perks with Arctic Rewards.">
   <section class="rw-hero grain">
     <div class="wrap">
       <p class="eyebrow" style="color:var(--on-dark-muted)">Arctic Rewards</p>
-      <h1 class="display">Shop.<br />Earn.<br />Stay cold.</h1>
+      <h1 class="display">Shop. Earn.<br /><span class="serif">Repeat.</span></h1>
       <p>Earn points on every order and turn them into money off. Free to join.</p>
       <a class="btn light" href="/account">Join now</a>
     </div>
@@ -41,18 +41,18 @@ const tiers = [
   .rw-hero h1 { font-size: clamp(56px, 10vw, 150px); margin: 10px 0 18px; }
   .rw-hero p { max-width: 40ch; opacity: .85; margin: 0 0 24px; }
   .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-  .steps div { background: var(--snow); border-radius: 18px; padding: 24px; display: grid; gap: 8px; }
+  .steps div { background: var(--stone-1); border-radius: 18px; padding: 24px; display: grid; gap: 8px; }
   .steps :global(svg) { width: 28px; height: 28px; }
-  .steps strong { font-family: var(--display); font-size: 22px; text-transform: uppercase; }
+  .steps strong { font-family: var(--display); font-size: 22px;  }
   .steps p { margin: 0; color: var(--muted); }
   .tiers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
   .tier { border-radius: 20px; padding: 28px; display: grid; gap: 4px; align-content: start; }
-  .tier strong { font-family: var(--display); font-weight: 900; font-stretch: 118%; font-size: 34px; text-transform: uppercase; }
+  .tier strong { font-family: var(--display); font-weight: 560; letter-spacing: -0.03em; font-size: 34px;  }
   .tier span { font-size: 13px; opacity: .75; }
   .tier ul { list-style: none; padding: 0; margin: 16px 0 0; display: grid; gap: 8px; font-size: 14px; }
   .tier li { display: flex; gap: 8px; align-items: center; }
   .tier :global(svg) { width: 18px; height: 18px; }
-  .t0 { background: var(--ice); }
+  .t0 { background: var(--stone-2); }
   .t1 { background: linear-gradient(160deg, #8a8278, #4d4740); color: #fff; }
   .t2 { background: linear-gradient(160deg, var(--deep-2), #12100e); color: #fff; }
   @media (max-width: 800px) { .steps, .tiers { grid-template-columns: 1fr; } }

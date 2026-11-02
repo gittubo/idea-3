@@ -1,0 +1,24 @@
+---
+import Base from '../../layouts/Base.astro';
+import Listing from '../../components/Listing.astro';
+import { departments } from '../../data/catalog';
+import { shops, inShop, catbar, type Shop } from '../../data/shops';
+
+export function getStaticPaths() {
+  return shops.map((s) => ({ params: { slug: s.slug }, props: { shop: s } }));
+}
+const { shop } = Astro.props as { shop: Shop };
+const items = inShop(shop);
+const depts = departments.filter((d) => items.some((p) => p.dept === d.slug || (p.alsoIn ?? []).includes(d.slug))).map((d) => [d.slug, d.name] as [string, string]);
+const siblings = (shop.trend ? shops.filter((s) => s.trend) : catbar.map((c) => shops.find((s) => s.slug === c)!))
+  .map((s) => ({ label: s.name, href: `/shop/${s.slug}`, on: s.slug === shop.slug }));
+---
+<Base title={shop.name} description={shop.blurb}>
+  <section class="wrap page-hero">
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a><span>/</span><span>{shop.trend ? 'The trend report' : 'Shop'}</span><span>/</span><span>{shop.name}</span></nav>
+    <span class="eyebrow tag">{shop.trend ? 'The trend report' : 'Shop by category'}</span>
+    <h1 class="display">{shop.name}</h1>
+    <p>{shop.blurb}</p>
+  </section>
+  <Listing products={items} links={siblings} catChips={depts.length > 1 ? depts : []} />
+</Base>

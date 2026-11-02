@@ -2,26 +2,38 @@
 import Base from '../layouts/Base.astro';
 import ProductCard from '../components/ProductCard.astro';
 import Icon from '../components/Icon.astro';
-import { departments, products, inDept, newIn, onSale, collections, inCollection, money, priceOf } from '../data/catalog';
+import { departments, products, inDept, newIn, priceOf } from '../data/catalog';
 import { hero, testimonials, community } from '../data/site';
 import { looks, lookItems } from '../data/looks';
+import { shops, inShop, shopCover, catbar, getShop } from '../data/shops';
 
-const hasProducts = products.length > 0;
-
-// Spotlight: up to six pieces that have photos
+// Spotlight: pieces with photos and a price (appears once prices exist)
 const spotData = products.filter((p) => p.images.length && p.sizes.length && priceOf(p) !== undefined).slice(0, 6).map((p) => ({
   slug: p.slug, name: p.name, garment: p.garment, colors: p.colors, sizes: p.sizes, img: p.images[0],
-  price: money(priceOf(p)!), was: p.salePrice && p.price ? money(p.price) : '',
+  price: priceOf(p)!, was: p.salePrice && p.price ? p.price : 0,
   cat: departments.find((d) => d.slug === p.dept)!.title,
 }));
 
-const popularTabs = departments
-  .map((d) => ({ d: d.slug, name: d.name, items: [...inDept(d.slug)].sort((a, b) => +b.bestseller - +a.bestseller).slice(0, 10) }))
-  .filter((t) => t.items.length);
-const fresh = newIn().slice(0, 8);
-const saleCount = onSale().length;
-const liveCollections = collections.map((c) => ({ ...c, count: inCollection(c.slug).length })).filter((c) => c.count);
-const categoryLinks = departments.flatMap((d) => d.categories.slice(0, 2).map((c) => ({ label: `${d.name} · ${c.name}`, href: `/${d.slug}/${c.slug}` })));
+// Department bento: look photos where the brand has them
+const lookFor = (d: string, prefer?: string) => (prefer && looks.find((l) => l.id === prefer)) || looks.find((l) => l.dept === d);
+const bento = [
+  { d: 'women', size: 'xl', img: lookFor('women', 'look-13')?.image },
+  { d: 'men', size: 'lg', img: lookFor('men', 'look-06')?.image },
+  { d: 'sports', size: 'md', img: lookFor('sports')?.image },
+  { d: 'curve', size: 'sm' },
+  { d: 'kids', size: 'sm' },
+  { d: 'beauty', size: 'sm' },
+].map((b) => ({ ...b, dept: departments.find((x) => x.slug === b.d)!, count: inDept(b.d).length }));
+
+const categoryTiles = catbar.filter((s) => s !== 'clothing').map((s) => getShop(s)!).map((s) => ({ s, img: shopCover(s), n: inShop(s).length })).filter((t) => t.n > 0 && t.img);
+const trends = shops.filter((s) => s.trend).map((s) => ({ s, img: shopCover(s), n: inShop(s).length })).filter((t) => t.n > 0);
+const latestTabs = [
+  { id: 'new', name: 'New In', items: newIn().slice(0, 12), href: '/new-in' },
+  ...['dresses', 'matching-sets', 'jackets', 'shoes', 'accessories'].map((slug) => {
+    const s = getShop(slug)!;
+    return { id: slug, name: s.name, items: inShop(s).slice(0, 12), href: `/shop/${slug}` };
+  }),
+].filter((t) => t.items.length);
 ---
 <Base preloader>
   <!-- HERO: brand landing film -->
@@ -36,9 +48,12 @@ const categoryLinks = departments.flatMap((d) => d.categories.slice(0, 2).map((c
     ></video>
     <div class="hero-shade" aria-hidden="true"></div>
     <div class="wrap hero-ui">
-      <div>
-        <p class="eyebrow hero-label">{hero.label}</p>
-        <a class="btn light" href={hero.cta.href}>{hero.cta.text}</a>
+      <div class="hero-copy">
+        <h1 class="display hero-title">THEE ARCTIC <span class="serif">Season 01</span></h1>
+        <div class="hero-ctas">
+          <a class="btn light" href={hero.cta.href}>Shop new in <span class="ico"><Icon name="arrow-ur" /></span></a>
+          <a class="hero-link" href="/lookbook">View the lookbook</a>
+        </div>
       </div>
       <button class="icon-btn hero-toggle" type="button" data-hero-toggle aria-pressed="false" aria-label="Pause video">
         <Icon name="pause" class="i-pause" /><Icon name="play" class="i-play" />
@@ -46,29 +61,97 @@ const categoryLinks = departments.flatMap((d) => d.categories.slice(0, 2).map((c
     </div>
   </section>
 
-  <!-- DEPARTMENTS -->
+  <!-- DEPARTMENTS: asymmetric bento -->
   <section class="section wrap">
     <div class="section-head reveal">
-      <div><p class="eyebrow">Shop by department</p><h2 class="h2">The Arctic family</h2></div>
+      <div><span class="eyebrow tag">Shop by department</span><h2 class="h2">One house, <span class="serif">every wardrobe.</span></h2></div>
     </div>
-    <div class="depts">
-      {departments.map((d, k) => (
-        <a class="dept reveal" href={`/${d.slug}`}>
-          <span class="dept-no">{String(k + 1).padStart(2, '0')}</span>
-          <div class="dept-copy">
-            <strong>{d.title}</strong>
-            <span>{d.tagline}</span>
+    <div class="bento">
+      {bento.map((b) => (
+        <a class={`tile tile-${b.size} reveal ${b.img ? 'has-img' : ''}`} href={`/${b.dept.slug}`}>
+          {b.img && <img src={b.img} alt="" loading="lazy" />}
+          <div class="tile-copy">
+            <span class="tile-meta">{b.count > 0 ? `${b.count} pieces` : 'Coming soon'}</span>
+            <strong>{b.dept.title}</strong>
+            {b.size !== 'sm' && <span class="tile-tag">{b.dept.tagline}</span>}
           </div>
-          <span class="dept-go" aria-hidden="true"><Icon name="arrow" /></span>
+          <span class="tile-go" aria-hidden="true"><Icon name="arrow-ur" /></span>
         </a>
       ))}
     </div>
   </section>
 
+  <!-- SHOP BY CATEGORY -->
+  {categoryTiles.length > 0 && (
+    <section class="wrap cats-sec">
+      <div class="section-head reveal">
+        <div><span class="eyebrow tag">Shop by category</span><h2 class="h2">Find your <span class="serif">piece.</span></h2></div>
+        <div class="rail-nav">
+          <button type="button" data-rail-btn="cats" data-dir="prev" aria-label="Scroll categories left"><Icon name="left" /></button>
+          <button type="button" data-rail-btn="cats" data-dir="next" aria-label="Scroll categories right"><Icon name="right" /></button>
+        </div>
+      </div>
+      <div class="rail cats" id="cats">
+        {categoryTiles.map((t) => (
+          <a class="cat-tile" href={`/shop/${t.s.slug}`}>
+            <span class="cat-img"><img src={t.img} alt="" loading="lazy" /></span>
+            <span class="cat-name">{t.s.name}</span>
+            <span class="cat-n tnum">{t.n}</span>
+          </a>
+        ))}
+      </div>
+    </section>
+  )}
+
+  <!-- THE TREND REPORT: editorial split -->
+  {trends.length > 0 && (
+    <section class="section wrap trend">
+      <div class="trend-intro reveal">
+        <span class="eyebrow tag">The trend report</span>
+        <h2 class="display trend-title">What we're <span class="serif">wearing now.</span></h2>
+        <p>Four edits pulled from Season 01. Leather, tailoring, satin and denim, cut the THEE ARCTIC way.</p>
+        <a class="link-arrow" href="/shop/leather">Start with leather</a>
+      </div>
+      <div class="trend-grid">
+        {trends.map((t, k) => (
+          <a class={`trend-card reveal ${k % 2 ? 'offset' : ''}`} href={`/shop/${t.s.slug}`}>
+            <span class="trend-img">{t.img && <img src={t.img} alt="" loading="lazy" />}</span>
+            <span class="trend-meta"><strong>{t.s.name}</strong><span class="tnum">{t.n} pieces</span></span>
+          </a>
+        ))}
+      </div>
+    </section>
+  )}
+
+  <!-- SHOP THE LATEST -->
+  {latestTabs.length > 0 && (
+    <section class="section wrap" data-tabs style="padding-top:0">
+      <div class="section-head reveal latest-head">
+        <div><span class="eyebrow tag">Shop the latest</span><h2 class="h2">Just <span class="serif">landed.</span></h2></div>
+        <div class="chips" role="tablist" aria-label="Shop the latest">
+          {latestTabs.map((t, k) => <button class={`chip ${k === 0 ? 'on' : ''}`} role="tab" type="button" aria-selected={k === 0 ? 'true' : 'false'} aria-controls={`latest-${t.id}`}>{t.name}</button>)}
+        </div>
+      </div>
+      {latestTabs.map((t, k) => (
+        <div role="tabpanel" id={`latest-${t.id}`} hidden={k !== 0}>
+          <div class="rail" id={`rail-${t.id}`}>{t.items.map((p, i) => <ProductCard product={p} idx={i} />)}</div>
+          <div class="rail-foot">
+            <a class="link-arrow" href={t.href}>Shop all {t.name.toLowerCase()}</a>
+            <div class="rail-nav">
+              <button type="button" data-rail-btn={`rail-${t.id}`} data-dir="prev" aria-label="Scroll left"><Icon name="left" /></button>
+              <button type="button" data-rail-btn={`rail-${t.id}`} data-dir="next" aria-label="Scroll right"><Icon name="right" /></button>
+            </div>
+          </div>
+        </div>
+      ))}
+    </section>
+  )}
+
+  <!-- SHOP THE LOOK -->
   {looks.length > 0 && (
     <section class="section wrap" style="padding-top:0">
       <div class="section-head reveal">
-        <div><p class="eyebrow">Pieces that go together</p><h2 class="h2">Shop the look</h2></div>
+        <div><span class="eyebrow tag">Pieces that go together</span><h2 class="h2">Shop the <span class="serif">look.</span></h2></div>
         <div class="rail-nav">
           <button type="button" data-rail-btn="looks" data-dir="prev" aria-label="Previous looks"><Icon name="left" /></button>
           <button type="button" data-rail-btn="looks" data-dir="next" aria-label="Next looks"><Icon name="right" /></button>
@@ -89,21 +172,18 @@ const categoryLinks = departments.flatMap((d) => d.categories.slice(0, 2).map((c
     <section class="spot" data-spot={JSON.stringify(spotData)} tabindex="0" aria-label="Spotlight">
       <div class="wrap spot-grid">
         <div class="spot-intro">
-          <p class="eyebrow">Season 01 · Spotlight</p>
-          <h2 class="display spot-title">Streetwear.<br /><span>Redefined.</span></h2>
-          <p class="spot-lede">Swipe through this season's standouts.</p>
+          <span class="eyebrow tag">Season 01 · Spotlight</span>
+          <h2 class="display spot-title">Streetwear, <span class="serif">redefined.</span></h2>
         </div>
         <div class="spot-stage">
-          {spotData.map((s) => (
-            <div class="spot-item" data-pos="far-next"><img src={s.img} alt={s.name} class="spot-art" /></div>
-          ))}
+          {spotData.map((s) => <div class="spot-item" data-pos="far-next"><img src={s.img} alt={s.name} class="spot-art" /></div>)}
           <div class="spot-nav">
             <button class="nav-btn" type="button" data-spot-prev aria-label="Previous"><Icon name="left" /></button>
-            <span class="spot-count" data-spot-count></span>
+            <span class="spot-count tnum" data-spot-count></span>
             <button class="nav-btn" type="button" data-spot-next aria-label="Next"><Icon name="right" /></button>
           </div>
         </div>
-        <div class="spot-panel" data-spot-panel aria-live="polite">
+        <div class="bezel"><div class="core spot-panel" data-spot-panel aria-live="polite">
           <p class="eyebrow" data-f="cat"></p>
           <h3 class="spot-name" data-f="name"></h3>
           <div class="price spot-price" data-f="price"></div>
@@ -112,105 +192,44 @@ const categoryLinks = departments.flatMap((d) => d.categories.slice(0, 2).map((c
           <p class="lbl">Add to bag · pick a size</p>
           <div class="spot-sz" data-f="sizes"></div>
           <a class="link-arrow" data-f="link" href="#">View details</a>
-        </div>
+        </div></div>
       </div>
     </section>
   )}
 
-  <!-- CATEGORIES -->
-  <section class="section wrap" style="padding-top:0">
-    <div class="section-head reveal"><h2 class="h2">Shop by category</h2></div>
-    <nav class="chips cat-links reveal" aria-label="Categories">
-      {categoryLinks.map((c) => <a class="chip" href={c.href}>{c.label}</a>)}
-    </nav>
-  </section>
-
-  {popularTabs.length > 0 && (
-    <section class="section wrap" data-tabs style="padding-top:0">
-      <div class="section-head reveal">
-        <div><p class="eyebrow">Trending right now</p><h2 class="h2">Popular picks</h2></div>
-        <div class="chips" role="tablist" aria-label="Department">
-          {popularTabs.map((t, k) => <button class={`chip ${k === 0 ? 'on' : ''}`} role="tab" type="button" aria-selected={k === 0 ? 'true' : 'false'} aria-controls={`pop-${t.d}`}>{t.name}</button>)}
-        </div>
-      </div>
-      {popularTabs.map((t, k) => (
-        <div role="tabpanel" id={`pop-${t.d}`} hidden={k !== 0}>
-          <div class="rail" id={`rail-${t.d}`}>{t.items.map((p, i) => <ProductCard product={p} idx={i} />)}</div>
-          <div class="rail-foot">
-            <a class="link-arrow" href={`/${t.d}?sort=best`}>Shop all {t.name}</a>
-            <div class="rail-nav">
-              <button type="button" data-rail-btn={`rail-${t.d}`} data-dir="prev" aria-label="Scroll left"><Icon name="left" /></button>
-              <button type="button" data-rail-btn={`rail-${t.d}`} data-dir="next" aria-label="Scroll right"><Icon name="right" /></button>
-            </div>
-          </div>
-        </div>
-      ))}
-    </section>
-  )}
-
-  {saleCount > 0 && (
-    <section class="wrap">
-      <a href="/sale" class="sale-banner reveal">
-        <div>
-          <p class="eyebrow" style="color:rgba(255,255,255,.72)">Sale</p>
-          <h2 class="display">{saleCount} styles marked down</h2>
-        </div>
-        <span class="btn light">Shop sale</span>
-      </a>
-    </section>
-  )}
-
-  {liveCollections.length > 0 && (
-    <section class="section wrap">
-      <div class="section-head reveal"><h2 class="h2">Collections</h2><a class="link-arrow" href="/collections">All collections</a></div>
-      <div class="chips">{liveCollections.map((c) => <a class="chip" href={`/collections/${c.slug}`}>{c.name} · {c.count}</a>)}</div>
-    </section>
-  )}
-
-  {fresh.length > 0 && (
-    <section class="section wrap" style="padding-top:0">
-      <div class="section-head reveal">
-        <div><p class="eyebrow">Just landed</p><h2 class="h2">New arrivals</h2></div>
-        <a class="link-arrow" href="/new-in">Shop all new</a>
-      </div>
-      <div class="grid">{fresh.map((p, i) => <ProductCard product={p} idx={i} />)}</div>
-    </section>
-  )}
-
-  <!-- SEASON 01: giant word + card with the campaign still -->
-  <section class="drift grain">
-    <div class="drift-word display" data-drift aria-hidden="true">ARCTIC</div>
-    <div class="wrap drift-inner">
-      <div class="drift-card reveal">
-        <img class="drift-img" src="/media/season01-group.jpg" alt="Three models in THEE ARCTIC Season 01" loading="lazy" />
-        <div>
-          <p class="eyebrow">Season 01</p>
-          <h2 class="display">Step into<br />your best style</h2>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px">
-            {hasProducts
-              ? <a class="btn" href={hero.cta.href}>Shop Season 01</a>
-              : <a class="btn" href="#nl-email">Get early access</a>}
+  <!-- SEASON 01 BAND -->
+  <section class="season">
+    <div class="season-word display" data-drift aria-hidden="true">THEE ARCTIC</div>
+    <div class="wrap season-inner">
+      <div class="bezel dark reveal season-card-wrap">
+        <div class="core season-card">
+          <img class="season-img" src="/media/season01-group.jpg" alt="Three models in THEE ARCTIC Season 01" loading="lazy" />
+          <div>
+            <span class="eyebrow" style="color:var(--on-dark-muted)">Season 01</span>
+            <h2 class="display season-title">Step into <span class="serif">your best style.</span></h2>
+            <p>Tailoring, leather, satin and denim. Pieces made to be worn together.</p>
+            <a class="btn light" href="/collections/pieces-that-go-together">Pieces that go together <span class="ico"><Icon name="arrow-ur" /></span></a>
           </div>
         </div>
       </div>
     </div>
   </section>
 
+  <!-- RECENTLY VIEWED (filled in the browser) -->
+  <section class="section wrap" data-recent="" hidden>
+    <div class="section-head"><div><span class="eyebrow tag">For you</span><h2 class="h2">Recently <span class="serif">viewed.</span></h2></div><a class="link-arrow" href="/recently-viewed">See all</a></div>
+    <div class="rail" data-recent-rail></div>
+  </section>
+
   {testimonials.length > 0 && (
     <section class="section wrap">
-      <div class="section-head reveal">
-        <h2 class="h2">Every fit tells a story.<br />Here's theirs.</h2>
-        <div class="rail-nav">
-          <button type="button" data-rail-btn="reviews" data-dir="prev" aria-label="Previous reviews"><Icon name="left" /></button>
-          <button type="button" data-rail-btn="reviews" data-dir="next" aria-label="Next reviews"><Icon name="right" /></button>
-        </div>
-      </div>
+      <div class="section-head reveal"><h2 class="h2">Every fit tells a <span class="serif">story.</span></h2></div>
       <div class="rail reviews" id="reviews">
         {testimonials.map((t) => (
           <figure class="review">
             <div class="stars"><b>{'★'.repeat(t.rating)}{'☆'.repeat(5 - t.rating)}</b></div>
             <blockquote>“{t.quote}”</blockquote>
-            <figcaption><span class="avatar">{t.name[0]}</span><span><strong>{t.name}</strong><small>{t.item}</small></span></figcaption>
+            <figcaption><strong>{t.name}</strong> · {t.item}</figcaption>
           </figure>
         ))}
       </div>
@@ -219,7 +238,7 @@ const categoryLinks = departments.flatMap((d) => d.categories.slice(0, 2).map((c
 
   {community.length > 0 && (
     <section class="section wrap">
-      <div class="section-head reveal"><div><p class="eyebrow">@THEEARCTIC</p><h2 class="h2">Worn by you</h2></div></div>
+      <div class="section-head reveal"><div><span class="eyebrow tag">@THEEARCTIC</span><h2 class="h2">Worn by <span class="serif">you.</span></h2></div></div>
       <div class="community">
         {community.map((c) => (
           <a class="post reveal" href={c.href ?? '#'} target="_blank" rel="noopener">
@@ -238,45 +257,92 @@ const categoryLinks = departments.flatMap((d) => d.categories.slice(0, 2).map((c
 
 <style>
   /* Hero */
-  .hero { position: relative; height: calc(100svh - var(--header-h) - 36px); min-height: 520px; overflow: hidden; background: var(--deep); }
+  .hero { position: relative; height: calc(100svh - var(--header-h) - var(--catbar-h) - 34px); min-height: 560px; overflow: hidden; background: var(--deep); }
   .hero-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-  .hero-shade { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 60%, rgba(0,0,0,.45)); pointer-events: none; }
-  .hero-ui { position: absolute; left: 0; right: 0; bottom: clamp(24px, 5vh, 48px); display: flex; justify-content: space-between; align-items: end; gap: 16px; }
-  .hero-label { color: rgba(255,255,255,.75); margin: 0 0 12px; }
+  .hero-shade { position: absolute; inset: 0; background: radial-gradient(120% 70% at 30% 110%, rgba(23,21,18,.7), transparent 60%), linear-gradient(180deg, transparent 55%, rgba(23,21,18,.35)); pointer-events: none; }
+  .hero-ui { position: absolute; left: 0; right: 0; bottom: clamp(28px, 6vh, 64px); display: flex; justify-content: space-between; align-items: end; gap: 24px; }
+  .hero-copy { max-width: 72rem; color: #fff; }
+  .hero-title { font-size: clamp(40px, 6.4vw, 104px); margin: 0 0 28px; color: #fff; }
+  .hero-title .serif { display: block; font-size: 1.04em; }
+  .hero-ctas { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; }
+  .hero-link { color: #fff; font-size: 12px; font-weight: 550; letter-spacing: .14em; text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,.6); padding-bottom: 3px; }
   .hero-toggle { color: #fff; background: rgba(255,255,255,.14); }
   .hero-toggle:hover { background: rgba(255,255,255,.26); }
   .hero-toggle :global(.i-play), .hero-toggle[aria-pressed="true"] :global(.i-pause) { display: none; }
   .hero-toggle[aria-pressed="true"] :global(.i-play) { display: block; }
 
-  /* Departments */
-  .depts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 20px; overflow: hidden; }
-  .dept { position: relative; background: #fff; min-height: 220px; padding: 24px; display: flex; flex-direction: column; justify-content: space-between; transition: background .35s var(--ease), color .35s; }
-  .dept:hover { background: var(--ink); color: #fff; }
-  .dept-no { font-family: var(--display); font-weight: 700; font-size: 13px; letter-spacing: .1em; opacity: .55; }
-  .dept-copy { display: grid; gap: 6px; }
-  .dept-copy strong { font-family: var(--display); font-weight: 900; font-stretch: 118%; font-size: clamp(22px, 2.6vw, 36px); line-height: .95; text-transform: uppercase; max-width: 10ch; }
-  .dept-copy span { font-size: 13px; opacity: .7; }
-  .dept-go { position: absolute; top: 20px; right: 20px; width: 44px; height: 44px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px currentColor; display: grid; place-items: center; transition: transform .3s var(--ease); }
-  .dept-go :global(svg) { width: 20px; height: 20px; }
-  .dept:hover .dept-go { transform: rotate(-45deg); }
-  @media (max-width: 900px) { .depts { grid-template-columns: repeat(2, 1fr); } .dept { min-height: 170px; padding: 18px; } .dept-go { width: 36px; height: 36px; top: 14px; right: 14px; } }
+  /* Department bento: 12 columns, rows interlock with no gaps (7+5 | 7+5 | 6+2+2+2) */
+  .bento { display: grid; grid-template-columns: repeat(12, 1fr); grid-auto-rows: clamp(200px, 21vw, 330px); grid-auto-flow: dense; gap: 12px; }
+  .tile { position: relative; overflow: hidden; border-radius: 22px; background: var(--stone-1); display: flex; align-items: flex-end; padding: clamp(18px, 2vw, 28px); isolation: isolate; }
+  .tile-xl { grid-column: span 7; grid-row: span 2; }
+  .tile-lg { grid-column: span 5; grid-row: span 2; }
+  .tile-md { grid-column: span 6; }
+  .tile-sm { grid-column: span 2; background: var(--stone-2); }
+  .tile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; transition: transform 1.4s var(--ease); }
+  .tile.has-img::after { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, transparent 45%, rgba(23,21,18,.62)); }
+  .tile:hover img { transform: scale(1.04); }
+  .tile.has-img { color: #fff; }
+  .tile-copy { display: grid; gap: 6px; }
+  .tile-copy strong { font-weight: 560; letter-spacing: -.035em; font-size: clamp(22px, 2.6vw, 40px); line-height: 1; }
+  .tile-sm .tile-copy strong { font-size: clamp(15px, 1.3vw, 19px); letter-spacing: -.01em; }
+  .tile-meta { font-size: 10.5px; font-weight: 550; letter-spacing: .2em; text-transform: uppercase; opacity: .75; }
+  .tile-tag { font-family: var(--serif); font-style: italic; font-size: clamp(17px, 1.6vw, 22px); opacity: .9; }
+  .tile-go { position: absolute; top: 16px; right: 16px; width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; background: rgba(255,255,255,.88); color: var(--ink); transition: transform .6s var(--ease); }
+  .tile-go :global(svg) { width: 16px; height: 16px; }
+  .tile:hover .tile-go { transform: translate(3px, -3px) scale(1.06); }
+  .tile-sm .tile-go { width: 34px; height: 34px; top: 12px; right: 12px; }
+  @media (max-width: 900px) {
+    .bento { grid-template-columns: repeat(2, 1fr); grid-auto-rows: 200px; }
+    .tile-xl, .tile-lg { grid-column: span 2; grid-row: span 2; }
+    .tile-md { grid-column: span 2; }
+    .tile-sm { grid-column: span 1; }
+    .tile-sm:last-child { grid-column: span 2; }
+  }
 
-  .cat-links { flex-wrap: wrap; overflow: visible; }
-  .looks-rail { grid-auto-columns: calc((100% - 16px * 3) / 3.3); }
+  /* Category tiles */
+  .cats-sec { padding-bottom: clamp(72px, 9vw, 150px); }
+  .cats { grid-auto-columns: calc((100% - 18px * 5) / 5.5); }
+  @media (max-width: 900px) { .cats { grid-auto-columns: 44%; } }
+  .cat-tile { display: grid; gap: 12px; grid-template-columns: 1fr auto; align-items: baseline; }
+  .cat-img { grid-column: 1 / -1; aspect-ratio: 3/4; border-radius: var(--radius); overflow: hidden; background: var(--stone-1); }
+  .cat-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 1.2s var(--ease); }
+  .cat-tile:hover img { transform: scale(1.04); }
+  .cat-name { font-family: var(--serif); font-style: italic; font-size: clamp(20px, 1.8vw, 26px); line-height: 1; }
+  .cat-n { font-size: 12px; color: var(--muted); }
+
+  /* Trend report */
+  .trend { display: grid; grid-template-columns: 5fr 7fr; gap: clamp(32px, 5vw, 96px); align-items: start; padding-top: 0; }
+  .trend-intro { position: sticky; top: calc(var(--header-h) + var(--catbar-h) + 32px); display: grid; gap: 22px; justify-items: start; }
+  .trend-title { font-size: clamp(44px, 5.4vw, 88px); margin: 0; }
+  .trend-intro p { color: var(--muted); max-width: 38ch; margin: 0; }
+  .trend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(14px, 2vw, 28px); }
+  .trend-card { display: grid; gap: 14px; }
+  .trend-card.offset { margin-top: clamp(40px, 7vw, 120px); }
+  .trend-img { aspect-ratio: 4/5; border-radius: 18px; overflow: hidden; background: var(--stone-1); }
+  .trend-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 1.4s var(--ease); }
+  .trend-card:hover img { transform: scale(1.04); }
+  .trend-meta { display: flex; justify-content: space-between; align-items: baseline; }
+  .trend-meta strong { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: clamp(24px, 2.2vw, 34px); }
+  .trend-meta span { font-size: 12px; color: var(--muted); }
+  @media (max-width: 900px) { .trend { grid-template-columns: 1fr; } .trend-intro { position: static; } .trend-card.offset { margin-top: 0; } }
+
+  .latest-head { flex-wrap: wrap; }
+  .rail-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 28px; }
+
+  /* Shop the look */
+  .looks-rail { grid-auto-columns: calc((100% - 18px * 3) / 3.3); }
   @media (max-width: 900px) { .looks-rail { grid-auto-columns: 80%; } }
-  .look-tile { position: relative; display: block; aspect-ratio: 4/5; border-radius: 18px; overflow: hidden; background: var(--snow); }
-  .look-tile img { width: 100%; height: 100%; object-fit: cover; transition: transform .8s var(--ease); }
-  .look-tile:hover img { transform: scale(1.03); }
-  .look-tile span { position: absolute; left: 12px; bottom: 12px; background: #fff; border-radius: 999px; padding: 7px 14px; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+  .look-tile { position: relative; display: block; aspect-ratio: 4/5; border-radius: 18px; overflow: hidden; background: var(--stone-1); }
+  .look-tile img { width: 100%; height: 100%; object-fit: cover; transition: transform 1.4s var(--ease); }
+  .look-tile:hover img { transform: scale(1.04); }
+  .look-tile span { position: absolute; left: 12px; bottom: 12px; background: rgba(250,249,247,.94); border-radius: 999px; padding: 8px 14px; font-size: 10.5px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; }
 
-  /* Spotlight (appears once products with photos exist) */
-  .spot { background: var(--snow); padding-block: clamp(48px, 7vw, 96px); overflow: hidden; outline: none; }
+  /* Spotlight (appears once priced products exist) */
+  .spot { background: var(--stone-1); padding-block: clamp(72px, 9vw, 140px); overflow: hidden; outline: none; }
   .spot-grid { display: grid; grid-template-columns: 1fr 1.2fr .9fr; gap: 32px; align-items: center; }
-  .spot-title { font-size: clamp(44px, 6vw, 92px); margin: 10px 0 16px; }
-  .spot-title span { color: var(--frost); }
-  .spot-lede { color: var(--muted); max-width: 36ch; margin: 0; }
+  .spot-title { font-size: clamp(44px, 5.4vw, 88px); margin: 16px 0 0; }
   .spot-stage { position: relative; height: clamp(380px, 46vw, 600px); }
-  .spot-item { position: absolute; top: 0; left: 50%; width: 70%; height: calc(100% - 60px); margin-left: -35%; transition: transform .9s var(--ease), opacity .7s, filter .7s; cursor: pointer; }
+  .spot-item { position: absolute; top: 0; left: 50%; width: 70%; height: calc(100% - 60px); margin-left: -35%; transition: transform 1s var(--ease), opacity .8s var(--ease), filter .8s var(--ease); cursor: pointer; }
   .spot-art { width: 100%; height: 100%; object-fit: contain; }
   .spot-item[data-pos="active"] { transform: none; opacity: 1; filter: none; z-index: 3; cursor: default; }
   .spot-item[data-pos="prev"] { transform: translateX(-62%) scale(.62); opacity: .28; filter: blur(3px) grayscale(.4); z-index: 2; }
@@ -284,47 +350,42 @@ const categoryLinks = departments.flatMap((d) => d.categories.slice(0, 2).map((c
   .spot-item[data-pos="far-prev"] { transform: translateX(-110%) scale(.4); opacity: 0; pointer-events: none; }
   .spot-item[data-pos="far-next"] { transform: translateX(110%) scale(.4); opacity: 0; pointer-events: none; }
   .spot-nav { position: absolute; bottom: 0; left: 0; right: 0; display: flex; justify-content: center; align-items: center; gap: 18px; z-index: 4; }
-  .nav-btn { width: 46px; height: 46px; border-radius: 50%; background: #fff; display: grid; place-items: center; box-shadow: 0 6px 20px var(--shadow); }
-  .nav-btn :global(svg) { width: 20px; height: 20px; }
-  .spot-count { font-family: var(--display); font-weight: 700; font-size: 14px; letter-spacing: .1em; min-width: 70px; text-align: center; }
-  .spot-panel { background: #fff; border-radius: 20px; padding: 26px; box-shadow: 0 20px 50px -30px var(--shadow); transition: opacity .22s, filter .22s, transform .22s; }
+  .nav-btn { width: 46px; height: 46px; border-radius: 50%; background: #fff; display: grid; place-items: center; box-shadow: var(--shadow-soft); }
+  .nav-btn :global(svg) { width: 18px; height: 18px; }
+  .spot-count { font-size: 13px; letter-spacing: .1em; min-width: 70px; text-align: center; }
+  .spot-panel { padding: 28px; transition: opacity .3s var(--ease), filter .3s var(--ease), transform .3s var(--ease); }
   .spot-panel.swap { opacity: 0; filter: blur(6px); transform: translateY(8px); }
-  .spot-name { font-family: var(--display); font-weight: 800; font-stretch: 110%; text-transform: uppercase; font-size: clamp(22px, 2.2vw, 32px); line-height: 1; margin: 8px 0 10px; }
+  .spot-name { font-weight: 560; letter-spacing: -.03em; font-size: clamp(22px, 2.2vw, 32px); line-height: 1.05; margin: 8px 0 10px; }
   .spot-price { font-size: 18px; margin-bottom: 18px; }
-  .lbl { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
+  .lbl { font-size: 10.5px; font-weight: 550; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
   .spot-sw { display: flex; gap: 8px; margin-bottom: 18px; }
   .spot-panel :global(.sw) { width: 26px; height: 26px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0,0,0,.15); }
   .spot-panel :global(.sw[aria-pressed="true"]) { box-shadow: 0 0 0 2px #fff, 0 0 0 3.5px var(--ink); }
   .spot-sz { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
-  .spot-panel :global(.sz) { min-width: 42px; height: 38px; padding-inline: 8px; border-radius: 10px; border: 1px solid var(--line); background: #fff; font-size: 13px; font-weight: 600; }
-  .spot-panel :global(.sz:hover) { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .spot-panel :global(.sz) { min-width: 42px; height: 38px; padding-inline: 10px; border-radius: 999px; box-shadow: inset 0 0 0 1px var(--hair); background: #fff; font-size: 13px; font-weight: 550; }
+  .spot-panel :global(.sz:hover) { background: var(--ink); color: #fff; }
   @media (max-width: 1080px) { .spot-grid { grid-template-columns: 1fr; } .spot-stage { height: 440px; } }
 
-  .rail-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
-  .sale-banner { display: flex; justify-content: space-between; align-items: center; gap: 24px; flex-wrap: wrap; background: radial-gradient(120% 160% at 90% 0%, #a3434b, var(--accent) 45%, var(--accent-deep)); color: #fff; border-radius: 24px; padding: clamp(24px, 4vw, 48px); }
-  .sale-banner h2 { font-size: clamp(32px, 5vw, 64px); margin: 6px 0 0; }
+  /* Season 01 band */
+  .season { position: relative; background: var(--deep); color: var(--on-dark); padding-block: clamp(96px, 13vw, 200px); overflow: hidden; margin-inline: clamp(8px, 1vw, 16px); border-radius: 32px; }
+  .season-word { position: absolute; top: 50%; left: 0; right: 0; margin-top: -0.45em; font-size: clamp(110px, 22vw, 400px); font-weight: 700; color: transparent; -webkit-text-stroke: 1px rgba(255,255,255,.14); white-space: nowrap; text-align: center; line-height: .9; letter-spacing: -.06em; will-change: transform; }
+  .season-inner { position: relative; display: flex; justify-content: center; }
+  .season-card-wrap { max-width: 860px; width: 100%; }
+  .season-card { display: grid; grid-template-columns: 260px 1fr; gap: clamp(24px, 3vw, 44px); align-items: center; padding: 18px clamp(18px, 3vw, 40px) 18px 18px; }
+  .season-card p { color: var(--on-dark-muted); max-width: 40ch; margin: 0 0 24px; }
+  .season-title { font-size: clamp(34px, 4.2vw, 64px); margin: 14px 0 16px; color: #fff; }
+  .season-img { width: 100%; aspect-ratio: 9/13; object-fit: cover; border-radius: 16px; }
+  @media (max-width: 680px) { .season-card { grid-template-columns: 1fr; padding: 14px 14px 26px; } .season-img { aspect-ratio: 4/5; } }
 
-  /* Season 01 */
-  .drift { position: relative; background: var(--deep); color: var(--on-dark); padding-block: clamp(80px, 12vw, 180px); overflow: hidden; margin-top: clamp(24px, 4vw, 64px); }
-  .drift-word { position: absolute; top: 50%; left: 0; right: 0; margin-top: -0.45em; font-size: clamp(140px, 30vw, 520px); font-weight: 900; font-stretch: 125%; color: transparent; -webkit-text-stroke: 1.5px rgba(255,255,255,.16); white-space: nowrap; text-align: center; line-height: .9; will-change: transform; }
-  .drift-inner { position: relative; display: flex; justify-content: center; }
-  .drift-card { display: grid; grid-template-columns: 240px 1fr; gap: 32px; align-items: center; background: #fff; color: var(--ink); border-radius: 24px; padding: 24px; max-width: 760px; box-shadow: 0 40px 80px -30px rgba(0,0,0,.55); }
-  .drift-card h2 { font-size: clamp(32px, 4.4vw, 60px); margin: 6px 0 0; }
-  .drift-img { width: 100%; aspect-ratio: 9/14; object-fit: cover; border-radius: 16px; }
-  @media (max-width: 640px) { .drift-card { grid-template-columns: 1fr; } .drift-img { aspect-ratio: 4/5; } }
-
-  .reviews { grid-auto-columns: calc((100% - 16px * 2) / 3); }
+  .reviews { grid-auto-columns: calc((100% - 18px * 2) / 3); }
   @media (max-width: 900px) { .reviews { grid-auto-columns: 85%; } }
-  .review { margin: 0; background: var(--snow); border-radius: 20px; padding: 26px; display: flex; flex-direction: column; gap: 16px; }
-  .review blockquote { margin: 0; font-size: 17px; line-height: 1.45; font-weight: 500; flex: 1; }
-  .review figcaption { display: flex; gap: 12px; align-items: center; }
-  .review figcaption > span:last-child { display: grid; }
-  .review small { color: var(--muted); font-size: 12px; }
-  .avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--ink); color: #fff; display: grid; place-items: center; font-weight: 700; }
+  .review { margin: 0; background: var(--stone-1); border-radius: 22px; padding: 28px; display: flex; flex-direction: column; gap: 16px; }
+  .review blockquote { margin: 0; font-family: var(--serif); font-size: 22px; line-height: 1.3; flex: 1; }
+  .review figcaption { font-size: 13px; color: var(--muted); }
   .community { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
-  .post { position: relative; aspect-ratio: 4/5; border-radius: 16px; overflow: hidden; display: block; background: var(--snow); }
+  .post { position: relative; aspect-ratio: 4/5; border-radius: 16px; overflow: hidden; display: block; background: var(--stone-1); }
   .post img { width: 100%; height: 100%; object-fit: cover; }
-  .handle { position: absolute; left: 10px; bottom: 10px; display: inline-flex; gap: 6px; align-items: center; font-size: 12px; font-weight: 600; color: #fff; background: rgba(0,0,0,.35); padding: 5px 9px; border-radius: 999px; }
+  .handle { position: absolute; left: 10px; bottom: 10px; display: inline-flex; gap: 6px; align-items: center; font-size: 12px; font-weight: 550; color: #fff; background: rgba(23,21,18,.4); padding: 5px 10px; border-radius: 999px; }
   .handle :global(svg) { width: 14px; height: 14px; }
   @media (max-width: 900px) { .community { grid-template-columns: repeat(3, 1fr); } }
 </style>

@@ -55,9 +55,9 @@ const completeLook = inDept(p.dept).filter((x) => x.category !== p.category).fil
           <div class="price big">
             {price === undefined
               ? <span class="tba">Price coming soon</span>
-              : p.salePrice && p.price ? <><span class="now">{money(p.salePrice)}</span><s>{money(p.price)}</s><span class="badge sale">Save {discount(p)}%</span></> : <span>{money(price)}</span>}
+              : p.salePrice && p.price ? <><span class="now"><span data-usd={p.salePrice}>{money(p.salePrice)}</span></span><s><span data-usd={p.price}>{money(p.price)}</span></s><span class="badge sale">Save {discount(p)}%</span></> : <span><span data-usd={price}>{money(price)}</span></span>}
           </div>
-          {price !== undefined && <p class="klarna">or 4 interest-free payments of <strong>{money(price / 4)}</strong> with Klarna / Afterpay</p>}
+          {price !== undefined && <p class="klarna">or 4 interest-free payments of <strong><span data-usd={price / 4}>{money(price / 4)}</span></strong> with Klarna / Afterpay</p>}
 
           {p.colors.length > 0 && (
             <>
@@ -83,7 +83,7 @@ const completeLook = inDept(p.dept).filter((x) => x.category !== p.category).fil
 
           <div class="actions">
             {buyable
-              ? <button class="btn block" type="button" data-add>Add to bag · {money(price!)}</button>
+              ? <button class="btn block" type="button" data-add>Add to bag · <span data-usd={price!}>{money(price!)}</span></button>
               : <button class="btn block" type="button" disabled>Coming soon</button>}
             <button class="wish-big" type="button" data-wish={JSON.stringify(item)} aria-pressed="false" aria-label="Save to wishlist"><Icon name="heart" /></button>
           </div>
@@ -151,7 +151,7 @@ const completeLook = inDept(p.dept).filter((x) => x.category !== p.category).fil
   {buyable && (
     <div class="sticky-bar" data-sticky-bar>
       <div class="wrap sb-inner">
-        <div class="sb-name"><strong>{p.name}</strong><span>{money(price!)}</span></div>
+        <div class="sb-name"><strong>{p.name}</strong><span><span data-usd={price!}>{money(price!)}</span></span></div>
         <button class="btn" type="button" data-add-sticky>Add to bag</button>
       </div>
     </div>
@@ -161,14 +161,14 @@ const completeLook = inDept(p.dept).filter((x) => x.category !== p.category).fil
 <style>
   .pdp { display: grid; grid-template-columns: 1.35fr 1fr; gap: clamp(24px, 4vw, 64px); align-items: start; }
   .gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .shot { position: relative; aspect-ratio: 3/4; border-radius: 16px; overflow: hidden; background: var(--snow); }
+  .shot { position: relative; aspect-ratio: 3/4; border-radius: 16px; overflow: hidden; background: var(--stone-1); }
   .shot img { width: 100%; height: 100%; object-fit: cover; }
   .gallery.one { grid-template-columns: minmax(0, 1fr); max-width: 680px; }
   .soon-note { font-size: 13px; color: var(--muted); margin: 12px 0 18px; }
   .soon-note a { text-decoration: underline; }
   .dots { display: none; }
-  .buy { position: sticky; top: calc(var(--header-h) + 16px); }
-  .pname { font-family: var(--display); font-weight: 800; font-stretch: 108%; text-transform: uppercase; font-size: clamp(26px, 2.8vw, 40px); line-height: 1; margin: 8px 0 10px; }
+  .buy { position: sticky; top: calc(var(--header-h) + var(--catbar-h) + 16px); }
+  .pname { font-family: var(--display); font-weight: 560; letter-spacing: -0.03em;  font-size: clamp(26px, 2.8vw, 40px); line-height: 1; margin: 8px 0 10px; }
   .price.big { font-size: 22px; margin: 14px 0 4px; align-items: center; }
   .klarna { font-size: 13px; color: var(--muted); margin: 0 0 22px; }
   .opt-head { display: flex; justify-content: space-between; align-items: center; font-size: 14px; margin: 18px 0 10px; }
@@ -188,7 +188,7 @@ const completeLook = inDept(p.dept).filter((x) => x.category !== p.category).fil
   .wish-big { width: 50px; height: 50px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--line); display: grid; place-items: center; }
   .wish-big :global(svg) { width: 22px; height: 22px; }
   .wish-big[aria-pressed="true"] :global(svg path) { fill: var(--sale); stroke: var(--sale); }
-  .perks { list-style: none; padding: 18px; margin: 22px 0; background: var(--snow); border-radius: 14px; display: grid; gap: 12px; font-size: 13px; }
+  .perks { list-style: none; padding: 18px; margin: 22px 0; background: var(--stone-1); border-radius: 14px; display: grid; gap: 12px; font-size: 13px; }
   .perks li { display: flex; gap: 12px; align-items: flex-start; }
   .perks :global(svg) { width: 20px; height: 20px; flex: none; }
   .acc { border-top: 1px solid var(--line); }
@@ -201,15 +201,15 @@ const completeLook = inDept(p.dept).filter((x) => x.category !== p.category).fil
   .acc ul { padding-left: 18px; display: grid; gap: 4px; }
 
   .shop-look { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(20px, 3vw, 48px); align-items: start; padding-bottom: 0; }
-  .sl-img img { width: 100%; border-radius: 18px; background: var(--snow); }
+  .sl-img img { width: 100%; border-radius: 18px; background: var(--stone-1); }
   .sl-items { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 12px; }
   @media (max-width: 860px) { .shop-look { grid-template-columns: 1fr; } }
   .rev-grid { display: grid; grid-template-columns: 300px 1fr; gap: 40px; }
-  .summary { display: grid; gap: 6px; align-content: start; background: var(--snow); padding: 24px; border-radius: 18px; }
+  .summary { display: grid; gap: 6px; align-content: start; background: var(--stone-1); padding: 24px; border-radius: 18px; }
   .avg { font-family: var(--display); font-size: 56px; font-weight: 800; line-height: 1; }
   .dist { display: grid; gap: 6px; margin-top: 12px; }
   .drow, .fit { display: grid; grid-template-columns: 28px 1fr; gap: 8px; align-items: center; font-size: 12px; }
-  .drow i, .fit i { height: 6px; background: var(--ice); border-radius: 6px; overflow: hidden; display: block; }
+  .drow i, .fit i { height: 6px; background: var(--stone-2); border-radius: 6px; overflow: hidden; display: block; }
   .drow em { display: block; height: 100%; background: var(--ink); }
   .fit { grid-template-columns: auto 1fr auto; margin-top: 18px; color: var(--muted); }
   .fit i { position: relative; overflow: visible; }
@@ -233,11 +233,11 @@ const completeLook = inDept(p.dept).filter((x) => x.category !== p.category).fil
     .gallery::-webkit-scrollbar { display: none; }
     .shot { scroll-snap-align: start; border-radius: 0; }
     .dots { display: flex; justify-content: center; gap: 6px; margin-top: 12px; }
-    .dots span { width: 6px; height: 6px; border-radius: 50%; background: var(--frost); transition: all .3s; }
+    .dots span { width: 6px; height: 6px; border-radius: 50%; background: var(--stone-3); transition: all .3s; }
     .dots span:global(.on) { background: var(--ink); width: 18px; border-radius: 6px; }
     .buy { position: static; }
     .shop-look { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(20px, 3vw, 48px); align-items: start; padding-bottom: 0; }
-  .sl-img img { width: 100%; border-radius: 18px; background: var(--snow); }
+  .sl-img img { width: 100%; border-radius: 18px; background: var(--stone-1); }
   .sl-items { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 12px; }
   @media (max-width: 860px) { .shop-look { grid-template-columns: 1fr; } }
   .rev-grid { grid-template-columns: 1fr; }
