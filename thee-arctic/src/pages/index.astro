@@ -2,6 +2,7 @@
 import Base from '../layouts/Base.astro';
 import ProductCard from '../components/ProductCard.astro';
 import Icon from '../components/Icon.astro';
+import Campaign from '../components/Campaign.astro';
 import { departments, products, inDept, newIn, onSale, discount, priceOf } from '../data/catalog';
 import { hero, testimonials, community } from '../data/site';
 import { looks, lookItems } from '../data/looks';
@@ -81,6 +82,9 @@ const latestTabs = [
       ))}
     </div>
   </section>
+
+  <!-- CAMPAIGN: cinematic scroll sequence -->
+  <Campaign />
 
   <!-- SHOP BY CATEGORY -->
   {categoryTiles.length > 0 && (
@@ -314,7 +318,7 @@ const latestTabs = [
   }
 
   /* Category tiles */
-  .cats-sec { padding-bottom: clamp(72px, 9vw, 150px); }
+  .cats-sec { padding-block: clamp(72px, 9vw, 150px); }
   .cats { grid-auto-columns: calc((100% - 18px * 5) / 5.5); }
   @media (max-width: 900px) { .cats { grid-auto-columns: 44%; } }
   .cat-tile { display: grid; gap: 12px; grid-template-columns: 1fr auto; align-items: baseline; }

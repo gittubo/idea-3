@@ -69,6 +69,7 @@ const here = (href: string) => (path === href ? 'page' : undefined);
       <li><a href="/new-in" aria-current={here('/new-in')}>New In</a></li>
       {bar.map((s) => <li><a href={`/shop/${s.slug}`} aria-current={here(`/shop/${s.slug}`)}>{s.name}</a></li>)}
       <li><a href="/collections/pieces-that-go-together" aria-current={here('/collections/pieces-that-go-together')}>Pieces That Go Together</a></li>
+      <li><a href="/campaign" aria-current={here('/campaign')}>Campaign</a></li>
       <li><a href="/lookbook" aria-current={here('/lookbook')}>Lookbook</a></li>
       <li><a href="/sale" class="sale" aria-current={here('/sale')}>Sale</a></li>
     </ul>

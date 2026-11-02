@@ -37,6 +37,10 @@ Node 20 or newer.
 - **Customer photos (#THEEARCTIC grid):** `community` in `src/data/site.ts`.
 - **Testimonials:** `testimonials` in `src/data/site.ts`. Empty, so the section is hidden until real reviews are added.
 
+## Campaign
+
+`src/components/Campaign.astro` is the cinematic campaign: a pinned, scroll-driven film (title card, three scenes, end card) with letterbox bars and a slow push-in on each shot. It appears on the home page and at `/campaign`. Photos are in `public/campaign/`; scene titles and lines are at the top of the component.
+
 ## Currency
 
 Prices are stored in USD (`price` in `src/data/products.ts`). Each shopper sees them in their own currency: it's detected from their time zone or browser region, and they can change it in the header, footer or mobile menu. Rates come from a free public feed (open.er-api.com) and are cached for 12 hours. If the feed can't be reached, prices stay in USD. The logic is in `src/scripts/currency.ts`.
