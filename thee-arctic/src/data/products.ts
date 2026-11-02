@@ -1,6 +1,5 @@
 // THEE ARCTIC Season 01 line. Names and photos supplied by the brand.
-// price, sizes, colours and description stay empty until the brand supplies them;
-// the site shows "Price coming soon" and disables add-to-bag for those products.
+// Prices and sizes are temporary placeholders (see placeholderPrice); colours and descriptions stay empty until supplied.
 import type { Product } from './catalog';
 
 type Row = [slug: string, name: string, dept: string, category: string, garment: Product['garment'], views: number, collections?: string[]];
@@ -141,9 +140,28 @@ const rows: Row[] = [
   ['arctic-zip-boots', 'Arctic Zip Boots', 'men', 'shoes', 'shoe', 1],
 ];
 
+// TEMPORARY placeholder prices (USD) until the real price list arrives.
+// Each piece gets a stable price inside a range that suits its type; replace with real prices when supplied.
+const RANGES: [RegExp, number, number][] = [
+  [/watch/i, 180, 320], [/gown|couture/i, 190, 340], [/suit/i, 220, 380], [/leather/i, 150, 320],
+  [/parka|overcoat|coat/i, 180, 360], [/boot|sneaker/i, 120, 260], [/bag/i, 85, 160],
+  [/glove/i, 55, 95], [/belt/i, 45, 85], [/beanie|snapback|cap/i, 35, 55],
+];
+const BY_CATEGORY: Record<string, [number, number]> = {
+  tops: [45, 95], shirts: [55, 110], tees: [35, 65], hoodies: [65, 140], bottoms: [55, 120], pants: [65, 135],
+  jeans: [70, 140], shorts: [45, 85], dresses: [85, 220], 'matching-sets': [110, 240], jumpsuits: [95, 180],
+  outerwear: [140, 300], shoes: [120, 260], accessories: [40, 120],
+};
+function placeholderPrice(slug: string, name: string, category: string): number {
+  let h = 2166136261;
+  for (const ch of slug) h = Math.imul(h ^ ch.charCodeAt(0), 16777619) >>> 0;
+  const [lo, hi] = RANGES.find(([re]) => re.test(name))?.slice(1) as [number, number] ?? BY_CATEGORY[category] ?? [50, 120];
+  return Math.round((lo + (h % 1000) / 1000 * (hi - lo)) / 5) * 5;
+}
+
 export const lineup: Product[] = rows.map(([slug, name, dept, category, garment, views, collections = []]) => ({
   slug, name, dept, category, garment,
-  price: undefined,
+  price: placeholderPrice(slug, name, category),
   colors: [],
   // Temporary: every piece offers S–XXL until the real size runs are supplied
   sizes: ['S', 'M', 'L', 'XL', 'XXL'],

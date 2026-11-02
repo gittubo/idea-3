@@ -20,6 +20,7 @@ import Icon from '../components/Icon.astro';
         <small></small>
       </form>
       <div class="row total"><span>Total</span><span data-sum-total></span></div>
+      <p class="kl" data-currency-note hidden></p>
       <p class="kl">or 4 payments of <strong data-sum-klarna></strong> with Klarna / Afterpay</p>
       <button class="btn block" type="button" data-checkout><Icon name="lock" /> Secure checkout</button>
       <p class="pending" data-checkout-msg hidden>Checkout isn't connected yet. Payments go live once the store is linked to Shopify or Stripe.</p>
@@ -42,6 +43,6 @@ import Icon from '../components/Icon.astro';
   .kl { font-size: 13px; color: var(--muted); margin: 0; }
   .pending { font-size: 13px; background: var(--stone-2); border-left: 3px solid var(--accent); padding: 10px 12px; border-radius: 10px; margin: 0; }
   .pay { display: flex; gap: 6px; flex-wrap: wrap; }
-  .pay span { font-size: 10px; font-weight: 700; padding: 4px 7px; border-radius: 5px; background: #fff; border: 1px solid var(--line); }
+  .pay span { font-size: 10px; font-weight: 700; padding: 4px 7px; border-radius: 5px; background: #fff; border: 1px solid var(--line); color: var(--ink-2); box-shadow: none; }
   @media (max-width: 900px) { .bag { grid-template-columns: 1fr; } .summary { position: static; } }
 </style>

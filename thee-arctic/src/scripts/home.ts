@@ -51,7 +51,7 @@ function spotlight() {
   const els = $$('.spot-item', root);
   const panel = $('[data-spot-panel]', root)!;
   const counter = $('[data-spot-count]', root)!;
-  let i = 0, hex = items[0].colors[0].hex, timer = 0;
+  let i = 0, hex = items[0].colors[0]?.hex ?? '', timer = 0;
 
   const layout = () => {
     const n = els.length;
@@ -65,7 +65,8 @@ function spotlight() {
   };
   const fill = () => {
     const it = items[i];
-    hex = it.colors[0].hex;
+    hex = it.colors[0]?.hex ?? '';
+    panel.querySelectorAll<HTMLElement>('[data-colour-row]').forEach((el) => (el.hidden = !it.colors.length));
     panel.classList.add('swap');
     setTimeout(() => {
       $('[data-f="cat"]', panel)!.textContent = it.cat;
@@ -106,7 +107,7 @@ function spotlight() {
     const sz = t.closest<HTMLElement>('.sz');
     if (sz) {
       const it = items[i];
-      const colour = it.colors.find((c) => c.hex === hex) ?? it.colors[0];
+      const colour = it.colors.find((c) => c.hex === hex) ?? it.colors[0] ?? { name: '', hex: '#cccccc' };
       const btn = document.createElement('button');
       btn.hidden = true;
       btn.dataset.addItem = JSON.stringify({ slug: it.slug, name: it.name, price: it.price, garment: it.garment, color: colour.name, hex: colour.hex, img: it.img });

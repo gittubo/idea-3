@@ -81,7 +81,7 @@ function lineHtml(l: Line, i: number) {
     <a class="thumb" href="/products/${esc(l.slug)}">${thumb(l)}</a>
     <div>
       <h4><a href="/products/${esc(l.slug)}">${esc(l.name)}</a></h4>
-      <div class="meta">${esc(l.color)} · ${esc(l.size)}</div>
+      <div class="meta">${[l.color, `Size ${l.size}`].filter(Boolean).map(esc).join(' · ')}</div>
       <div class="qty" role="group" aria-label="Quantity">
         <button type="button" data-qty="${i}" data-d="-1" aria-label="Decrease">−</button>
         <span>${l.qty}</span>
