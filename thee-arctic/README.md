@@ -39,7 +39,7 @@ Node 20 or newer.
 
 ## Campaign
 
-`src/components/Campaign.astro` is the cinematic campaign. It plays by itself: the Season 01 film first, then each campaign photo for 6 seconds with a slow push-in, crossfading and looping. It has letterbox bars, scene progress bars and a pause button, and it only plays while on screen. It's the last section on the home page (just above the footer) and also has its own page at `/campaign`. To add or reorder scenes, edit the `scenes` list at the top of the component. A scene can be a video (`kind: 'video'`) or a photo (`kind: 'photo'`). Photos are in `public/campaign/`.
+`src/components/Campaign.astro` is the cinematic campaign. It plays by itself: the eyewear film first, then each campaign photo for 6 seconds with a slow push-in, crossfading and looping. It has letterbox bars, scene progress bars and a pause button, and it only plays while on screen. It's the last section on the home page (just above the footer) and also has its own page at `/campaign`. To add or reorder scenes, edit the `scenes` list at the top of the component. A scene can be a video (`kind: 'video'`) or a photo (`kind: 'photo'`). Photos are in `public/campaign/`.
 
 ## Currency
 

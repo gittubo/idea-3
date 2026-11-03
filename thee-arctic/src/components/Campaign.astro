@@ -9,7 +9,7 @@ type Scene =
   | { kind: 'photo'; img: string; bg: string; w: number; h: number; title: string; line: string; alt: string };
 
 const scenes: Scene[] = [
-  { kind: 'video', wide: '/media/landing-16x9.mp4', tall: '/media/landing-9x16.mp4', poster: '/media/landing-16x9.jpg', title: 'In Motion', line: 'Season 01, on film.', alt: 'THEE ARCTIC Season 01 campaign film' },
+  { kind: 'video', wide: '/campaign/eyewear.mp4', tall: '/campaign/eyewear.mp4', poster: '/campaign/eyewear.jpg', title: 'In Focus', line: 'THEE ARCTIC eyewear, Season 01.', alt: 'THEE ARCTIC eyewear campaign film' },
   { kind: 'photo', img: '/campaign/scene-1.webp', bg: '/campaign/scene-1-bg.webp', w: 1448, h: 1086, title: 'After Hours', line: 'Satin, lace and a late-night call.', alt: 'Model in a satin slip dress and lace tights on a velvet sofa' },
   { kind: 'photo', img: '/campaign/scene-2.webp', bg: '/campaign/scene-2-bg.webp', w: 1098, h: 1432, title: 'Sweet Talk', line: 'Soft knit, ribbon bows, a room in red.', alt: 'Model in a cream bow-detail cardigan on a red set' },
   { kind: 'photo', img: '/campaign/scene-3.webp', bg: '/campaign/scene-3-bg.webp', w: 993, h: 1584, title: 'Matching Energy', line: 'THEE ARCTIC sets, worn together.', alt: 'Two models in pink THEE ARCTIC sweatsuits and white jackets' },
@@ -20,6 +20,7 @@ const pad = (k: number) => String(k).padStart(2, '0');
   {scenes.map((s, i) => (
     <figure class={`scene ${s.kind} ${i === 0 ? 'on' : ''} ${i % 2 ? 'flip' : ''}`} aria-roledescription="slide" aria-label={`${i + 1} of ${scenes.length}`}>
       {s.kind === 'video' ? (
+        <img class="bg film-bg" src={s.poster.replace('.jpg', '-bg.jpg')} alt="" aria-hidden="true" loading="lazy" />
         <video class="film" data-wide={s.wide} data-tall={s.tall} poster={s.poster} muted playsinline preload="none" aria-label={s.alt}></video>
       ) : (
         <>
@@ -67,6 +68,7 @@ const pad = (k: number) => String(k).padStart(2, '0');
   .scene.on { opacity: 1; visibility: visible; transition: opacity 1.2s var(--ease-out); }
 
   .film { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .film-bg { display: none; }
   .video::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(8,7,6,.55), transparent 55%); pointer-events: none; }
 
   .bg { position: absolute; inset: -6%; width: 112%; height: 112%; object-fit: cover; }
@@ -110,6 +112,9 @@ const pad = (k: number) => String(k).padStart(2, '0');
   .cam-toggle[aria-pressed="true"] .i-play { display: block; }
 
   @media (max-width: 820px) {
+    /* Wide film on a tall screen: show the whole frame over a blurred backdrop */
+    .film-bg { display: block; }
+    .film { object-fit: contain; inset: var(--bar) 0; height: calc(100% - 2 * var(--bar)); transform: translateY(-40px); }
     .frame, .flip .frame { transform: translateY(-48px); height: min(calc(100% - 2 * var(--bar) - 190px), calc(84vw / var(--ar))); }
     .cap, .flip .cap, .video .cap { left: var(--gutter); right: var(--gutter); top: auto; bottom: calc(var(--bar) + 20px); transform: none; width: auto; text-align: center; justify-items: center; gap: 6px; }
     .cap-title { font-size: clamp(40px, 12vw, 64px); }
