@@ -35,6 +35,11 @@ function hero() {
     if (paused) video.pause(); else video.play().catch(() => {});
     sync();
   });
+  // The film ends on its own THEE ARCTIC logo card: hide the page title while it's on screen
+  // so the two wordmarks never overlap. It comes back when the film loops.
+  const card = () => root.classList.toggle('logo-card', !!video.duration && video.currentTime > video.duration - 1.8);
+  video.addEventListener('timeupdate', card);
+  video.addEventListener('seeked', card);
   // Pause while scrolled out of view to save battery
   new IntersectionObserver(([e]) => {
     if (paused) return;

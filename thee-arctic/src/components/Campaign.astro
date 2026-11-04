@@ -16,17 +16,19 @@ const scenes: Scene[] = [
 ];
 const pad = (k: number) => String(k).padStart(2, '0');
 ---
-<section class="campaign" id={id} data-campaign aria-roledescription="carousel" aria-label="THEE ARCTIC Season 01 campaign">
+<section class="campaign" id={id} data-campaign tabindex="0" aria-roledescription="carousel" aria-label="THEE ARCTIC Season 01 campaign">
   {scenes.map((s, i) => (
     <figure class={`scene ${s.kind} ${i === 0 ? 'on' : ''} ${i % 2 ? 'flip' : ''}`} aria-roledescription="slide" aria-label={`${i + 1} of ${scenes.length}`}>
       {s.kind === 'video' ? (
-        <img class="bg film-bg" src={s.poster.replace('.jpg', '-bg.jpg')} alt="" aria-hidden="true" loading="lazy" />
-        <video class="film" data-wide={s.wide} data-tall={s.tall} poster={s.poster} muted playsinline preload="none" aria-label={s.alt}></video>
+        <>
+          <img class="bg film-bg" src={s.poster.replace('.jpg', '-bg.jpg')} alt="" aria-hidden="true" loading="lazy" draggable="false" />
+          <video class="film" data-wide={s.wide} data-tall={s.tall} poster={s.poster} muted playsinline preload="none" aria-label={s.alt}></video>
+        </>
       ) : (
         <>
-          <img class="bg" src={s.bg} alt="" aria-hidden="true" loading="lazy" />
+          <img class="bg" src={s.bg} alt="" aria-hidden="true" loading="lazy" draggable="false" />
           <div class="frame" style={`--ar:${(s.w / s.h).toFixed(4)}`}>
-            <img class="fg" src={s.img} alt={s.alt} loading="lazy" decoding="async" />
+            <img class="fg" src={s.img} alt={s.alt} loading="lazy" decoding="async" draggable="false" />
           </div>
         </>
       )}
@@ -39,16 +41,20 @@ const pad = (k: number) => String(k).padStart(2, '0');
   ))}
 
   <!-- Letterbox + HUD -->
-  <div class="lb lb-top" aria-hidden="true"><span>THEE ARCTIC</span><span>Season 01 Campaign</span></div>
+  <div class="lb lb-top" aria-hidden="true"><span>THEE ARCTIC</span><span class="lb-wide">Season 01 Campaign</span><span class="lb-swipe">Swipe <svg viewBox="0 0 24 24"><path d="M5 12h14M14 7l5 5-5 5" /></svg></span></div>
   <div class="lb lb-bottom">
     <span class="tnum" data-cam-count aria-hidden="true">{`01 / ${pad(scenes.length)}`}</span>
     <div class="segs">
       {scenes.map((s, i) => <button type="button" class="seg" data-seg={i} aria-label={`Play scene ${i + 1}: ${s.title}`}><i></i></button>)}
     </div>
+    <div class="cam-ctrls">
+    <button type="button" class="cam-toggle cam-arrow" data-cam-prev aria-label="Previous scene"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg></button>
+    <button type="button" class="cam-toggle cam-arrow" data-cam-next aria-label="Next scene"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" /></svg></button>
     <button type="button" class="cam-toggle" data-cam-toggle aria-pressed="false" aria-label="Pause campaign">
       <svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14" /></svg>
       <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z" /></svg>
     </button>
+    </div>
   </div>
 </section>
 
@@ -59,13 +65,24 @@ const pad = (k: number) => String(k).padStart(2, '0');
 <style>
   .campaign {
     --bar: clamp(36px, 6svh, 60px);
+    touch-action: pan-y; -webkit-user-select: none; user-select: none; cursor: grab; outline: none;
     position: relative; overflow: hidden; background: #0d0c0b; color: var(--on-dark);
     height: calc(100svh - var(--header-h) - var(--catbar-h)); min-height: 520px;
   }
 
-  /* Scenes: stacked, crossfading */
-  .scene { position: absolute; inset: 0; margin: 0; display: grid; place-items: center; overflow: hidden; opacity: 0; visibility: hidden; transition: opacity 1.2s var(--ease-out), visibility 0s 1.2s; }
-  .scene.on { opacity: 1; visibility: visible; transition: opacity 1.2s var(--ease-out); }
+  .campaign.grabbing { cursor: grabbing; }
+  .campaign:focus-visible { box-shadow: inset 0 0 0 2px rgba(255,255,255,.5); }
+  .campaign img { -webkit-user-drag: none; pointer-events: none; }
+
+  /* Scenes sit side by side; the script slides them (and follows the finger while swiping) */
+  .scene { position: absolute; inset: 0; margin: 0; display: grid; place-items: center; overflow: hidden; visibility: hidden; background: #0d0c0b; will-change: transform; }
+  .scene.on, .scene.peek { visibility: visible; }
+  .sliding .scene { transition: transform .75s var(--ease); }
+
+  .cam-ctrls { display: flex; gap: 8px; }
+  .cam-arrow svg { stroke-linecap: round; }
+  .lb-swipe { display: none; align-items: center; gap: 6px; }
+  .lb-swipe svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.6; }
 
   .film { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
   .film-bg { display: none; }
@@ -119,7 +136,9 @@ const pad = (k: number) => String(k).padStart(2, '0');
     .cap, .flip .cap, .video .cap { left: var(--gutter); right: var(--gutter); top: auto; bottom: calc(var(--bar) + 20px); transform: none; width: auto; text-align: center; justify-items: center; gap: 6px; }
     .cap-title { font-size: clamp(40px, 12vw, 64px); }
     .cap p { font-size: 13.5px; }
-    .lb-top span:last-child { display: none; }
+    .lb-wide { display: none; }
+    .lb-swipe { display: inline-flex; }
+    .cam-ctrls .cam-arrow { display: none; }
   }
   @media (prefers-reduced-motion: reduce) {
     .on .fg, .on .bg { animation: none; }

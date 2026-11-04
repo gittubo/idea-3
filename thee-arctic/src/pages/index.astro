@@ -281,6 +281,8 @@ const latestTabs = [
   .hero-copy { max-width: 72rem; color: #fff; }
   .hero-title { font-size: clamp(40px, 6.4vw, 104px); margin: 0 0 28px; color: #fff; }
   .hero-title .serif { display: block; font-size: 1.04em; }
+  .hero-title { transition: opacity .5s var(--ease-out), transform .7s var(--ease-out); }
+  .logo-card .hero-title { opacity: 0; transform: translateY(12px); }
   .hero-ctas { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; }
   .hero-link { color: #fff; font-size: 12px; font-weight: 550; letter-spacing: .14em; text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,.6); padding-bottom: 3px; }
   .hero-toggle { color: #fff; background: rgba(255,255,255,.14); }
