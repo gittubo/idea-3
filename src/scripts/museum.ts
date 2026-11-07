@@ -110,7 +110,8 @@ export async function startMuseum(entries: RoomEntry[]) {
   let active = -1;
   let move: Move | null = null;
   const pose = newPose();
-  const look = { pos: new THREE.Vector3(START.x, EYE, START.z), yaw: START.yaw, pitch: START.pitch };
+  // the visitor waits at the entrance, two steps behind the starting point, until they step in
+  const look = { pos: new THREE.Vector3(START.x, EYE, START.z + 1.6), yaw: START.yaw, pitch: 0 };
   const goal = { pos: look.pos.clone(), yaw: look.yaw, pitch: look.pitch };
   let hover = -1;
 
@@ -365,6 +366,7 @@ export async function startMuseum(entries: RoomEntry[]) {
 
   addEventListener('wheel', (e) => {
     e.preventDefault();
+    if (!entered) { enterMuseum(); return; }
     const dy = e.deltaY * (e.deltaMode === 1 ? 16 : 1);
     if (mode === 'exploring') {
       const ex = ready.get(active)!.explorer;
@@ -381,6 +383,10 @@ export async function startMuseum(entries: RoomEntry[]) {
   }, { passive: false });
 
   addEventListener('keydown', (e) => {
+    if (!entered) {
+      if (['Enter', ' ', 'ArrowUp', 'ArrowDown', 'w', 's'].includes(e.key)) { e.preventDefault(); enterMuseum(); }
+      return;
+    }
     if (mode === 'exploring') {
       const ex = ready.get(active)!.explorer;
       const step = 0.14;
@@ -435,12 +441,57 @@ export async function startMuseum(entries: RoomEntry[]) {
     });
   });
 
+  // ---- the threshold: the lens of the Tubo mark opens like an iris onto the gallery ----------
+  const threshold = $('.threshold');
+  let entered = false;
+  function enterMuseum(instant = false) {
+    if (entered) return;
+    entered = true;
+    root.classList.add('entering');
+    const lens = threshold.querySelector('.iris')!.getBoundingClientRect();
+    const cx = lens.left + lens.width / 2, cy = lens.top + lens.height / 2;
+    threshold.style.setProperty('--x', `${cx}px`);
+    threshold.style.setProperty('--y', `${cy}px`);
+    const far = Math.hypot(Math.max(cx, vw - cx), Math.max(cy, vh - cy)) + 40;
+    const finish = () => { threshold.remove(); root.classList.remove('entering'); root.classList.add('entered'); };
+    if (instant || reduced) {
+      threshold.style.transition = 'opacity 0.6s ease';
+      threshold.style.opacity = '0';
+      setTimeout(finish, instant ? 0 : 650);
+      if (!instant) stepIn();
+      return;
+    }
+    const t0 = performance.now(), dur = 1900;
+    const open = (now: number) => {
+      const k = Math.min(1, (now - t0) / dur);
+      // slow at first, like an eye opening, then quickly wide
+      threshold.style.setProperty('--r', `${Math.pow(k, 2.4) * far}px`);
+      if (k < 1) requestAnimationFrame(open); else finish();
+    };
+    requestAnimationFrame(open);
+    setTimeout(stepIn, 350);
+  }
+  /** Two slow steps in from the entrance. */
+  function stepIn() {
+    if (mode !== 'hall') return;
+    const to = newPose();
+    look.pos.set(START.x, EYE, START.z); look.yaw = START.yaw; look.pitch = START.pitch;
+    lookPose(to);
+    look.pos.set(START.x, EYE, START.z + 1.6); look.pitch = 0;
+    startMove(to, { speed: 0.75, done: () => { setLookFrom(pose); mode = 'hall'; } });
+  }
+  threshold.addEventListener('click', () => { if (root.classList.contains('ready')) enterMuseum(); });
+
   // ---- frame loop ---------------------------------------------------------------------------
   (window as any).__tuboState = () => ({ mode, active, pos: pose.pos.toArray().map((v) => +v.toFixed(2)), target: pose.target.toArray().map((v) => +v.toFixed(2)), fov: +pose.fov.toFixed(1), move: move && { dur: move.dur, painting: move.painting, to: move.to.pos.toArray().map((v) => +v.toFixed(2)) } });
   lookPose(pose);
   let last = performance.now();
   root.classList.add('ready');
-  if (location.hash.length > 1) setTimeout(fromHash, 300);
+  if (location.hash.length > 1) {
+    // a link straight to a painting skips the threshold
+    enterMuseum(true);
+    setTimeout(fromHash, 300);
+  }
   // a painting's depth layers load when the visitor hovers or walks toward it
 
 

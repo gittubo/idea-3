@@ -251,7 +251,7 @@ Each piece has a hidden detail the camera finds. The story is never written on t
 | **0. Finish planning** | ✅ Done | |
 | **1. One piece, end to end** | ✅ Done: "The Kept Letter" with the depth camera, plaque and lens | Approved |
 | **2. Hall** | ✅ Done (v4): exhibition hall, walk-to-click, free exploration of all three Room I paintings | Approved by you |
-| **3. Threshold and rooms** | Iris entrance, archways, room light shifts, wordless navigation | A first-time visitor finds their way without help |
+| **3. Threshold** | ✅ Done: the Tubo mark's lens pulses on a black screen while the gallery loads; a click, tap, scroll or Enter opens it like an iris onto the corridor, and the visitor steps in. Links to a painting skip it. | |
 | **4. Sound and atmosphere** | Soundscapes, the on/off toggle, grain, lens cursor, loading state (a lens slowly coming into focus) | |
 | **5. Remaining pieces** | Pieces 2–6 through the production steps in Section 5 | All pass the quality check |
 | **6. Polish and launch** | Speed, real-phone testing, accessibility, search information, domain | Launch |

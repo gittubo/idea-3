@@ -59,8 +59,20 @@ const mark = 'M37 17.5V2.5H3v43h34V30.5A6.5 6.5 0 0 1 37 17.5Z';
 
     <div class="cursor" aria-hidden="true"><i></i></div>
     <div class="grain" aria-hidden="true"></div>
-    <div class="loading" aria-hidden="true">
-      <svg viewBox="0 0 40 48" fill="none" stroke="currentColor" stroke-width="2.4"><path d={mark} /></svg>
+    <!-- the threshold: the lens pulses; tap, click, scroll or Enter opens it like an iris -->
+    <div class="threshold" role="button" tabindex="0" aria-label="Enter the museum">
+      <div class="threshold-mark" aria-hidden="true">
+        <svg viewBox="-2 -2 46 52" fill="none" stroke="currentColor" stroke-width="1.6">
+          <path d={mark} />
+          <circle class="iris" cx="37" cy="24" r="3.4" fill="currentColor" stroke="none" />
+        </svg>
+        <span class="threshold-word">TUBO</span>
+      </div>
+      <div class="threshold-hint" aria-hidden="true">
+        <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.2">
+          <circle class="ripple" cx="20" cy="20" r="6" /><circle cx="20" cy="20" r="3" fill="currentColor" stroke="none" />
+        </svg>
+      </div>
     </div>
     <p class="fallback">This museum needs a newer browser with 3D graphics turned on.</p>
     <noscript><p class="fallback" style="display:grid">This museum needs JavaScript turned on.</p></noscript>
