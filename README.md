@@ -20,6 +20,8 @@ Live: **https://tubo-ten.vercel.app** (Vercel project `tubo`).
 
 `.vercelignore` keeps the full-size source paintings, the pipeline and local previews out of the upload.
 
+**Automatic deploys:** `.github/workflows/deploy.yml` deploys on every push. A push to the default branch updates the live site, and any other branch gets a preview address. It needs one repository secret, `VERCEL_TOKEN` (a Vercel access token), under **Settings → Secrets and variables → Actions**. Without it, the workflow skips deploying and says so.
+
 The repository is ready for Vercel. `vercel.json` sets the Astro build, the `dist/` output, and cache headers.
 
 **From the Vercel dashboard (no token needed):**

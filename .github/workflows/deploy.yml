@@ -1,0 +1,71 @@
+# Deploys Tubo to Vercel on every push.
+# - A push to the repository's default branch updates the live site (https://tubo-ten.vercel.app).
+# - A push to any other branch gets its own preview address.
+# Needs one repository secret: VERCEL_TOKEN (Settings → Secrets and variables → Actions).
+name: Deploy to Vercel
+
+on:
+  push:
+  workflow_dispatch:
+
+concurrency:
+  group: vercel-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # The Vercel team and project are identifiers, not secrets.
+  VERCEL_ORG_ID: team_vAXNwxpwQk3i1HHE3nVgwDgX
+  VERCEL_PROJECT_ID: prj_oxEYvVDX49R8XevwOl5qXJ4SqGmr
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for the Vercel token
+        id: token
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "::warning::Not deployed: add a VERCEL_TOKEN repository secret to turn on automatic deploys."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.token.outputs.ready == 'true'
+
+      - uses: actions/setup-node@v4
+        if: steps.token.outputs.ready == 'true'
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Choose production or preview
+        if: steps.token.outputs.ready == 'true'
+        id: target
+        run: |
+          if [ "${{ github.ref_name }}" = "${{ github.event.repository.default_branch }}" ]; then
+            echo "env=production" >> "$GITHUB_OUTPUT"; echo "flag=--prod" >> "$GITHUB_OUTPUT"
+          else
+            echo "env=preview" >> "$GITHUB_OUTPUT"; echo "flag=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build
+        if: steps.token.outputs.ready == 'true'
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          npm install --global vercel@65.12.1
+          vercel pull --yes --environment=${{ steps.target.outputs.env }} --token="$VERCEL_TOKEN"
+          vercel build ${{ steps.target.outputs.flag }} --token="$VERCEL_TOKEN"
+
+      - name: Deploy
+        if: steps.token.outputs.ready == 'true'
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          url=$(vercel deploy --prebuilt ${{ steps.target.outputs.flag }} --token="$VERCEL_TOKEN")
+          echo "Deployed: $url" >> "$GITHUB_STEP_SUMMARY"
+          echo "$url"
