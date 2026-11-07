@@ -438,8 +438,8 @@ function wireNewsletter() {
     e.preventDefault();
     // Not connected to an email provider yet: hook this up to Klaviyo/Mailchimp/Shopify Customers.
     const msg = f.parentElement?.querySelector('[data-newsletter-msg]');
-    if (msg) msg.textContent = "You're on the list. Check your inbox for your 15% off code.";
-    f.reset();
+    // Nothing is stored until a provider is connected, so say so plainly rather than confirm a sign-up.
+    if (msg) msg.textContent = "Our mailing list isn't open yet. Please check back soon.";
   }));
 }
 
