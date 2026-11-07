@@ -18,7 +18,7 @@ const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
 const ease = (t: number) => t * t * (3 - 2 * t);
 const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 const HALL_DIM = 0.3;     // how lit the hall stays around a painting being explored
-const START = { x: 0, z: 8.8, yaw: 0, pitch: 0.07 };
+const START = { x: 0, z: 11, yaw: 0, pitch: 0.04 };
 
 type Mode = 'hall' | 'moving' | 'exploring' | 'leaving';
 interface Journey { scene: DepthScene; explorer: Explorer }

@@ -1,7 +1,8 @@
 /**
- * The hall: a large, dark exhibition space. Monumental unframed paintings stand
- * around the room under ceiling spotlights; the polished concrete floor carries
- * soft, blurred reflections of them.
+ * The gallery: a long corridor with dark walls, a glossy wood floor and a cream
+ * ceiling carrying two black track rails of spotlights. Framed paintings hang along
+ * both walls and on the end wall, each in its own pool of light; the floor carries
+ * soft reflections of them.
  */
 import * as THREE from 'three';
 import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js';
@@ -9,21 +10,21 @@ import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js';
 export interface Placement {
   x: number;
   z: number;
-  /** Rotation about the vertical axis in degrees; 0 faces the entrance (+z). */
+  /** Rotation about the vertical axis in degrees; 0 faces the entrance (+z), 90 faces +x. */
   yaw: number;
 }
 
 export interface HallItem {
   slug: string;
   title: string;
-  /** Image shown in the hall (relative URL). */
+  /** Image shown on the wall (relative URL). */
   image: string;
   /** Width / height. */
   aspect: number;
   /** Painted surface height in metres. */
   height: number;
   place: Placement;
-  /** Colour of its spotlights: warm for oils (Room I), cool for drawings (Room II). */
+  /** Colour of its spotlights: warm for oils (Room I), slightly cooler for drawings (Room II). */
   light?: 'warm' | 'cool';
 }
 
@@ -34,12 +35,19 @@ export const copyPose = (from: Pose, to: Pose) => { to.pos.copy(from.pos); to.ta
 export type Pick = { kind: 'painting'; index: number } | { kind: 'floor'; point: THREE.Vector3 } | null;
 
 export const EYE = 1.65;
-const BASE = 0.38;              // paintings stand this far off the floor
-const SURFACE = 0.045;          // painted surface in front of the panel's centre
-export const BOUNDS = { minX: -10.5, maxX: 10.5, minZ: -7, maxZ: 10 };
-const ROOM = { w: 30, d: 24, h: 9.5, z: -0.5 }; // centred on x = 0, z = ROOM.z
-const SPOT = 300;               // candela per spotlight
-const WASH = 90;                // overhead lights washing the floor
+const HANG = 1.72;              // centre height of a hung painting
+const SURFACE = 0.03;           // painted surface in front of the wall
+const FRAME = 0.045;            // thin black frame
+/** The corridor: walls at x = ±HALF_W, from the end wall (z = END_Z) to the entrance (z = START_Z). */
+export const HALF_W = 3.5;
+export const END_Z = -13;
+const START_Z = 13;
+const HEIGHT = 4.3;
+const RAIL_X = 1.3;
+export const BOUNDS = { minX: -2.6, maxX: 2.6, minZ: -11.4, maxZ: 11.8 };
+const BENCH = { x: 0, z: -8, w: 2.1, d: 0.62 };
+const SPOT = 46;                // candela per painting spotlight
+const WASH = 14;                // down-lights along the corridor
 
 const paintVert = /* glsl */ `
   varying vec2 vUv;
@@ -74,34 +82,61 @@ const blurFrag = /* glsl */ `
     gl_FragColor = vec4(s, 1.0);
   }`;
 
-function concreteTexture(size: number) {
+function canvasTexture(size: number, draw: (g: CanvasRenderingContext2D, size: number) => void) {
   const c = document.createElement('canvas');
   c.width = c.height = size;
-  const g = c.getContext('2d')!;
-  g.fillStyle = 'rgb(46,46,47)';
-  g.fillRect(0, 0, size, size);
-  for (let i = 0; i < 220; i++) {
-    const r = size * (0.03 + Math.random() * 0.16);
-    const x = Math.random() * size, y = Math.random() * size;
-    const k = Math.round((Math.random() - 0.5) * 22);
-    for (const ox of [-size, 0, size]) for (const oy of [-size, 0, size]) {
-      const grd = g.createRadialGradient(x + ox, y + oy, 0, x + ox, y + oy, r);
-      grd.addColorStop(0, `rgba(${46 + k},${46 + k},${47 + k},0.3)`);
-      grd.addColorStop(1, `rgba(${46 + k},${46 + k},${47 + k},0)`);
-      g.fillStyle = grd;
-      g.fillRect(x + ox - r, y + oy - r, r * 2, r * 2);
-    }
-  }
-  const img = g.getImageData(0, 0, size, size);
-  for (let i = 0; i < img.data.length; i += 4) {
-    const n = (Math.random() - 0.5) * 9;
-    img.data[i] += n; img.data[i + 1] += n; img.data[i + 2] += n;
-  }
-  g.putImageData(img, 0, 0);
+  draw(c.getContext('2d')!, size);
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
   return t;
+}
+
+/** Fine, low-contrast noise over a base colour (painted plaster, ceiling). */
+function plasterTexture(rgb: [number, number, number], spread: number) {
+  return canvasTexture(256, (g, size) => {
+    g.fillStyle = `rgb(${rgb.join(',')})`;
+    g.fillRect(0, 0, size, size);
+    const img = g.getImageData(0, 0, size, size);
+    for (let i = 0; i < img.data.length; i += 4) {
+      const n = (Math.random() - 0.5) * spread;
+      img.data[i] += n; img.data[i + 1] += n; img.data[i + 2] += n;
+    }
+    g.putImageData(img, 0, 0);
+  });
+}
+
+/** Wood planks running along the corridor: 2 m of floor per tile, 14 boards across. */
+function woodTexture() {
+  return canvasTexture(1024, (g, size) => {
+    const boards = 18, bw = size / boards;
+    for (let b = 0; b < boards; b++) {
+      let y = -Math.random() * size;
+      while (y < size) {
+        const len = size * (0.9 + Math.random() * 1.2);
+        const k = Math.random();
+        const r = 96 + k * 18, gg = 62 + k * 11, bl = 38 + k * 7;
+        g.fillStyle = `rgb(${r | 0},${gg | 0},${bl | 0})`;
+        g.fillRect(b * bw, y, bw, len);
+        // grain
+        for (let l = 0; l < 9; l++) {
+          g.strokeStyle = `rgba(${(r * 0.7) | 0},${(gg * 0.7) | 0},${(bl * 0.7) | 0},${0.15 + Math.random() * 0.25})`;
+          g.lineWidth = 0.6 + Math.random() * 1.2;
+          const x = b * bw + Math.random() * bw;
+          g.beginPath();
+          g.moveTo(x, y);
+          g.bezierCurveTo(x + (Math.random() - 0.5) * 6, y + len * 0.33, x + (Math.random() - 0.5) * 6, y + len * 0.66, x + (Math.random() - 0.5) * 4, y + len);
+          g.stroke();
+        }
+        // joint
+        g.fillStyle = 'rgba(20,12,6,0.55)';
+        g.fillRect(b * bw, y + len - 1.5, bw, 1.5);
+        y += len;
+      }
+      g.fillStyle = 'rgba(18,11,6,0.6)';
+      g.fillRect(b * bw, 0, 1.2, size);
+    }
+  });
 }
 
 function glowTexture() {
@@ -134,11 +169,10 @@ export class Hall {
   /** Everything that appears in the floor's reflection. */
   private world = new THREE.Group();
   private floor!: THREE.Mesh;
-  private shell!: THREE.Mesh;
   private hung: Hung[] = [];
   private pickables: THREE.Object3D[] = [];
   private raycaster = new THREE.Raycaster();
-  private hemi = new THREE.HemisphereLight(0xb4bccb, 0x2a2826, 2.2);
+  private hemi = new THREE.HemisphereLight(0xfff0dc, 0x3b2a1d, 1.15);
   private washes: THREE.SpotLight[] = [];
   private glows: THREE.SpriteMaterial[] = [];
   private rtReflect: THREE.WebGLRenderTarget;
@@ -149,14 +183,13 @@ export class Hall {
   private floorUniforms = {
     tReflect: { value: null as THREE.Texture | null },
     uRes: { value: new THREE.Vector2(1, 1) },
-    uStrength: { value: 0.62 },
+    uStrength: { value: 0.32 },
   };
   private dim = 1;
   fov = 55;
 
   constructor(private renderer: THREE.WebGLRenderer, readonly items: HallItem[]) {
-    this.scene.background = new THREE.Color(0x0b0b0c);
-    this.scene.fog = new THREE.Fog(0x0b0b0c, 30, 80);
+    this.scene.background = new THREE.Color(0x0e0c0b);
     this.scene.add(this.world);
     const opts = { type: THREE.HalfFloatType, depthBuffer: true };
     this.rtReflect = new THREE.WebGLRenderTarget(1, 1, opts);
@@ -176,11 +209,13 @@ export class Hall {
   async load() {
     const W = this.world;
     W.add(this.hemi);
+    const len = START_Z - END_Z, midZ = (START_Z + END_Z) / 2;
 
-    // floor: polished concrete, reflection added in its shader
-    const concrete = concreteTexture(512);
-    concrete.repeat.set(9, 9);
-    const floorMat = new THREE.MeshStandardMaterial({ map: concrete, roughness: 0.5, metalness: 0, color: 0xffffff });
+    // floor: glossy wood planks; the reflection is added in its shader
+    const wood = woodTexture();
+    wood.repeat.set((HALF_W * 2) / 2, len / 2);
+    wood.anisotropy = Math.min(8, this.renderer.capabilities.getMaxAnisotropy());
+    const floorMat = new THREE.MeshStandardMaterial({ map: wood, roughness: 0.34, metalness: 0, color: 0xffffff });
     floorMat.onBeforeCompile = (sh) => {
       Object.assign(sh.uniforms, this.floorUniforms);
       sh.fragmentShader = 'uniform sampler2D tReflect;\nuniform vec2 uRes;\nuniform float uStrength;\n' +
@@ -188,88 +223,119 @@ export class Hall {
           {
             vec2 suv = gl_FragCoord.xy / uRes;
             vec3 refl = texture2D(tReflect, suv).rgb;
-            float grain = texture2D(map, vMapUv * 3.7).r;
-            gl_FragColor.rgb += refl * uStrength * (0.75 + 0.5 * grain);
+            float grain = texture2D(map, vMapUv).r;
+            gl_FragColor.rgb += refl * uStrength * (0.7 + 0.9 * grain);
           }
           #include <tonemapping_fragment>`);
     };
-    this.floor = new THREE.Mesh(new THREE.PlaneGeometry(ROOM.w, ROOM.d), floorMat);
+    this.floor = new THREE.Mesh(new THREE.PlaneGeometry(HALF_W * 2, len), floorMat);
     this.floor.rotation.x = -Math.PI / 2;
-    this.floor.position.set(0, 0, ROOM.z);
+    this.floor.position.set(0, 0, midZ);
     this.scene.add(this.floor);
     this.pickables.push(this.floor);
 
-    // walls and ceiling: near-black, barely there
-    const shell = this.shell = new THREE.Mesh(
-      new THREE.BoxGeometry(ROOM.w, ROOM.h, ROOM.d),
-      new THREE.MeshStandardMaterial({ color: 0x3a3a3d, roughness: 0.95, side: THREE.BackSide }),
-    );
-    shell.position.set(0, ROOM.h / 2 - 0.02, ROOM.z);
-    W.add(shell);
-    this.pickables.push(shell);
-
-    // steel trusses with track lights
-    const steel = new THREE.MeshStandardMaterial({ color: 0x4a4a4f, roughness: 0.5, metalness: 0.45 });
-    const fixture = new THREE.MeshBasicMaterial({ color: 0xfff1dc });
-    const glowTex = glowTexture();
-    const zs = [-10, -6, -2, 2, 6, 10];
-    for (const z of zs) {
-      const beam = new THREE.Mesh(new THREE.BoxGeometry(ROOM.w, 0.55, 0.28), steel);
-      beam.position.set(0, ROOM.h - 0.7, z);
-      W.add(beam);
-      const chord = new THREE.Mesh(new THREE.BoxGeometry(ROOM.w, 0.08, 0.08), steel);
-      chord.position.set(0, ROOM.h - 1.35, z);
-      W.add(chord);
+    // walls: dark warm charcoal, one-sided so a camera stepping back through one never sees it
+    const wallMat = new THREE.MeshStandardMaterial({ map: plasterTexture([62, 58, 55], 7), roughness: 0.92 });
+    const wall = (w: number, x: number, z: number, yaw: number) => {
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(w, HEIGHT), wallMat);
+      m.position.set(x, HEIGHT / 2, z);
+      m.rotation.y = yaw;
+      m.userData.walk = true;
+      W.add(m);
+      this.pickables.push(m);
+      return m;
+    };
+    wall(len, -HALF_W, midZ, Math.PI / 2);
+    wall(len, HALF_W, midZ, -Math.PI / 2);
+    wall(HALF_W * 2, 0, END_Z, 0);
+    wall(HALF_W * 2, 0, START_Z, Math.PI);
+    const skirt = new THREE.MeshStandardMaterial({ color: 0x1c1816, roughness: 0.6 });
+    for (const sx of [-1, 1]) {
+      const b = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.1, len), skirt);
+      b.position.set(sx * (HALF_W - 0.01), 0.05, midZ);
+      W.add(b);
     }
-    for (const x of [-10, -5, 0, 5, 10]) {
-      const rail = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, ROOM.d), steel);
-      rail.position.set(x, ROOM.h - 1.5, ROOM.z);
+
+    // ceiling: warm cream, lit from the track lights, with a dropped bulkhead along each wall
+    const ceilMat = new THREE.MeshStandardMaterial({ map: plasterTexture([222, 210, 192], 5), roughness: 0.95, emissive: 0xb59b7c, emissiveIntensity: 0.5 });
+    const ceil = new THREE.Mesh(new THREE.PlaneGeometry(HALF_W * 2, len), ceilMat);
+    ceilMat.map!.repeat.set(4, 12);
+    ceil.rotation.x = Math.PI / 2;
+    ceil.position.set(0, HEIGHT, midZ);
+    W.add(ceil);
+    const bulkMat = new THREE.MeshStandardMaterial({ color: 0x8c7c6a, roughness: 0.9, emissive: 0x2c241c, emissiveIntensity: 0.6 });
+    for (const sx of [-1, 1]) {
+      const bulk = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.32, len), bulkMat);
+      bulk.position.set(sx * (HALF_W - 0.375), HEIGHT - 0.16, midZ);
+      W.add(bulk);
+    }
+
+    // two black track rails with spotlight cans and their glow
+    const black = new THREE.MeshStandardMaterial({ color: 0x0c0c0c, roughness: 0.45, metalness: 0.4 });
+    const lensMat = new THREE.MeshBasicMaterial({ color: 0xfff4e2, toneMapped: false });
+    const glowTex = glowTexture();
+    for (const sx of [-1, 1]) {
+      const rail = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.04, len - 1), black);
+      rail.position.set(sx * RAIL_X, HEIGHT - 0.02, midZ);
       W.add(rail);
-      for (let z = -11; z <= 10.5; z += 3.4) {
-        const zz = z + (x * 0.37) % 1.2;
-        const can = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, 0.22, 12), steel);
-        can.position.set(x, ROOM.h - 1.68, zz);
-        W.add(can);
-        const lens = new THREE.Mesh(new THREE.CircleGeometry(0.06, 16), fixture);
+      for (let z = END_Z + 1.2; z < START_Z - 0.8; z += 1.55) {
+        const can = new THREE.Group();
+        can.position.set(sx * RAIL_X, HEIGHT - 0.13, z);
+        // aimed down and toward this side's wall
+        can.rotation.z = sx * 0.6;
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.055, 0.17, 12), black);
+        can.add(body);
+        const lens = new THREE.Mesh(new THREE.CircleGeometry(0.038, 16), lensMat);
         lens.rotation.x = Math.PI / 2;
-        lens.position.set(x, ROOM.h - 1.8, zz);
-        W.add(lens);
-        const gm = new THREE.SpriteMaterial({ map: glowTex, color: 0xffe6c4, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, toneMapped: false });
+        lens.position.y = -0.087;
+        can.add(lens);
+        W.add(can);
+        const gm = new THREE.SpriteMaterial({ map: glowTex, color: 0xffe9cc, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, toneMapped: false });
         this.glows.push(gm);
         const glow = new THREE.Sprite(gm);
-        glow.scale.setScalar(0.75);
-        glow.position.set(x, ROOM.h - 1.86, zz);
+        glow.scale.setScalar(0.3);
+        glow.position.set(sx * (RAIL_X + 0.06), HEIGHT - 0.24, z);
         W.add(glow);
       }
     }
-
-    // overhead washes: soft pools on the concrete, like the reference hall
-    for (const [x, z] of [[-6, 4], [6, 4], [0, -1], [-7, -3], [7, -3], [0, 7]]) {
-      const w = new THREE.SpotLight(0xf3eadf, WASH, 0, 0.62, 1, 2);
-      w.position.set(x, ROOM.h - 1.8, z);
-      w.target.position.set(x, 0, z + 0.5);
+    // soft down-lights along the centre: pools on the floor, glints in its gloss
+    for (let z = END_Z + 3; z < START_Z - 1; z += 5) {
+      const w = new THREE.SpotLight(0xffe6c8, WASH, 0, 0.7, 1, 2);
+      w.position.set(0, HEIGHT - 0.1, z);
+      w.target.position.set(0, 0, z + 0.3);
       W.add(w, w.target);
       this.washes.push(w);
     }
 
+    // a bench and a pedestal before the end wall
+    const cushion = new THREE.Mesh(new THREE.BoxGeometry(BENCH.w, 0.12, BENCH.d), new THREE.MeshStandardMaterial({ color: 0xbfa98c, roughness: 0.85 }));
+    cushion.position.set(BENCH.x, 0.44, BENCH.z);
+    const base = new THREE.Mesh(new THREE.BoxGeometry(BENCH.w - 0.12, 0.38, BENCH.d - 0.1), new THREE.MeshStandardMaterial({ color: 0x3a281b, roughness: 0.55 }));
+    base.position.set(BENCH.x, 0.19, BENCH.z);
+    const plinth = new THREE.Mesh(new THREE.BoxGeometry(0.42, 1.05, 0.42), new THREE.MeshStandardMaterial({ color: 0x2c2420, roughness: 0.5 }));
+    plinth.position.set(2.75, 0.525, -9.6);
+    const vessel = new THREE.Mesh(new THREE.SphereGeometry(0.14, 24, 16), new THREE.MeshStandardMaterial({ color: 0x8a6a45, roughness: 0.35, metalness: 0.3 }));
+    vessel.scale.y = 1.3;
+    vessel.position.set(2.75, 1.23, -9.6);
+    W.add(cushion, base, plinth, vessel);
+
     // paintings
     const loader = new THREE.TextureLoader();
     const maxAniso = this.renderer.capabilities.getMaxAnisotropy();
-    const edge = new THREE.MeshStandardMaterial({ color: 0x1d1913, roughness: 0.8 });
-    const shadowTex = glowTexture();
+    const frameMat = new THREE.MeshStandardMaterial({ color: 0x111010, roughness: 0.4, metalness: 0.2 });
+    const labelMat = new THREE.MeshStandardMaterial({ color: 0xece6dc, roughness: 0.6 });
     await Promise.all(this.items.map(async (item, i) => {
       const map = await loader.loadAsync(item.image);
       map.colorSpace = THREE.NoColorSpace; // raw pixels, matched by the depth camera
       map.anisotropy = Math.min(8, maxAniso);
       const h = item.height, w = h * item.aspect;
+      const cy = Math.max(HANG, h / 2 + 0.4);
       const yaw = THREE.MathUtils.degToRad(item.place.yaw);
       const normal = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
       const group = new THREE.Group();
-      group.position.set(item.place.x, BASE + h / 2, item.place.z);
+      group.position.set(item.place.x, cy, item.place.z);
       group.rotation.y = yaw;
 
-      const panel = new THREE.Mesh(new THREE.BoxGeometry(w + 0.04, h + 0.04, 0.08), edge);
-      group.add(panel);
       const mat = new THREE.ShaderMaterial({
         vertexShader: paintVert, fragmentShader: paintFrag,
         uniforms: { map: { value: map }, uLit: { value: 1 }, uGlow: { value: 1 }, uToLinear: { value: 0 } },
@@ -278,28 +344,38 @@ export class Hall {
       surface.position.z = SURFACE;
       surface.userData.index = i;
       group.add(surface);
+      const back = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.02), frameMat);
+      back.position.z = SURFACE - 0.012;
+      group.add(back);
+      const bars: [number, number, number, number][] = [
+        [0, h / 2 + FRAME / 2, w + FRAME * 2, FRAME], [0, -h / 2 - FRAME / 2, w + FRAME * 2, FRAME],
+        [-w / 2 - FRAME / 2, 0, FRAME, h], [w / 2 + FRAME / 2, 0, FRAME, h],
+      ];
+      for (const [bx, by, bw, bh] of bars) {
+        const bar = new THREE.Mesh(new THREE.BoxGeometry(bw, bh, 0.05), frameMat);
+        bar.position.set(bx, by, 0.025);
+        group.add(bar);
+      }
+      // a blank wall label beside it
+      const label = new THREE.Mesh(new THREE.PlaneGeometry(0.11, 0.15), labelMat);
+      label.position.set(w / 2 + FRAME + 0.28, 1.45 - cy, 0.004);
+      group.add(label);
       W.add(group);
       this.pickables.push(surface);
 
-      // contact shadow on the floor
-      const sh = new THREE.Mesh(
-        new THREE.PlaneGeometry(w * 1.25, 1.4),
-        new THREE.MeshBasicMaterial({ map: shadowTex, color: 0x000000, transparent: true, opacity: 0.55, depthWrite: false }),
-      );
-      sh.rotation.x = -Math.PI / 2;
-      sh.position.set(0, -BASE - h / 2 + 0.005, 0.1);
-      group.add(sh);
-
-      // two ceiling spotlights per painting
-      const center = new THREE.Vector3(item.place.x, BASE + h / 2, item.place.z).addScaledVector(normal, SURFACE);
+      // two spotlights from the nearest track rail
+      const center = new THREE.Vector3(item.place.x, cy, item.place.z).addScaledVector(normal, SURFACE);
       const side = new THREE.Vector3(normal.z, 0, -normal.x);
       const lamps: THREE.SpotLight[] = [];
+      const reach = Math.max(w, h) / 2 + 0.35;
       for (const s of [-1, 1]) {
-        const lamp = new THREE.SpotLight(item.light === 'cool' ? 0xdfe8ff : 0xffd9ad, SPOT, 0, 0.42, 0.75, 2);
-        lamp.position.copy(center).addScaledVector(normal, 4.2).addScaledVector(side, s * w * 0.28);
-        lamp.position.y = ROOM.h - 1.8;
+        const lamp = new THREE.SpotLight(item.light === 'cool' ? 0xf0eeea : 0xffdcb4, SPOT, 0, 0.5, 0.65, 2);
+        const off = Math.abs(normal.x) > 0.5 ? HALF_W - RAIL_X : 2.6; // distance from the wall to the rail
+        lamp.position.copy(center).addScaledVector(normal, off).addScaledVector(side, s * w * 0.26);
+        lamp.position.y = HEIGHT - 0.2;
+        lamp.angle = Math.min(0.75, Math.atan(reach / lamp.position.distanceTo(center)) + 0.08);
         lamp.target.position.copy(center).addScaledVector(side, s * w * 0.12);
-        lamp.target.position.y -= h * 0.08;
+        lamp.target.position.y -= h * 0.06;
         W.add(lamp, lamp.target);
         lamps.push(lamp);
       }
@@ -310,7 +386,7 @@ export class Hall {
   layout(width: number, height: number, dpr: number) {
     const aspect = width / height;
     this.camera.aspect = aspect;
-    this.fov = aspect < 0.8 ? 66 : 48;
+    this.fov = aspect < 0.8 ? 68 : 54;
     const rw = Math.max(1, Math.round(width * dpr * 0.5)), rh = Math.max(1, Math.round(height * dpr * 0.5));
     this.rtReflect.setSize(rw, rh);
     this.rtA.setSize(rw, rh);
@@ -331,7 +407,7 @@ export class Hall {
   /** Where a visitor stands to take in painting i: on the floor, at eye height, a few steps back. */
   standPose(i: number, out: Pose) {
     const p = this.hung[i];
-    const d = Math.max(3.2, (Math.max(p.h, p.w / this.camera.aspect) * 1.5) / (2 * Math.tan(THREE.MathUtils.degToRad(this.fov) / 2)));
+    const d = Math.max(2.6, (Math.max(p.h, p.w / this.camera.aspect) * 1.45) / (2 * Math.tan(THREE.MathUtils.degToRad(this.fov) / 2)));
     out.pos.copy(p.center).addScaledVector(p.normal, d);
     out.pos.y = EYE;
     this.clamp(out.pos);
@@ -344,12 +420,16 @@ export class Hall {
   clamp(v: THREE.Vector3) {
     v.x = THREE.MathUtils.clamp(v.x, BOUNDS.minX, BOUNDS.maxX);
     v.z = THREE.MathUtils.clamp(v.z, BOUNDS.minZ, BOUNDS.maxZ);
+    // step around the bench
+    if (Math.abs(v.x - BENCH.x) < BENCH.w / 2 + 0.35 && Math.abs(v.z - BENCH.z) < BENCH.d / 2 + 0.35) {
+      v.z = BENCH.z + Math.sign(v.z - BENCH.z || 1) * (BENCH.d / 2 + 0.35);
+    }
     for (const p of this.hung) {
       const dx = v.x - p.center.x, dz = v.z - p.center.z;
       const along = dx * p.normal.z - dz * p.normal.x;   // sideways along the panel
       const across = dx * p.normal.x + dz * p.normal.z;  // in front (+) or behind (-)
-      if (Math.abs(along) < p.w / 2 + 0.7 && across < 1.8 && across > -1.2) {
-        const out = across > -0.2 ? 1.8 : -1.2;
+      if (Math.abs(along) < p.w / 2 + 0.5 && across < 1.4 && across > -1.2) {
+        const out = across > -0.2 ? 1.4 : -1.2;
         v.x = p.center.x + p.normal.z * along + p.normal.x * out;
         v.z = p.center.z - p.normal.x * along + p.normal.z * out;
       }
@@ -369,7 +449,7 @@ export class Hall {
     const hit = this.raycaster.intersectObjects(this.pickables, false)[0];
     if (!hit) return null;
     // the floor, or a wall: walk toward it (the walk stops inside the hall)
-    if (hit.object === this.floor || hit.object === this.shell) return { kind: 'floor', point: hit.point.clone() };
+    if (hit.object === this.floor || hit.object.userData.walk) return { kind: 'floor', point: hit.point.clone() };
     return { kind: 'painting', index: hit.object.userData.index as number };
   }
 
@@ -380,10 +460,10 @@ export class Hall {
 
   update(hover: number, dt: number) {
     const k = this.dim;
-    this.hemi.intensity = 2.2 * k;
+    this.hemi.intensity = 1.15 * k;
     for (const w of this.washes) w.intensity = WASH * k;
     for (const g of this.glows) g.opacity = 0.35 + 0.65 * k;
-    this.floorUniforms.uStrength.value = 0.62 * k;
+    this.floorUniforms.uStrength.value = 0.32 * k;
     for (let i = 0; i < this.hung.length; i++) {
       const p = this.hung[i];
       p.glow += ((i === hover ? 1 : 0) - p.glow) * Math.min(1, dt * 4);
@@ -406,12 +486,12 @@ export class Hall {
     for (const p of this.hung) p.mat.uniforms.uToLinear.value = 0;
     this.world.updateMatrixWorld(true);
     this.floor.visible = true;
-    // two separable blur passes, stretched vertically like light on polished concrete
+    // two separable blur passes, stretched vertically like light on a glossy floor
     let src: THREE.WebGLRenderTarget = this.rtReflect;
     for (let pass = 0; pass < 2; pass++) {
       for (const [dst, dir] of [[this.rtA, [1, 0]], [this.rtB, [0, 1]]] as const) {
         this.blurMat.uniforms.tMap.value = src.texture;
-        this.blurMat.uniforms.uDir.value.set((dir[0] * 0.7) / dst.width, (dir[1] * 2.6) / dst.height).multiplyScalar(1 + pass);
+        this.blurMat.uniforms.uDir.value.set((dir[0] * 0.5) / dst.width, (dir[1] * 1.8) / dst.height).multiplyScalar(1 + pass);
         r.setRenderTarget(dst);
         this.blurQuad.render(r);
         src = dst;

@@ -11,14 +11,15 @@ export interface Painting extends HallItem {
 }
 
 /**
- * One hall, two sides. Room I (oils, warm light) stands on the left; Room II
- * (drawings, cool light) on the right. Story sheets live in PLAN.md section 7.
+ * One gallery corridor. Room I (oils, warm light) hangs on the left wall, Room II
+ * (drawings, cooler light) on the right, and one of each on the end wall.
+ * Story sheets live in PLAN.md section 7.
  */
 export const collection: Painting[] = [
   // ---- Room I · Oil ----------------------------------------------------------------
   {
     slug: 'the-apprentice', title: 'The Apprentice', base: 'pieces/apprentice', image: 'pieces/apprentice/wall.webp',
-    aspect: 3312 / 2480, height: 3.1, place: { x: -11.6, z: 0.6, yaw: 78 }, light: 'warm',
+    aspect: 3312 / 2480, height: 1.75, place: { x: -3.5, z: 4.5, yaw: 90 }, light: 'warm',
     alt: 'Oil painting of a dim workshop: an old bearded master paints a Madonna at an easel while a boy grinds pigment in the shadows.',
     guide: [
       { u: 0.531, v: 0.242, h: 0.32, hold: 2 },     // the finest face in the room
@@ -30,7 +31,7 @@ export const collection: Painting[] = [
   },
   {
     slug: 'the-wings', title: 'The Wings', base: 'pieces/wings', image: 'pieces/wings/wall.webp',
-    aspect: 3504 / 2336, height: 2.9, place: { x: -9.2, z: -7.6, yaw: 42 }, light: 'warm',
+    aspect: 3504 / 2336, height: 1.6, place: { x: -3.5, z: -4.5, yaw: 90 }, light: 'warm',
     alt: 'Oil painting of a man with a splinted arm beside a wood-and-canvas flying machine on a hilltop at dawn, watched by villagers.',
     guide: [
       { u: 0.49, v: 0.565, h: 0.4, hold: 1.6 },     // the machine
@@ -42,7 +43,7 @@ export const collection: Painting[] = [
   },
   {
     slug: 'the-kept-letter', title: 'The Kept Letter', base: 'pieces/kept-letter', image: 'pieces/kept-letter/wall.webp',
-    aspect: 2480 / 3312, height: 4.3, place: { x: -3.4, z: -10.7, yaw: 8 }, light: 'warm',
+    aspect: 2480 / 3312, height: 2.25, place: { x: -1.45, z: -13, yaw: 0 }, light: 'warm',
     alt: 'Oil painting of a young woman in an oxblood velvet gown and a sheer veil, seated in a stone loggia with her hands folded on a parapet. Through the open loggia, a blue mountain landscape with a winding road.',
     guide: [
       { u: 0.41, v: 0.235, h: 0.24, hold: 2.2 },    // her eyes, turned away
@@ -55,7 +56,7 @@ export const collection: Painting[] = [
   // ---- Room II · Codex -------------------------------------------------------------
   {
     slug: 'the-reflection', title: 'The Reflection', base: 'pieces/reflection', image: 'pieces/reflection/wall.webp',
-    aspect: 2480 / 3312, height: 3.9, place: { x: 3.4, z: -10.7, yaw: -8 }, light: 'cool',
+    aspect: 2480 / 3312, height: 2.1, place: { x: 1.45, z: -13, yaw: 0 }, light: 'cool',
     alt: 'Ink drawing of optics studies: a cross-section of an eye with rays of light, mirrors, a pinhole room, and a large drawn eye.',
     guide: [
       { u: 0.56, v: 0.2, h: 0.3, hold: 1.8 },       // light entering the eye
@@ -66,7 +67,7 @@ export const collection: Painting[] = [
   },
   {
     slug: 'the-deluge', title: 'The Deluge', base: 'pieces/deluge', image: 'pieces/deluge/wall.webp',
-    aspect: 3312 / 2480, height: 3.0, place: { x: 9.2, z: -7.6, yaw: -42 }, light: 'cool',
+    aspect: 3312 / 2480, height: 1.75, place: { x: 3.5, z: 4.5, yaw: -90 }, light: 'cool',
     alt: 'Ink and wash drawing of a great storm: spiralling water and wind, collapsing hills and a bent tree.',
     guide: [
       { u: 0.16, v: 0.45, h: 0.4, hold: 1.6 },      // the tree, breaking
@@ -77,7 +78,7 @@ export const collection: Painting[] = [
   },
   {
     slug: 'study-of-a-hand', title: 'Study of a Hand', base: 'pieces/hand', image: 'pieces/hand/wall.webp',
-    aspect: 2480 / 3312, height: 3.6, place: { x: 11.6, z: 0.6, yaw: -78 }, light: 'cool',
+    aspect: 2480 / 3312, height: 2.0, place: { x: 3.5, z: -4.5, yaw: -90 }, light: 'cool',
     alt: 'Red chalk drawing of anatomical studies of an adult hand, its tendons and bones, surrounded by notes.',
     guide: [
       { u: 0.476, v: 0.32, h: 0.45, hold: 1.8 },    // tendons

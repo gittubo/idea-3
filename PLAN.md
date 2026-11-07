@@ -22,7 +22,9 @@ Following the reference photo (a dark exhibition hall with monumental paintings,
 
 **Optional guided view:** a play button inside each painting moves the camera through that painting's stops (from its story sheet) and ends on the hidden detail, then pulls back to the whole painting. It is off unless the visitor presses it. Any drag, zoom or key press hands control straight back. The stops live in `src/pieces/collection.ts`.
 
-All six paintings are explorable. "The Apprentice" and "The Wings" use a single smoothed depth layer (`"mode": "single"` in `pipeline/*.json`).
+All six paintings are explorable.
+
+**v6, the gallery corridor:** following the second reference photo, the dark hall becomes a long gallery corridor. It has dark charcoal walls, a glossy wood plank floor, and a warm cream ceiling with two black track rails of spotlights. The paintings are framed and hung along both walls: the oils on the left, the drawings on the right, and one of each on the end wall. Each has its own pool of light and a blank wall label. A bench and a pedestal stand before the end wall. Walking, exploring, the guided view and the sound are unchanged. "The Apprentice" and "The Wings" use a single smoothed depth layer (`"mode": "single"` in `pipeline/*.json`).
 
 ---
 

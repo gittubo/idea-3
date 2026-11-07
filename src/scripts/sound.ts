@@ -46,7 +46,7 @@ export class Soundscape {
 
   /** Visitor's position across the hall (metres, left negative). */
   setPosition(x: number) {
-    const side = 1 / (1 + Math.exp(-x / 3.2));
+    const side = 1 / (1 + Math.exp(-x / 1.1));
     if (!this.ctx || Math.abs(side - this.side) < 0.01) return;
     this.side = side;
     const t = this.ctx.currentTime;
