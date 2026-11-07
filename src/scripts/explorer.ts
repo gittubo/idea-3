@@ -21,7 +21,8 @@ export class Explorer {
   private goal = { zoom: 1, u: 0.5, v: 0.5 };
   private view = { zoom: 1, u: 0.5, v: 0.5 };
   private vel = new THREE.Vector2();   // pan velocity in image units per second, for inertia
-  private zRef: number;
+  private zRef: number;       // the painting's median depth
+  private zNow: number;       // depth the camera is aimed at, eased
   homeVisible = 1.18;
   aspect = 1;
   private target = new THREE.Vector3();
@@ -33,6 +34,7 @@ export class Explorer {
     for (let y = 0.1; y < 1; y += 0.1) for (let x = 0.1; x < 1; x += 0.1) ds.push(scene.depthAt(x, y));
     ds.sort((a, b) => a - b);
     this.zRef = scene.zAt(ds[Math.floor(ds.length / 2)]);
+    this.zNow = this.zRef;
   }
 
   layout(aspect: number) {
@@ -107,7 +109,7 @@ export class Explorer {
     this.stopGuide();
     this.goal.zoom = 1; this.goal.u = 0.5; this.goal.v = 0.5;
     this.vel.set(0, 0);
-    if (instant) Object.assign(this.view, this.goal);
+    if (instant) { Object.assign(this.view, this.goal); this.zNow = this.zRef; }
   }
 
   /** Drag by a number of screen pixels. */
@@ -160,7 +162,16 @@ export class Explorer {
     this.view.u += (this.goal.u - this.view.u) * k;
     this.view.v += (this.goal.v - this.view.v) * k;
 
-    const A = this.scene.aspect, K = DepthScene.K0, z = this.zRef;
+    // Aim at the depth of whatever is in the middle of the view, so a close-up of a near
+    // detail (a hand, a letter) stays centred despite parallax. Eased so panning across
+    // a depth edge never jumps; at the whole-painting view it returns to the median.
+    const span = this.span(this.view.zoom);
+    let d = 0;
+    for (let iy = -1; iy <= 1; iy++) for (let ix = -1; ix <= 1; ix++) d += this.scene.depthAt(this.view.u + ix * span.su * 0.12, this.view.v + iy * span.sv * 0.12);
+    const local = this.scene.zAt(d / 9);
+    const w = THREE.MathUtils.clamp((this.view.zoom - 1) / 1.5, 0, 1);
+    this.zNow += (this.zRef + (local - this.zRef) * w - this.zNow) * (1 - Math.exp(-dt * 3));
+    const A = this.scene.aspect, K = DepthScene.K0, z = this.zNow;
     this.target.set((this.view.u - 0.5) * A * K * z, (0.5 - this.view.v) * K * z, -z);
     const cam = this.scene.camera;
     cam.position.set(this.target.x * PARALLAX, this.target.y * PARALLAX, 0);
@@ -172,6 +183,16 @@ export class Explorer {
     this.scene.setOverscan(THREE.MathUtils.clamp((1 - this.visible) / 0.15, 0, 1));
     const moving = Math.abs(this.goal.zoom - this.view.zoom) > 1e-4 || Math.abs(this.goal.u - this.view.u) > 1e-5 || Math.abs(this.goal.v - this.view.v) > 1e-5;
     return moving;
+  }
+
+  /** Current desired view (for scripted recordings). */
+  get state() { return { ...this.goal }; }
+  /** Set the desired view directly (for scripted recordings); the view eases toward it. */
+  goTo(u: number, v: number, zoom: number) {
+    this.vel.set(0, 0);
+    this.goal.zoom = THREE.MathUtils.clamp(zoom, 1, this.maxZoom);
+    this.goal.u = u; this.goal.v = v;
+    this.clampGoal();
   }
 
   /** Home view: the whole painting, square-on (matches the hall camera's home pose). */

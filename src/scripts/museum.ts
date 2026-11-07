@@ -126,7 +126,9 @@ export async function startMuseum(entries: RoomEntry[]) {
   let vw = 0, vh = 0;
   // resolution adapts to the device: it steps down when frames run slow and back up when there is room
   const dprMax = Math.min(devicePixelRatio, small ? 1.5 : 1.75);
-  let dprNow = dprMax;
+  // ?capture: a fixed resolution and a scripting hook, for recording walkthrough videos
+  const capture = new URLSearchParams(location.search).has('capture');
+  let dprNow = capture ? 1 : dprMax;
   function resize() {
     vw = innerWidth; vh = innerHeight;
     const dpr = dprNow;
@@ -498,6 +500,36 @@ export async function startMuseum(entries: RoomEntry[]) {
   }
   threshold.addEventListener('click', () => { if (root.classList.contains('ready')) enterMuseum(); });
 
+  if (capture) {
+    root.classList.add('capture');
+    const tap = (x: number, y: number) => {
+      const r = document.createElement('div');
+      r.className = 'tap-ripple';
+      r.style.left = `${x}px`; r.style.top = `${y}px`;
+      document.body.appendChild(r);
+      setTimeout(() => r.remove(), 1100);
+    };
+    (window as any).__tuboCapture = {
+      tap,
+      enter: () => { const c = threshold.querySelector('.iris')!.getBoundingClientRect(); tap(c.left + c.width / 2, c.top + c.height / 2); enterMuseum(); },
+      step: (m: number) => { goal.pos.addScaledVector(new THREE.Vector3(-Math.sin(goal.yaw), 0, -Math.cos(goal.yaw)), m); hall.clamp(goal.pos); },
+      reset: () => ready.get(active)?.explorer.reset(),
+      view: () => ready.get(active)?.explorer.state ?? null,
+      goTo: (u: number, v: number, z: number) => ready.get(active)?.explorer.goTo(u, v, z),
+      walked: () => root.classList.add('walked'),
+      home: (i: number) => { const j = ready.get(i); if (!j) return null; const hh = vh / j.explorer.homeVisible; return { w: hh * j.scene.aspect, h: hh, x: vw / 2, y: vh / 2 }; },
+      look: (dyaw: number, dpitch = 0) => { goal.yaw += dyaw; goal.pitch = THREE.MathUtils.clamp(goal.pitch + dpitch, -0.35, 0.5); },
+      screenOf: (i: number) => hall.screenOf(i, vw, vh),
+      walkTo: (i: number) => { const p = hall.screenOf(i, vw, vh); tap(p.x, p.y); walkToPainting(i); },
+      zoomAt: (f: number, x: number, y: number) => ready.get(active)?.explorer.zoomAt(f, x, y, vw, vh),
+      panBy: (dx: number, dy: number) => ready.get(active)?.explorer.panBy(dx, dy, vw, vh),
+      guide: () => { tap(guideBtn.getBoundingClientRect().left + 22, guideBtn.getBoundingClientRect().top + 22); toggleGuide(); },
+      soundOn: () => { const b = soundBtn.getBoundingClientRect(); tap(b.left + 22, b.top + 22); showSound(true); },
+      leave: () => leave(),
+      state: () => ({ mode, active, guiding: !!ready.get(active)?.explorer.guiding, zoom: ready.get(active)?.explorer.zoom ?? 0 }),
+    };
+  }
+
   // ---- frame loop ---------------------------------------------------------------------------
   (window as any).__tuboState = () => ({ mode, active, dpr: dprNow, loaded: ready.size, pos: pose.pos.toArray().map((v) => +v.toFixed(2)), target: pose.target.toArray().map((v) => +v.toFixed(2)), fov: +pose.fov.toFixed(1), move: move && { dur: move.dur, painting: move.painting, to: move.to.pos.toArray().map((v) => +v.toFixed(2)) } });
   lookPose(pose);
@@ -513,7 +545,7 @@ export async function startMuseum(entries: RoomEntry[]) {
 
   let perfFrames = 0, perfTime = 0, perfChanged = 0;
   function adaptResolution(dtRaw: number, now: number) {
-    if (document.hidden) return;
+    if (document.hidden || capture) return;
     perfFrames++; perfTime += dtRaw;
     if (perfFrames < 45) return;
     const avg = perfTime / perfFrames;

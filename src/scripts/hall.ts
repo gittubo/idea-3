@@ -516,6 +516,12 @@ export class Hall {
     return v;
   }
 
+  /** Where painting i's centre appears on screen (pixels). */
+  screenOf(i: number, w: number, h: number) {
+    const v = this.hung[i].center.clone().project(this.camera);
+    return { x: ((v.x + 1) / 2) * w, y: ((1 - v.y) / 2) * h, inView: v.z < 1 && Math.abs(v.x) < 1 && Math.abs(v.y) < 1 };
+  }
+
   apply(pose: Pose) {
     this.camera.position.copy(pose.pos);
     this.camera.fov = pose.fov;
