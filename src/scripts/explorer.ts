@@ -154,7 +154,7 @@ export class Explorer {
       if (this.vel.length() < 0.002) this.vel.set(0, 0);
       this.clampGoal();
     }
-    const k = 1 - Math.exp(-dt * 9);
+    const k = 1 - Math.exp(-dt * 15);
     // zoom eases in log space so it feels even
     this.view.zoom = Math.exp(Math.log(this.view.zoom) + (Math.log(this.goal.zoom) - Math.log(this.view.zoom)) * k);
     this.view.u += (this.goal.u - this.view.u) * k;

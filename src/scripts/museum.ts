@@ -117,9 +117,12 @@ export async function startMuseum(entries: RoomEntry[]) {
 
   // ---- layout ------------------------------------------------------------------------
   let vw = 0, vh = 0;
+  // resolution adapts to the device: it steps down when frames run slow and back up when there is room
+  const dprMax = Math.min(devicePixelRatio, small ? 1.5 : 1.75);
+  let dprNow = dprMax;
   function resize() {
     vw = innerWidth; vh = innerHeight;
-    const dpr = Math.min(devicePixelRatio, small ? 1.75 : 2);
+    const dpr = dprNow;
     renderer.setPixelRatio(dpr);
     renderer.setSize(vw, vh, false);
     hall.layout(vw, vh, dpr);
@@ -150,7 +153,7 @@ export async function startMuseum(entries: RoomEntry[]) {
     const from = copyPose(pose, newPose());
     const dist = from.pos.distanceTo(opts.ctrl ?? to.pos) + (opts.ctrl ? opts.ctrl.distanceTo(to.pos) : 0);
     const flat = Math.hypot(to.pos.x - from.pos.x, to.pos.z - from.pos.z);
-    const dur = reduced ? 0.6 : THREE.MathUtils.clamp(dist / (opts.speed ?? 2.1) + 0.7, 1.4, 5.2);
+    const dur = reduced ? 0.6 : THREE.MathUtils.clamp(dist / (opts.speed ?? 3.2) + 0.45, 1.0, 3.6);
     move = { from, to: copyPose(to, newPose()), ctrl: opts.ctrl ?? null, start: performance.now(), dur: dur * 1000, walk: flat, stepIdx: 0, painting: opts.painting ?? -1, done: opts.done };
     mode = 'moving';
   }
@@ -230,6 +233,13 @@ export async function startMuseum(entries: RoomEntry[]) {
   function explore(i: number, j: Journey) {
     mode = 'exploring';
     active = i;
+    // only the painting being explored keeps its full layers in graphics memory
+    for (const [k, other] of ready) {
+      if (k === i) continue;
+      other.scene.dispose();
+      ready.delete(k);
+      journeys.delete(k);
+    }
     j.explorer.layout(vw / vh);
     j.explorer.reset(true);
     hall.homePose(i, j.explorer.homeVisible, pose);
@@ -483,7 +493,7 @@ export async function startMuseum(entries: RoomEntry[]) {
   threshold.addEventListener('click', () => { if (root.classList.contains('ready')) enterMuseum(); });
 
   // ---- frame loop ---------------------------------------------------------------------------
-  (window as any).__tuboState = () => ({ mode, active, pos: pose.pos.toArray().map((v) => +v.toFixed(2)), target: pose.target.toArray().map((v) => +v.toFixed(2)), fov: +pose.fov.toFixed(1), move: move && { dur: move.dur, painting: move.painting, to: move.to.pos.toArray().map((v) => +v.toFixed(2)) } });
+  (window as any).__tuboState = () => ({ mode, active, dpr: dprNow, loaded: ready.size, pos: pose.pos.toArray().map((v) => +v.toFixed(2)), target: pose.target.toArray().map((v) => +v.toFixed(2)), fov: +pose.fov.toFixed(1), move: move && { dur: move.dur, painting: move.painting, to: move.to.pos.toArray().map((v) => +v.toFixed(2)) } });
   lookPose(pose);
   let last = performance.now();
   root.classList.add('ready');
@@ -495,14 +505,26 @@ export async function startMuseum(entries: RoomEntry[]) {
   // a painting's depth layers load when the visitor hovers or walks toward it
 
 
+  let perfFrames = 0, perfTime = 0, perfChanged = 0;
+  function adaptResolution(dtRaw: number, now: number) {
+    if (document.hidden) return;
+    perfFrames++; perfTime += dtRaw;
+    if (perfFrames < 45) return;
+    const avg = perfTime / perfFrames;
+    perfFrames = 0; perfTime = 0;
+    if (avg > 0.024 && dprNow > 0.6) { dprNow = Math.max(0.6, dprNow - 0.25); perfChanged = now; resize(); }
+    else if (avg < 0.0135 && dprNow < dprMax && now - perfChanged > 4000) { dprNow = Math.min(dprMax, dprNow + 0.25); perfChanged = now; resize(); }
+  }
+
   function frame(now: number) {
+    adaptResolution((now - last) / 1000, now);
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
     renderer.setRenderTarget(null);
     renderer.clear();
 
     if (mode === 'hall') {
-      const k = 1 - Math.exp(-dt * 6);
+      const k = 1 - Math.exp(-dt * 14);
       look.pos.lerp(goal.pos, k);
       look.yaw += (goal.yaw - look.yaw) * k;
       look.pitch += (goal.pitch - look.pitch) * k;

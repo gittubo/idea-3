@@ -132,4 +132,18 @@ export class DepthScene {
   setOverscan(k: number) { for (const m of this.materials) m.uniforms.uOverscan.value = k; }
 
   render() { this.renderer.render(this.scene, this.camera); }
+
+  /** Free the layers' textures and geometry from graphics memory. */
+  dispose() {
+    this.scene.traverse((o) => {
+      const m = o as THREE.Mesh;
+      if (!m.isMesh) return;
+      m.geometry.dispose();
+      const mat = m.material as THREE.ShaderMaterial;
+      for (const u of Object.values(mat.uniforms ?? {})) if ((u as { value: unknown }).value instanceof THREE.Texture) (u as { value: THREE.Texture }).value.dispose();
+      mat.dispose();
+    });
+    this.scene.clear();
+    this.loaded = false;
+  }
 }
