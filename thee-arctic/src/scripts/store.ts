@@ -2,6 +2,7 @@
 // State lives in localStorage until a commerce backend (e.g. Shopify) is connected.
 import { garmentSvg, type Garment } from '../data/garments';
 import { formatPrice } from './currency';
+import { SUPABASE_URL, SUPABASE_KEY } from '../data/backend';
 
 export interface Item { slug: string; name: string; /** null = not priced yet */ price: number | null; garment: Garment; color: string; hex: string; img?: string }
 interface Line extends Item { size: string; qty: number }
@@ -434,12 +435,30 @@ function wireRails() {
 }
 
 function wireNewsletter() {
-  $$<HTMLFormElement>('[data-newsletter]').forEach((f) => f.addEventListener('submit', (e) => {
+  $$<HTMLFormElement>('[data-newsletter]').forEach((f) => f.addEventListener('submit', async (e) => {
     e.preventDefault();
-    // Not connected to an email provider yet: hook this up to Klaviyo/Mailchimp/Shopify Customers.
-    const msg = f.parentElement?.querySelector('[data-newsletter-msg]');
-    // Nothing is stored until a provider is connected, so say so plainly rather than confirm a sign-up.
-    if (msg) msg.textContent = "Our mailing list isn't open yet. Please check back soon.";
+    const msg = f.closest('.newsletter')?.querySelector('[data-newsletter-msg]');
+    const input = f.querySelector<HTMLInputElement>('input[type="email"]');
+    const btn = f.querySelector<HTMLButtonElement>('button[type="submit"]');
+    const email = input?.value.trim() ?? '';
+    const say = (t: string) => { if (msg) msg.textContent = t; };
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return say('Please enter a valid email address.');
+    if (btn) btn.disabled = true;
+    try {
+      // Saved to the Supabase mailing list (see src/data/backend.ts). Anyone may add an email; nobody can read the list from the site.
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/subscribers`, {
+        method: 'POST',
+        headers: { apikey: SUPABASE_KEY, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+        body: JSON.stringify({ email, source: 'footer' }),
+      });
+      if (res.ok) { say("You're on the list. We'll email you when new pieces drop."); f.reset(); }
+      else if (res.status === 409) { say("You're already on the list. Thanks!"); f.reset(); }
+      else say('Something went wrong. Please try again.');
+    } catch {
+      say('We couldn’t reach the server. Check your connection and try again.');
+    } finally {
+      if (btn) btn.disabled = false;
+    }
   }));
 }
 

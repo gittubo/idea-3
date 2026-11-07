@@ -51,12 +51,23 @@ This changes what shoppers **see**. Charging in local currency is done by the pa
 
 `src/data/shops.ts` defines the category bar (Clothing, Dresses, Shoes, Accessories, Formal Shop…) and the Trend Report edits (Leather, Tailoring, Satin & Silk, Denim) as rules over the catalog. New products appear in them automatically. Shoes and accessories are unisex, so they're listed under both Women and Men (`alsoIn` in `products.ts`).
 
+## Accounts and mailing list (Supabase, free plan)
+
+Customer accounts and the footer mailing list are stored in a free Supabase project (`thee-arctic`, London region). The site talks to it directly from the browser; there's no server of our own.
+
+- **Accounts:** `/account` handles sign up, sign in, sign out, "forgot password" and the signed-in view. Each account gets a row in `profiles` (first name, last name, email, mailing-list choice).
+- **Mailing list:** the footer form adds the address to `subscribers`. A repeat address is told it's already on the list.
+- **Security:** row-level security is on. The public key in `src/data/backend.ts` can only add an email to `subscribers` and read or update the signed-in customer's own profile. It can't read the list or anyone else's data.
+- **Where to see sign-ups:** Supabase dashboard, then Table Editor: `subscribers` and `profiles`. Authentication, then Users, lists accounts.
+- **Email confirmation is off**, because Supabase's built-in email service only sends a few emails an hour. Password-reset emails use that same service. To raise the limit, add a free SMTP provider (e.g. Resend) under Authentication, then Emails, then SMTP settings.
+- **Free plan pause:** a project with no activity for 7 days is paused. Restore it from the dashboard; no data is lost.
+
 ## Not connected yet
 
 These parts have their UI in place but need a service behind them before the store can take orders:
 
-- **Checkout and payments**: Shopify (Storefront API / Buy Button) or Stripe.
-- **Customer accounts, order tracking**: Shopify customer accounts.
+- **Checkout and payments**: Paystack or Stripe (no monthly fee; a small cut per sale).
+- **Order tracking**: needs checkout first.
 - **Product reviews**: the product page shows a reviews block with sample text. Connect Judge.me, Okendo or Yotpo before launch.
-- **Newsletter and contact form**: Klaviyo, Mailchimp or Shopify Email.
+- **Contact form**: not connected yet.
 - **Search** runs in the browser over `/search-index.json`, which is fine for a few thousand products.

@@ -2,15 +2,24 @@
 import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
 ---
-<Base title="Sign in">
-  <section class="wrap acct">
+<Base title="Account">
+  <!-- Signed out: sign in + create account -->
+  <section class="wrap acct" data-view="out">
     <div class="panel-card">
       <h1 class="display" style="font-size:clamp(36px,5vw,64px)">Sign in</h1>
-      <form class="form" data-auth>
-        <div class="field"><label for="si-email">Email</label><input id="si-email" type="email" autocomplete="email" required /></div>
-        <div class="field"><label for="si-pass">Password</label><input id="si-pass" type="password" autocomplete="current-password" required /></div>
+      <form class="form" data-signin novalidate>
+        <div class="field"><label for="si-email">Email</label><input id="si-email" name="email" type="email" autocomplete="email" required /></div>
+        <div class="field"><label for="si-pass">Password</label><input id="si-pass" name="password" type="password" autocomplete="current-password" required /></div>
+        <p class="msg" data-msg role="alert" hidden></p>
         <button class="btn block" type="submit">Sign in</button>
-        <a href="#" style="font-size:13px;text-decoration:underline">Forgot your password?</a>
+        <button class="linkish" type="button" data-show="forgot">Forgot your password?</button>
+      </form>
+      <form class="form" data-forgot hidden novalidate>
+        <p class="muted" style="margin:0">Enter your email and we'll send you a link to set a new password.</p>
+        <div class="field"><label for="fp-email">Email</label><input id="fp-email" name="email" type="email" autocomplete="email" required /></div>
+        <p class="msg" data-msg role="alert" hidden></p>
+        <button class="btn block" type="submit">Send reset link</button>
+        <button class="linkish" type="button" data-show="signin">Back to sign in</button>
       </form>
     </div>
     <div class="panel-card join">
@@ -21,30 +30,217 @@ import Icon from '../components/Icon.astro';
         <li><Icon name="star" /> Earn points on every purchase</li>
         <li><Icon name="truck" /> Track orders and returns in one place</li>
       </ul>
-      <form class="form" data-auth>
-        <div class="field"><label for="su-name">First name</label><input id="su-name" autocomplete="given-name" required /></div>
-        <div class="field"><label for="su-email">Email</label><input id="su-email" type="email" autocomplete="email" required /></div>
-        <div class="field"><label for="su-pass">Password</label><input id="su-pass" type="password" autocomplete="new-password" required minlength="8" /></div>
+      <form class="form" data-signup novalidate>
+        <div class="row2">
+          <div class="field"><label for="su-first">First name</label><input id="su-first" name="first" autocomplete="given-name" required maxlength="60" /></div>
+          <div class="field"><label for="su-last">Last name</label><input id="su-last" name="last" autocomplete="family-name" maxlength="60" /></div>
+        </div>
+        <div class="field"><label for="su-email">Email</label><input id="su-email" name="email" type="email" autocomplete="email" required /></div>
+        <div class="field"><label for="su-pass">Password</label><input id="su-pass" name="password" type="password" autocomplete="new-password" required minlength="8" /><small>At least 8 characters.</small></div>
+        <label class="check"><input type="checkbox" name="optin" checked /> Email me about new drops and offers</label>
+        <p class="msg" data-msg role="alert" hidden></p>
         <button class="btn light block" type="submit">Create account</button>
       </form>
     </div>
   </section>
-  <p class="wrap" data-auth-msg hidden style="text-align:center;color:var(--muted)">Accounts aren't connected yet. Sign-in goes live once the store is linked to Shopify customer accounts.</p>
+
+  <!-- Arrived from a reset email: choose a new password -->
+  <section class="wrap acct one" data-view="reset" hidden>
+    <div class="panel-card">
+      <h1 class="display" style="font-size:clamp(32px,4.5vw,56px)">Set a new password</h1>
+      <form class="form" data-reset novalidate>
+        <div class="field"><label for="rp-pass">New password</label><input id="rp-pass" name="password" type="password" autocomplete="new-password" required minlength="8" /><small>At least 8 characters.</small></div>
+        <p class="msg" data-msg role="alert" hidden></p>
+        <button class="btn block" type="submit">Save password</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- Signed in -->
+  <section class="wrap acct one" data-view="in" hidden>
+    <div class="panel-card">
+      <p class="eyebrow">My account</p>
+      <h1 class="display" style="font-size:clamp(36px,5vw,64px);margin:6px 0 4px">Hi, <span class="serif" data-first>there</span>.</h1>
+      <p class="muted" style="margin:0 0 24px" data-email></p>
+      <label class="check"><input type="checkbox" data-optin /> Email me about new drops and offers</label>
+      <p class="msg ok" data-saved hidden>Saved.</p>
+      <div class="acct-links">
+        <a class="btn ghost" href="/wishlist"><Icon name="heart" /> Wishlist</a>
+        <a class="btn ghost" href="/recently-viewed"><Icon name="clock" /> Recently viewed</a>
+        <a class="btn ghost" href="/new-in">Shop new in</a>
+      </div>
+      <p class="muted small">Order history appears here once checkout is live.</p>
+      <button class="btn block" type="button" data-signout>Sign out</button>
+    </div>
+  </section>
 </Base>
+
 <script>
-  document.querySelectorAll<HTMLFormElement>('[data-auth]').forEach((f) => f.addEventListener('submit', (e) => {
+  import { supabase } from '../scripts/supabase';
+
+  const $ = <T extends Element = HTMLElement>(s: string, r: ParentNode = document) => r.querySelector<T>(s)!;
+  const views = ['out', 'in', 'reset'] as const;
+  const show = (v: (typeof views)[number]) => views.forEach((k) => ($(`[data-view="${k}"]`).hidden = k !== v));
+
+  const say = (form: HTMLFormElement, text: string, ok = false) => {
+    const m = $<HTMLParagraphElement>('[data-msg]', form);
+    m.textContent = text;
+    m.classList.toggle('ok', ok);
+    m.hidden = !text;
+  };
+  const busy = (form: HTMLFormElement, on: boolean) => {
+    const b = $<HTMLButtonElement>('button[type="submit"]', form);
+    b.disabled = on;
+    b.dataset.label ??= b.textContent ?? '';
+    b.textContent = on ? 'Please wait…' : b.dataset.label;
+  };
+  const friendly = (msg: string) => {
+    if (/invalid login/i.test(msg)) return 'That email and password don’t match. Try again or reset your password.';
+    if (/already registered|already exists/i.test(msg)) return 'There’s already an account with that email. Sign in instead.';
+    if (/rate limit|too many/i.test(msg)) return 'Too many attempts. Please wait a few minutes and try again.';
+    if (/password/i.test(msg) && /characters|weak|short/i.test(msg)) return 'Please choose a password with at least 8 characters.';
+    if (/fetch|network/i.test(msg)) return 'We couldn’t reach the server. Check your connection and try again.';
+    return msg;
+  };
+  const validEmail = (s: string) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(s);
+
+  // Signed-in view
+  async function renderIn() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return show('out');
+    const { data: p } = await supabase.from('profiles').select('first_name, marketing_opt_in').eq('id', user.id).maybeSingle();
+    $('[data-first]').textContent = p?.first_name || user.user_metadata?.first_name || 'there';
+    $('[data-email]').textContent = user.email ?? '';
+    $<HTMLInputElement>('[data-optin]').checked = !!p?.marketing_opt_in;
+    show('in');
+  }
+
+  // Sign in
+  const signin = $<HTMLFormElement>('[data-signin]');
+  signin.addEventListener('submit', async (e) => {
     e.preventDefault();
-    document.querySelector('[data-auth-msg]')?.removeAttribute('hidden');
+    const fd = new FormData(signin);
+    const email = String(fd.get('email')).trim();
+    const password = String(fd.get('password'));
+    if (!validEmail(email) || !password) return say(signin, 'Enter your email and password.');
+    busy(signin, true); say(signin, '');
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    busy(signin, false);
+    if (error) return say(signin, friendly(error.message));
+    signin.reset();
+    renderIn();
+  });
+
+  // Create account
+  const signup = $<HTMLFormElement>('[data-signup]');
+  signup.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fd = new FormData(signup);
+    const first_name = String(fd.get('first')).trim();
+    const last_name = String(fd.get('last')).trim();
+    const email = String(fd.get('email')).trim();
+    const password = String(fd.get('password'));
+    if (!first_name) return say(signup, 'Please enter your first name.');
+    if (!validEmail(email)) return say(signup, 'Please enter a valid email address.');
+    if (password.length < 8) return say(signup, 'Please choose a password with at least 8 characters.');
+    busy(signup, true); say(signup, '');
+    const { data, error } = await supabase.auth.signUp({
+      email, password,
+      options: { data: { first_name, last_name, marketing_opt_in: fd.get('optin') === 'on' }, emailRedirectTo: `${location.origin}/account` },
+    });
+    busy(signup, false);
+    if (error) return say(signup, friendly(error.message));
+    // An existing email comes back with no identities and no session
+    if (data.user && data.user.identities?.length === 0) return say(signup, friendly('already registered'));
+    signup.reset();
+    if (data.session) renderIn();
+    else say(signup, 'Almost there: check your inbox to confirm your email, then sign in.', true);
+  });
+
+  // Forgot password
+  const forgot = $<HTMLFormElement>('[data-forgot]');
+  document.querySelectorAll<HTMLButtonElement>('[data-show]').forEach((b) => b.addEventListener('click', () => {
+    const toForgot = b.dataset.show === 'forgot';
+    signin.hidden = toForgot; forgot.hidden = !toForgot;
+    $<HTMLInputElement>(toForgot ? '#fp-email' : '#si-email').focus();
   }));
+  forgot.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = String(new FormData(forgot).get('email')).trim();
+    if (!validEmail(email)) return say(forgot, 'Please enter a valid email address.');
+    busy(forgot, true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${location.origin}/account` });
+    busy(forgot, false);
+    if (error) return say(forgot, friendly(error.message));
+    say(forgot, 'If there’s an account for that email, a reset link is on its way.', true);
+  });
+
+  // New password after following the reset link
+  const reset = $<HTMLFormElement>('[data-reset]');
+  reset.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const password = String(new FormData(reset).get('password'));
+    if (password.length < 8) return say(reset, 'Please choose a password with at least 8 characters.');
+    busy(reset, true);
+    const { error } = await supabase.auth.updateUser({ password });
+    busy(reset, false);
+    if (error) return say(reset, friendly(error.message));
+    history.replaceState(null, '', '/account');
+    renderIn();
+  });
+
+  // Marketing preference
+  $<HTMLInputElement>('[data-optin]').addEventListener('change', async (e) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { error } = await supabase.from('profiles').update({ marketing_opt_in: (e.target as HTMLInputElement).checked }).eq('id', user.id);
+    const s = $('[data-saved]');
+    s.textContent = error ? 'Couldn’t save that. Please try again.' : 'Saved.';
+    s.hidden = false;
+    setTimeout(() => (s.hidden = true), 2500);
+  });
+
+  // Sign out
+  $('[data-signout]').addEventListener('click', async () => {
+    await supabase.auth.signOut();
+    show('out');
+  });
+
+  let recovering = false;
+  supabase.auth.onAuthStateChange((event) => {
+    if (event === 'PASSWORD_RECOVERY') { recovering = true; show('reset'); }
+  });
+  supabase.auth.getSession().then(({ data }) => {
+    if (recovering) return;
+    if (data.session) renderIn(); else show('out');
+  });
 </script>
+
 <style>
   .acct { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding-block: 40px; }
+  .acct.one { grid-template-columns: minmax(0, 560px); justify-content: center; }
+  .acct[hidden] { display: none; }
   .panel-card { border: 1px solid var(--line); border-radius: 22px; padding: clamp(24px, 4vw, 44px); }
   .join { background: var(--deep); color: #fff; border: 0; }
   .join ul { list-style: none; padding: 0; margin: 18px 0 24px; display: grid; gap: 10px; }
   .join li { display: flex; gap: 10px; align-items: center; }
   .join li :global(svg) { width: 20px; height: 20px; }
   .join .field input { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.18); color: #fff; }
+  .join .field small, .join .check { color: rgba(255,255,255,.75); }
   .form { display: grid; gap: 14px; margin-top: 18px; }
-  @media (max-width: 800px) { .acct { grid-template-columns: 1fr; } }
+  .form[hidden] { display: none; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .field small { display: block; margin-top: 6px; font-size: 12px; color: var(--muted); }
+  .check { display: flex; gap: 10px; align-items: center; font-size: 14px; cursor: pointer; }
+  .check input { width: 18px; height: 18px; accent-color: var(--accent); }
+  .msg { margin: 0; font-size: 13.5px; color: #b3261e; }
+  .join .msg { color: #ffb4ab; }
+  .msg.ok { color: #2e7d32; }
+  .join .msg.ok { color: #a5d6a7; }
+  .linkish { background: none; border: 0; padding: 0; font: inherit; font-size: 13px; text-decoration: underline; cursor: pointer; justify-self: start; color: inherit; }
+  .muted { color: var(--muted); }
+  .small { font-size: 13px; }
+  .acct-links { display: flex; flex-wrap: wrap; gap: 10px; margin: 24px 0 8px; }
+  .acct-links :global(svg) { width: 16px; height: 16px; }
+  @media (max-width: 800px) { .acct { grid-template-columns: 1fr; } .row2 { grid-template-columns: 1fr; } }
 </style>
