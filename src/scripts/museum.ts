@@ -302,6 +302,7 @@ export async function startMuseum(entries: RoomEntry[]) {
       if (mode === 'hall') {
         const pick = hall.pick((e.clientX / vw) * 2 - 1, -(e.clientY / vh) * 2 + 1);
         hover = pick?.kind === 'painting' ? pick.index : -1;
+        if (hover >= 0) loadJourney(hover);
         root.classList.toggle('over', hover >= 0);
       }
       return;
@@ -440,8 +441,8 @@ export async function startMuseum(entries: RoomEntry[]) {
   let last = performance.now();
   root.classList.add('ready');
   if (location.hash.length > 1) setTimeout(fromHash, 300);
-  // preload every painting's layers once the hall is up
-  setTimeout(() => entries.forEach((_, i) => loadJourney(i)), 1200);
+  // a painting's depth layers load when the visitor hovers or walks toward it
+
 
   function frame(now: number) {
     const dt = Math.min(0.05, (now - last) / 1000);

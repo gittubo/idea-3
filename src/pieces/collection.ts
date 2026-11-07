@@ -19,7 +19,7 @@ export const collection: Painting[] = [
   // ---- Room I · Oil ----------------------------------------------------------------
   {
     slug: 'the-apprentice', title: 'The Apprentice', base: 'pieces/apprentice', image: 'pieces/apprentice/wall.webp',
-    aspect: 3312 / 2480, height: 1.75, place: { x: -3.5, z: 4.5, yaw: 90 }, light: 'warm',
+    aspect: 3312 / 2480, height: 1.75, place: { x: -3.5, z: 4.6, yaw: 90 }, light: 'warm',
     alt: 'Oil painting of a dim workshop: an old bearded master paints a Madonna at an easel while a boy grinds pigment in the shadows.',
     guide: [
       { u: 0.531, v: 0.242, h: 0.32, hold: 2 },     // the finest face in the room
@@ -67,7 +67,7 @@ export const collection: Painting[] = [
   },
   {
     slug: 'the-deluge', title: 'The Deluge', base: 'pieces/deluge', image: 'pieces/deluge/wall.webp',
-    aspect: 3312 / 2480, height: 1.75, place: { x: 3.5, z: 4.5, yaw: -90 }, light: 'cool',
+    aspect: 3312 / 2480, height: 1.75, place: { x: 3.5, z: 4.6, yaw: -90 }, light: 'cool',
     alt: 'Ink and wash drawing of a great storm: spiralling water and wind, collapsing hills and a bent tree.',
     guide: [
       { u: 0.16, v: 0.45, h: 0.4, hold: 1.6 },      // the tree, breaking
@@ -85,6 +85,77 @@ export const collection: Painting[] = [
       { u: 0.83, v: 0.25, h: 0.3, hold: 1.4 },      // bones
       { u: 0.2, v: 0.75, h: 0.3, hold: 1.4 },       // a grip
       { u: 0.905, v: 0.875, h: 0.1, hold: 3.5 },    // a child's hand, holding on
+    ],
+  },
+  // ---- Room I · Oil, more of the left wall ------------------------------------------
+  {
+    slug: 'the-lute-player', title: 'The Lute Player', base: 'pieces/lute', image: 'pieces/lute/wall.webp',
+    aspect: 2480 / 3312, height: 2.0, place: { x: -3.5, z: 9.4, yaw: 90 }, light: 'warm',
+    alt: 'Oil painting of a young man in a green doublet playing a lute, glancing toward a half-open door, an open music book before him.',
+    guide: [
+      { u: 0.486, v: 0.2, h: 0.25, hold: 2 },       // his eyes, turned to the door
+      { u: 0.13, v: 0.31, h: 0.35, hold: 1.6 },     // the door, and its light
+      { u: 0.8, v: 0.47, h: 0.25, hold: 1.6 },      // his hands, mid-song
+      { u: 0.19, v: 0.69, h: 0.3, hold: 1.4 },      // the music
+      { u: 0.275, v: 0.695, h: 0.1, hold: 3.5 },    // a dried rose, kept between the pages
+    ],
+  },
+  {
+    slug: 'the-cartographer', title: 'The Cartographer', base: 'pieces/cartographer', image: 'pieces/cartographer/wall.webp',
+    aspect: 3312 / 2480, height: 1.75, place: { x: -3.5, z: 0, yaw: 90 }, light: 'warm',
+    alt: 'Oil painting of an old bearded cartographer measuring a sea chart by candlelight, a globe and instruments around him, a harbour at dusk through the window.',
+    guide: [
+      { u: 0.445, v: 0.35, h: 0.3, hold: 1.8 },     // the old man
+      { u: 0.39, v: 0.58, h: 0.25, hold: 1.6 },     // his dividers
+      { u: 0.85, v: 0.23, h: 0.3, hold: 1.8 },      // the harbour, the ships
+      { u: 0.64, v: 0.8, h: 0.3, hold: 1.4 },       // the open sea
+      { u: 0.763, v: 0.7, h: 0.07, hold: 3.5 },     // one island, one house, smoke from its chimney
+    ],
+  },
+  {
+    slug: 'the-vigil', title: 'The Vigil', base: 'pieces/vigil', image: 'pieces/vigil/wall.webp',
+    aspect: 3504 / 2336, height: 1.55, place: { x: -3.5, z: -9.3, yaw: 90 }, light: 'warm',
+    alt: 'Oil painting of a young mother keeping watch at night beside her sleeping child, a candle burned low on the table.',
+    guide: [
+      { u: 0.48, v: 0.22, h: 0.25, hold: 2 },       // the mother
+      { u: 0.18, v: 0.45, h: 0.25, hold: 2 },       // the sleeping child
+      { u: 0.38, v: 0.49, h: 0.2, hold: 1.6 },      // her hand on his
+      { u: 0.07, v: 0.53, h: 0.18, hold: 2 },       // the candle, nearly gone
+      { u: 0.87, v: 0.42, h: 0.3, hold: 3.5 },      // dawn, through the shutter
+    ],
+  },
+  // ---- Room II · Codex, more of the right wall -------------------------------------
+  {
+    slug: 'the-flying-machine', title: 'The Flying Machine', base: 'pieces/flying', image: 'pieces/flying/wall.webp',
+    aspect: 2480 / 3312, height: 2.0, place: { x: 3.5, z: 9.4, yaw: -90 }, light: 'cool',
+    alt: 'Ink design for a mechanical bat-like wing with ribs, cords, gears and a crank, surrounded by smaller diagrams and notes.',
+    guide: [
+      { u: 0.44, v: 0.48, h: 0.5, hold: 1.8 },      // the wing
+      { u: 0.19, v: 0.6, h: 0.25, hold: 1.6 },      // the crank and gears
+      { u: 0.69, v: 0.09, h: 0.2, hold: 1.4 },      // a wheel
+      { u: 0.44, v: 0.28, h: 0.12, hold: 3.5 },     // a sparrow, showing how it is done
+    ],
+  },
+  {
+    slug: 'study-of-horses', title: 'Study of Horses', base: 'pieces/horses', image: 'pieces/horses/wall.webp',
+    aspect: 3312 / 2480, height: 1.75, place: { x: 3.5, z: 0, yaw: -90 }, light: 'cool',
+    alt: 'Red chalk sheet of studies of war horses: a rearing horse, heads, legs and a gallop.',
+    guide: [
+      { u: 0.555, v: 0.19, h: 0.3, hold: 1.8 },     // the war horse
+      { u: 0.84, v: 0.21, h: 0.25, hold: 1.4 },     // galloping
+      { u: 0.77, v: 0.5, h: 0.35, hold: 1.4 },      // legs, measured
+      { u: 0.156, v: 0.83, h: 0.22, hold: 3.5 },    // a foal asleep against its mother
+    ],
+  },
+  {
+    slug: 'study-of-faces', title: 'Study of Faces', base: 'pieces/faces', image: 'pieces/faces/wall.webp',
+    aspect: 2480 / 3312, height: 2.0, place: { x: 3.5, z: -9.3, yaw: -90 }, light: 'cool',
+    alt: 'Ink sheet crowded with caricature heads of old men and women, laughing and sneering, all turned to the centre.',
+    guide: [
+      { u: 0.5, v: 0.8, h: 0.4, hold: 1.6 },        // laughter
+      { u: 0.3, v: 0.37, h: 0.18, hold: 1.6 },      // mockery
+      { u: 0.5, v: 0.3, h: 0.5, hold: 1.4 },        // all turned to the middle
+      { u: 0.5, v: 0.38, h: 0.12, hold: 3.5 },      // the one face that is not laughing
     ],
   },
 ];

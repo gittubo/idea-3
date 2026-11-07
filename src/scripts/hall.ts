@@ -46,7 +46,7 @@ const HEIGHT = 4.3;
 const RAIL_X = 1.3;
 export const BOUNDS = { minX: -2.6, maxX: 2.6, minZ: -11.4, maxZ: 11.8 };
 const BENCH = { x: 0, z: -8, w: 2.1, d: 0.62 };
-const SPOT = 46;                // candela per painting spotlight
+const SPOT = 70;                // candela per painting spotlight
 const WASH = 14;                // down-lights along the corridor
 
 const paintVert = /* glsl */ `
@@ -299,7 +299,7 @@ export class Hall {
       }
     }
     // soft down-lights along the centre: pools on the floor, glints in its gloss
-    for (let z = END_Z + 3; z < START_Z - 1; z += 5) {
+    for (let z = END_Z + 4; z < START_Z - 1; z += 8) {
       const w = new THREE.SpotLight(0xffe6c8, WASH, 0, 0.7, 1, 2);
       w.position.set(0, HEIGHT - 0.1, z);
       w.target.position.set(0, 0, z + 0.3);
@@ -313,10 +313,10 @@ export class Hall {
     const base = new THREE.Mesh(new THREE.BoxGeometry(BENCH.w - 0.12, 0.38, BENCH.d - 0.1), new THREE.MeshStandardMaterial({ color: 0x3a281b, roughness: 0.55 }));
     base.position.set(BENCH.x, 0.19, BENCH.z);
     const plinth = new THREE.Mesh(new THREE.BoxGeometry(0.42, 1.05, 0.42), new THREE.MeshStandardMaterial({ color: 0x2c2420, roughness: 0.5 }));
-    plinth.position.set(2.75, 0.525, -9.6);
+    plinth.position.set(0, 0.525, -12.2);
     const vessel = new THREE.Mesh(new THREE.SphereGeometry(0.14, 24, 16), new THREE.MeshStandardMaterial({ color: 0x8a6a45, roughness: 0.35, metalness: 0.3 }));
     vessel.scale.y = 1.3;
-    vessel.position.set(2.75, 1.23, -9.6);
+    vessel.position.set(0, 1.23, -12.2);
     W.add(cushion, base, plinth, vessel);
 
     // paintings
@@ -368,12 +368,12 @@ export class Hall {
       const side = new THREE.Vector3(normal.z, 0, -normal.x);
       const lamps: THREE.SpotLight[] = [];
       const reach = Math.max(w, h) / 2 + 0.35;
-      for (const s of [-1, 1]) {
+      for (const s of [0]) { // one lamp per painting keeps twelve paintings fast on phones
         const lamp = new THREE.SpotLight(item.light === 'cool' ? 0xf0eeea : 0xffdcb4, SPOT, 0, 0.5, 0.65, 2);
         const off = Math.abs(normal.x) > 0.5 ? HALF_W - RAIL_X : 2.6; // distance from the wall to the rail
         lamp.position.copy(center).addScaledVector(normal, off).addScaledVector(side, s * w * 0.26);
         lamp.position.y = HEIGHT - 0.2;
-        lamp.angle = Math.min(0.75, Math.atan(reach / lamp.position.distanceTo(center)) + 0.08);
+        lamp.angle = Math.min(0.85, Math.atan(reach / lamp.position.distanceTo(center)) + 0.1);
         lamp.target.position.copy(center).addScaledVector(side, s * w * 0.12);
         lamp.target.position.y -= h * 0.06;
         W.add(lamp, lamp.target);

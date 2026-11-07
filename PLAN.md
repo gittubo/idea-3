@@ -22,7 +22,7 @@ Following the reference photo (a dark exhibition hall with monumental paintings,
 
 **Optional guided view:** a play button inside each painting moves the camera through that painting's stops (from its story sheet) and ends on the hidden detail, then pulls back to the whole painting. It is off unless the visitor presses it. Any drag, zoom or key press hands control straight back. The stops live in `src/pieces/collection.ts`.
 
-All six paintings are explorable.
+All twelve paintings are explorable.
 
 **v6, the gallery corridor:** following the second reference photo, the dark hall becomes a long gallery corridor. It has dark charcoal walls, a glossy wood plank floor, and a warm cream ceiling with two black track rails of spotlights. The paintings are framed and hung along both walls: the oils on the left, the drawings on the right, and one of each on the end wall. Each has its own pool of light and a blank wall label. A bench and a pedestal stand before the end wall. Walking, exploring, the guided view and the sound are unchanged. "The Apprentice" and "The Wings" use a single smoothed depth layer (`"mode": "single"` in `pipeline/*.json`).
 
@@ -176,6 +176,38 @@ Each piece has a hidden detail the camera finds. The story is never written on t
 - It is the last piece in the museum, ending on looking itself, which echoes the Tubo lens.
 
 ---
+
+### Added in v7: six more pieces to fill the corridor walls
+
+**7. The Lute Player** (oil, left wall)
+- *The painting:* a young man in a green doublet, playing a lute in a dim room.
+- *Camera stops:* his eyes turned to a half-open door → the light from the door → his hands, mid-song → the music → **a dried rose pressed between the pages.**
+- *Meaning:* he plays for someone who is gone.
+
+**8. The Cartographer** (oil, left wall)
+- *The painting:* an old map-maker measuring a sea chart by candlelight, a harbour at dusk through the window.
+- *Camera stops:* the old man → his dividers → the harbour and its ships → the open sea on the chart → **one tiny island, drawn with more care than anything else: a little house with smoke from its chimney.**
+- *Meaning:* he mapped the whole world and never sailed home.
+
+**9. The Vigil** (oil, left wall)
+- *The painting:* a young mother keeping watch at night by her sleeping child.
+- *Camera stops:* the mother → the sleeping child → her hand on his → the candle, nearly burnt out → **a sliver of dawn through the shutter.**
+- *Meaning:* the night is over, and the child is still breathing.
+
+**10. The Flying Machine** (drawing, right wall)
+- *The painting:* an ink design for a mechanical wing.
+- *Camera stops:* the wing → the crank and gears → a wheel → **a real sparrow perched on the machine, its own wing half open.**
+- *Meaning:* the answer was sitting on the design all along.
+
+**11. Study of Horses** (drawing, right wall)
+- *The painting:* a red-chalk sheet of rearing war horses.
+- *Camera stops:* the war horse → a gallop → measured legs → **a foal asleep against its mother.**
+- *Meaning:* behind every war horse, a foal.
+
+**12. Study of Faces** (drawing, right wall)
+- *The painting:* a sheet of caricature heads, laughing and sneering, all turned to the centre.
+- *Camera stops:* laughter → mockery → everyone turned to the middle → **the one face that is not laughing.**
+- *Meaning:* who the crowd is laughing at.
 
 ## 8. Sound
 
