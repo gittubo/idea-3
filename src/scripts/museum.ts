@@ -88,6 +88,13 @@ export async function startMuseum(entries: RoomEntry[]) {
   function loadJourney(i: number): Promise<Journey> {
     let p = journeys.get(i);
     if (!p) {
+      // keep graphics memory to one painting: release every other painting's layers first
+      for (const [k, other] of ready) {
+        if (k === i) continue;
+        other.scene.dispose();
+        ready.delete(k);
+        journeys.delete(k);
+      }
       const base = entries[i].base;
       p = (async () => {
         const meta: PieceMeta = await fetch(`${base}/layers.json`).then((r) => r.json());
@@ -313,7 +320,6 @@ export async function startMuseum(entries: RoomEntry[]) {
       if (mode === 'hall') {
         const pick = hall.pick((e.clientX / vw) * 2 - 1, -(e.clientY / vh) * 2 + 1);
         hover = pick?.kind === 'painting' ? pick.index : -1;
-        if (hover >= 0) loadJourney(hover);
         root.classList.toggle('over', hover >= 0);
       }
       return;
@@ -502,7 +508,7 @@ export async function startMuseum(entries: RoomEntry[]) {
     enterMuseum(true);
     setTimeout(fromHash, 300);
   }
-  // a painting's depth layers load when the visitor hovers or walks toward it
+  // a painting's depth layers load when the visitor walks toward it, one painting at a time
 
 
   let perfFrames = 0, perfTime = 0, perfChanged = 0;
