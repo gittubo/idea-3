@@ -40,20 +40,63 @@ const faqs = [
     </section>
     <section id="contact">
       <h2 class="h2">Contact us</h2>
-      <p>Our team replies within 24 hours, 7 days a week.</p>
-      <form class="contact" onsubmit="event.preventDefault(); this.querySelector('.note').hidden = false;">
-        <div class="field"><label for="c-name">Name</label><input id="c-name" required /></div>
-        <div class="field"><label for="c-email">Email</label><input id="c-email" type="email" required /></div>
-        <div class="field" style="grid-column:1/-1"><label for="c-msg">Message</label><textarea id="c-msg" required></textarea></div>
+      <p>Send us a message and we'll reply by email.</p>
+      <form class="contact" data-contact novalidate>
+        <div class="field"><label for="c-name">Name</label><input id="c-name" name="name" autocomplete="name" required maxlength="100" /></div>
+        <div class="field"><label for="c-email">Email</label><input id="c-email" name="email" type="email" autocomplete="email" required maxlength="254" /></div>
+        <div class="field"><label for="c-topic">Topic</label>
+          <select id="c-topic" name="topic">
+            <option>General question</option>
+            <option>Sizing and fit</option>
+            <option>Order or delivery</option>
+            <option>Returns and exchanges</option>
+            <option>Wholesale or press</option>
+            <option>Something else</option>
+          </select>
+        </div>
+        <div class="field"><label for="c-order">Order number <span class="opt">(optional)</span></label><input id="c-order" name="order" maxlength="40" /></div>
+        <div class="field" style="grid-column:1/-1"><label for="c-msg">Message</label><textarea id="c-msg" name="message" required maxlength="5000" rows="5"></textarea></div>
         <button class="btn" type="submit">Send message</button>
-        <p class="note" hidden>The contact form isn't connected to an inbox yet.</p>
+        <p class="note" data-contact-msg role="status" aria-live="polite" hidden></p>
       </form>
     </section>
     <section id="privacy"><h2 class="h2">Privacy</h2><p>Your privacy policy goes here.</p></section>
     <section id="terms"><h2 class="h2">Terms</h2><p>Your terms of service go here.</p></section>
-    <section id="promo-terms"><h2 class="h2">Promo terms</h2><p>Terms for promotions and discount codes go here.</p></section>
   </div>
 </Base>
+<script>
+  import { SUPABASE_URL, SUPABASE_KEY } from '../data/backend';
+
+  // Messages are saved to the Supabase "messages" table (see the README). Visitors can send but never read them.
+  const form = document.querySelector<HTMLFormElement>('[data-contact]');
+  const note = form?.querySelector<HTMLParagraphElement>('[data-contact-msg]');
+  const say = (t: string, ok = false) => { if (!note) return; note.textContent = t; note.classList.toggle('ok', ok); note.hidden = false; };
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fd = new FormData(form);
+    const get = (k: string) => String(fd.get(k) ?? '').trim();
+    const body = { name: get('name'), email: get('email'), topic: get('topic'), order_number: get('order') || null, message: get('message') };
+    if (!body.name) return say('Please enter your name.');
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(body.email)) return say('Please enter a valid email address.');
+    if (!body.message) return say('Please write a message.');
+    const btn = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+    btn.disabled = true; btn.textContent = 'Sending…';
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/messages`, {
+        method: 'POST',
+        headers: { apikey: SUPABASE_KEY, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      form.reset();
+      say(`Thanks, ${body.name.split(' ')[0]}. Your message has been sent and we'll reply to ${body.email}.`, true);
+    } catch {
+      say('Your message couldn’t be sent. Please check your connection and try again.');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Send message';
+    }
+  });
+</script>
 <style>
   .quick-help { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 32px; }
   .quick-help a { background: var(--stone-1); border-radius: 16px; padding: 22px; display: grid; gap: 10px; transition: background .2s; }
@@ -65,6 +108,9 @@ const faqs = [
   .help p { color: var(--ink-2); }
   .track, .contact { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: end; }
   .track .btn, .contact .btn { justify-self: start; }
+  .note.ok { border-left-color: #2e7d32; }
+  .opt { font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--muted); }
+  .contact select { width: 100%; }
   .note { font-size: 13px; background: var(--stone-2); border-left: 3px solid var(--accent); padding: 10px 12px; border-radius: 10px; }
   .faq { border-bottom: 1px solid var(--line); }
   .faq summary { cursor: pointer; padding: 16px 0; font-weight: 600; list-style: none; display: flex; justify-content: space-between; }

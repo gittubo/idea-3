@@ -57,7 +57,6 @@ const completeLook = inDept(p.dept).filter((x) => x.category !== p.category).fil
               ? <span class="tba">Price coming soon</span>
               : p.salePrice && p.price ? <><span class="now"><span data-usd={p.salePrice}>{money(p.salePrice)}</span></span><s><span data-usd={p.price}>{money(p.price)}</span></s><span class="badge sale">Save {discount(p)}%</span></> : <span><span data-usd={price}>{money(price)}</span></span>}
           </div>
-          {price !== undefined && <p class="klarna">or 4 interest-free payments of <strong><span data-usd={price / 4}>{money(price / 4)}</span></strong> with Klarna / Afterpay</p>}
 
           {p.colors.length > 0 && (
             <>
@@ -170,7 +169,6 @@ const completeLook = inDept(p.dept).filter((x) => x.category !== p.category).fil
   .buy { position: sticky; top: calc(var(--header-h) + var(--catbar-h) + 16px); }
   .pname { font-family: var(--display); font-weight: 560; letter-spacing: -0.03em;  font-size: clamp(26px, 2.8vw, 40px); line-height: 1; margin: 8px 0 10px; }
   .price.big { font-size: 22px; margin: 14px 0 4px; align-items: center; }
-  .klarna { font-size: 13px; color: var(--muted); margin: 0 0 22px; }
   .opt-head { display: flex; justify-content: space-between; align-items: center; font-size: 14px; margin: 18px 0 10px; }
   .sg { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; }
   .sg :global(svg) { width: 18px; height: 18px; }

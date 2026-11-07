@@ -135,7 +135,6 @@ function renderCartPage() {
   $('[data-sum-sub]', sum)!.innerHTML = money(sub);
   $('[data-sum-ship]', sum)!.innerHTML = ship ? money(ship) : 'Free';
   $('[data-sum-total]', sum)!.innerHTML = money(sub + ship);
-  $('[data-sum-klarna]', sum)!.innerHTML = money((sub + ship) / 4);
 }
 
 /* ---------- Wishlist ---------- */

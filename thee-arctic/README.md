@@ -57,8 +57,9 @@ Customer accounts and the footer mailing list are stored in a free Supabase proj
 
 - **Accounts:** `/account` handles sign up, sign in, sign out, "forgot password" and the signed-in view. Each account gets a row in `profiles` (first name, last name, email, mailing-list choice).
 - **Mailing list:** the footer form adds the address to `subscribers`. A repeat address is told it's already on the list.
+- **Contact form:** the Help Centre form (`/help#contact`) saves name, email, topic, optional order number and message to `messages`. Visitors can send but never read messages.
 - **Security:** row-level security is on. The public key in `src/data/backend.ts` can only add an email to `subscribers` and read or update the signed-in customer's own profile. It can't read the list or anyone else's data.
-- **Where to see sign-ups:** Supabase dashboard, then Table Editor: `subscribers` and `profiles`. Authentication, then Users, lists accounts.
+- **Where to see sign-ups and messages:** Supabase dashboard, then Table Editor: `subscribers`, `profiles` and `messages`. Authentication, then Users, lists accounts.
 - **Email confirmation is off**, because Supabase's built-in email service only sends a few emails an hour. Password-reset emails use that same service. To raise the limit, add a free SMTP provider (e.g. Resend) under Authentication, then Emails, then SMTP settings.
 - **Free plan pause:** a project with no activity for 7 days is paused. Restore it from the dashboard; no data is lost.
 
@@ -69,5 +70,5 @@ These parts have their UI in place but need a service behind them before the sto
 - **Checkout and payments**: Paystack or Stripe (no monthly fee; a small cut per sale).
 - **Order tracking**: needs checkout first.
 - **Product reviews**: the product page shows a reviews block with sample text. Connect Judge.me, Okendo or Yotpo before launch.
-- **Contact form**: not connected yet.
+- **Payment logos, Klarna and promo codes** are hidden until checkout exists; the bag's Checkout button shows "Coming soon".
 - **Search** runs in the browser over `/search-index.json`, which is fine for a few thousand products.

@@ -13,36 +13,18 @@ import Icon from '../components/Icon.astro';
       <h2 class="h2" style="font-size:22px">Order summary</h2>
       <div class="row"><span>Subtotal</span><span data-sum-sub></span></div>
       <div class="row"><span>Shipping</span><span data-sum-ship></span></div>
-      <form class="promo" onsubmit="event.preventDefault(); this.querySelector('small').textContent = 'Promo codes apply at checkout.';">
-        <label class="sr-only" for="promo">Promo code</label>
-        <input id="promo" placeholder="Promo code" />
-        <button class="btn ghost" type="submit" style="height:44px">Apply</button>
-        <small></small>
-      </form>
       <div class="row total"><span>Total</span><span data-sum-total></span></div>
       <p class="kl" data-currency-note hidden></p>
-      <p class="kl">or 4 payments of <strong data-sum-klarna></strong> with Klarna / Afterpay</p>
-      <button class="btn block" type="button" data-checkout><Icon name="lock" /> Secure checkout</button>
-      <p class="pending" data-checkout-msg hidden>Checkout isn't connected yet. Payments go live once the store is linked to Shopify or Stripe.</p>
-      <div class="pay"><span>VISA</span><span>MC</span><span>AMEX</span><span>PAYPAL</span><span>APPLE PAY</span></div>
+      <button class="btn block" type="button" disabled aria-describedby="checkout-soon"><Icon name="lock" /> Checkout <span class="soon on-dark">Coming soon</span></button>
+      <p class="pending" id="checkout-soon">Online checkout is coming soon. Your bag is saved on this device until then.</p>
     </aside>
   </section>
 </Base>
-<script>
-  document.querySelector('[data-checkout]')?.addEventListener('click', () => {
-    document.querySelector('[data-checkout-msg]')?.removeAttribute('hidden');
-  });
-</script>
 <style>
   .bag { display: grid; grid-template-columns: 1fr 380px; gap: 40px; align-items: start; }
   .summary { position: sticky; top: calc(var(--header-h) + var(--catbar-h) + 16px); background: var(--stone-1); border-radius: 18px; padding: 24px; display: grid; gap: 14px; }
   .total { font-size: 18px; font-weight: 800; border-top: 1px solid var(--line); padding-top: 14px; }
-  .promo { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
-  .promo input { height: 44px; border: 1px solid var(--line); border-radius: 999px; padding-inline: 16px; background: #fff; min-width: 0; }
-  .promo small { grid-column: 1 / -1; color: var(--muted); }
   .kl { font-size: 13px; color: var(--muted); margin: 0; }
   .pending { font-size: 13px; background: var(--stone-2); border-left: 3px solid var(--accent); padding: 10px 12px; border-radius: 10px; margin: 0; }
-  .pay { display: flex; gap: 6px; flex-wrap: wrap; }
-  .pay span { font-size: 10px; font-weight: 700; padding: 4px 7px; border-radius: 5px; background: #fff; border: 1px solid var(--line); color: var(--ink-2); box-shadow: none; }
   @media (max-width: 900px) { .bag { grid-template-columns: 1fr; } .summary { position: static; } }
 </style>
