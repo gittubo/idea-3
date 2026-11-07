@@ -1,0 +1,7 @@
+{
+  "mode": "single", "blur": 14,
+  "t_far": 0.15, "t_near": 0.4, "edge": 0.03,
+  "z": {"far": 6.0, "near": 2.4},
+  "webp_q": 88,
+  "pad": 0.07
+}
