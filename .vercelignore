@@ -1,0 +1,9 @@
+# Only what the site build needs is uploaded to Vercel.
+art/
+pipeline/
+preview/
+brand/
+dist/
+node_modules/
+tools/
+*.md

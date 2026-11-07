@@ -16,6 +16,10 @@ Node 20 or newer.
 
 ## Deploy to Vercel
 
+Live: **https://tubo-ten.vercel.app** (Vercel project `tubo`).
+
+`.vercelignore` keeps the full-size source paintings, the pipeline and local previews out of the upload.
+
 The repository is ready for Vercel. `vercel.json` sets the Astro build, the `dist/` output, and cache headers.
 
 **From the Vercel dashboard (no token needed):**
