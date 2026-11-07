@@ -1,14 +1,17 @@
 ---
 import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
+// Policy answers are placeholders until the real shipping and returns policies are written.
+const SOON = 'Coming soon. We\'re finalising this policy and will publish it here before checkout opens.';
 const faqs = [
-  ['How long does shipping take?', 'Standard shipping takes 3–7 business days in the US. Express takes 1–3 business days. International orders take 7–14 business days.'],
-  ['How much is shipping?', 'Standard shipping is free on orders over $75, otherwise $7.95. Express shipping is $14.95.'],
-  ['What is your return policy?', 'Return unworn, unwashed items with tags within 30 days for a full refund or exchange. Final-sale items and beauty products that have been opened cannot be returned.'],
-  ['How do I exchange a size?', 'Start a return from your account and choose “Exchange”. We ship the new size as soon as your return is scanned.'],
-  ['Can I change or cancel my order?', 'We process orders fast. Contact us within 1 hour of placing your order and we will do our best to help.'],
-  ['Do you ship internationally?', 'Yes, we ship to over 100 countries. Duties and taxes are calculated at checkout.'],
-  ['How do I use a promo code?', 'Enter your code at checkout. Only one promo code can be used per order.'],
+  ['How long does shipping take?', SOON],
+  ['How much is shipping?', SOON],
+  ['What is your return policy?', SOON],
+  ['How do I exchange a size?', SOON],
+  ['Can I change or cancel my order?', SOON],
+  ['Do you ship internationally?', SOON],
+  ['How do I use a promo code?', SOON],
+  ['Have a question that isn\'t answered here?', 'Send us a message using the contact form below and we\'ll reply by email.'],
 ];
 ---
 <Base title="Help Centre">
@@ -27,8 +30,8 @@ const faqs = [
       <h2 class="h2">Track my order <span class="soon">Coming soon</span></h2>
       <p class="note">Online order tracking is coming soon, along with checkout.</p>
     </section>
-    <section id="shipping"><h2 class="h2">Shipping</h2><p>Free standard shipping on US orders over $75. Orders placed before 2pm ET ship the same business day.</p></section>
-    <section id="returns"><h2 class="h2">Returns &amp; exchanges</h2><p>30 days to return or exchange unworn items with tags attached. Refunds go back to your original payment method within 5–10 business days of us receiving your return.</p></section>
+    <section id="shipping"><h2 class="h2">Shipping <span class="soon">Coming soon</span></h2><p class="note">Shipping rates and delivery times will be published here before checkout opens.</p></section>
+    <section id="returns"><h2 class="h2">Returns &amp; exchanges <span class="soon">Coming soon</span></h2><p class="note">Our returns and exchanges policy will be published here before checkout opens.</p></section>
     <section id="sizing">
       <h2 class="h2">Size guide</h2>
       <p>Body measurements in inches. Between sizes? Size up for a relaxed fit.</p>
@@ -60,8 +63,8 @@ const faqs = [
         <p class="note" data-contact-msg role="status" aria-live="polite" hidden></p>
       </form>
     </section>
-    <section id="privacy"><h2 class="h2">Privacy</h2><p>Your privacy policy goes here.</p></section>
-    <section id="terms"><h2 class="h2">Terms</h2><p>Your terms of service go here.</p></section>
+    <section id="privacy"><h2 class="h2">Privacy <span class="soon">Coming soon</span></h2><p class="note">Our privacy policy will be published here soon.</p></section>
+    <section id="terms"><h2 class="h2">Terms <span class="soon">Coming soon</span></h2><p class="note">Our terms of service will be published here soon.</p></section>
   </div>
 </Base>
 <script>

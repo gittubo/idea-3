@@ -12,8 +12,8 @@ import Icon from '../components/Icon.astro';
     <aside class="summary" data-cart-page-summary hidden>
       <h2 class="h2" style="font-size:22px">Order summary</h2>
       <div class="row"><span>Subtotal</span><span data-sum-sub></span></div>
-      <div class="row"><span>Shipping</span><span data-sum-ship></span></div>
-      <div class="row total"><span>Total</span><span data-sum-total></span></div>
+      <div class="row"><span>Shipping</span><span class="soon">Coming soon</span></div>
+      <div class="row total"><span>Total before shipping</span><span data-sum-total></span></div>
       <p class="kl" data-currency-note hidden></p>
       <button class="btn block" type="button" disabled aria-describedby="checkout-soon"><Icon name="lock" /> Checkout <span class="soon on-dark">Coming soon</span></button>
       <p class="pending" id="checkout-soon">Online checkout is coming soon. Your bag is saved on this device until then.</p>

@@ -7,7 +7,6 @@ import { SUPABASE_URL, SUPABASE_KEY } from '../data/backend';
 export interface Item { slug: string; name: string; /** null = not priced yet */ price: number | null; garment: Garment; color: string; hex: string; img?: string }
 interface Line extends Item { size: string; qty: number }
 
-const FREE_SHIP = 75;
 const $ = <T extends Element = HTMLElement>(s: string, r: ParentNode = document) => r.querySelector<T>(s);
 const $$ = <T extends Element = HTMLElement>(s: string, r: ParentNode = document) => Array.from(r.querySelectorAll<T>(s));
 // Prices are stored in USD; data-usd lets the currency layer repaint them when the shopper switches currency
@@ -93,27 +92,18 @@ function lineHtml(l: Line, i: number) {
   </div>`;
 }
 
-function shipMeter() {
-  const left = FREE_SHIP - subtotal();
-  const pct = Math.min(100, (subtotal() / FREE_SHIP) * 100);
-  const msg = left > 0 ? `You're <strong>${money(left)}</strong> away from free shipping` : '<strong>You\'ve unlocked free shipping</strong>';
-  return `${msg}<div class="track"><div class="fill" style="width:${pct}%"></div></div>`;
-}
-
 function renderCart() {
   const lines = $('[data-cart-lines]');
   if (!lines) return;
   const foot = $('[data-cart-foot]')!;
-  const meter = $('[data-ship-meter]')!;
   const label = $('[data-cart-count-text]');
   if (label) label.textContent = units() ? `(${units()})` : '';
   if (!cart.length) {
     lines.innerHTML = `<div class="empty"><p style="margin:0;font-weight:600;color:var(--ink)">Your bag is empty</p><p style="margin:0">Start with something new.</p><a class="btn" href="/new-in">Shop new in</a></div>`;
-    foot.hidden = true; meter.hidden = true;
+    foot.hidden = true;
     return;
   }
-  foot.hidden = false; meter.hidden = false;
-  meter.innerHTML = shipMeter();
+  foot.hidden = false;
   lines.innerHTML = cart.map(lineHtml).join('');
   $('[data-cart-subtotal]')!.innerHTML = money(subtotal());
 }
@@ -129,12 +119,10 @@ function renderCartPage() {
     return;
   }
   sum.hidden = false;
-  list.innerHTML = `<div class="ship-meter" style="border-radius:12px">${shipMeter()}</div>` + cart.map(lineHtml).join('');
+  list.innerHTML = cart.map(lineHtml).join('');
   const sub = subtotal();
-  const ship = sub >= FREE_SHIP ? 0 : 7.95;
   $('[data-sum-sub]', sum)!.innerHTML = money(sub);
-  $('[data-sum-ship]', sum)!.innerHTML = ship ? money(ship) : 'Free';
-  $('[data-sum-total]', sum)!.innerHTML = money(sub + ship);
+  $('[data-sum-total]', sum)!.innerHTML = money(sub);
 }
 
 /* ---------- Wishlist ---------- */
